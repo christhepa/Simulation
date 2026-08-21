@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clinical Simulation Hub</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    
+    .login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #003366 0%, #1a4a7a 100%);
+    }
+    
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .login-container h1 { margin-top: 0; color: #003366; }
+    .login-container input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    .login-container button {
+      width: 100%;
+      padding: 10px;
+      background: #003366;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .login-container button:hover { background: #1a4a7a; }
+    .error { color: red; font-size: 14px; margin-top: 10px; }
+    
+    #hub-content { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="login-screen">
+  <div class="login-container">
+    <h1>Clinical Simulation Hub</h1>
+    <p>Enter the access code to continue</p>
+    <input type="password" id="password-input" placeholder="Access code" />
+    <button onclick="checkPassword()">Unlock</button>
+    <div id="error-msg" class="error"></div>
+  </div>
+</div>
+
+<!-- HUB CONTENT (your existing index.html content goes here) -->
+<div id="hub-content">
+  <!-- Existing hub structure -->
+  <h1>Simulation Tools</h1>
+  <a href="EMR-Sim.html">EMR Simulator</a>
+  <a href="Monitor-Sim.html">Monitor Simulator</a>
+  <a href="Telemetry-Sim.html">Telemetry Simulator</a>
+</div>
+
+<script>
+  const ACCESS_PASSWORD = "Fall2025Sim"; // Change this each semester
+  
+  function checkPassword() {
+    const input = document.getElementById("password-input").value;
+    const error = document.getElementById("error-msg");
+    
+    if (input === ACCESS_PASSWORD) {
+      sessionStorage.setItem("sim-unlocked", "true");
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("hub-content").style.display = "block";
+    } else {
+      error.textContent = "Incorrect code. Try again.";
+      document.getElementById("password-input").value = "";
+    }
+  }
+  
+  // Check if already unlocked in this session
+  if (sessionStorage.getItem("sim-unlocked") === "true") {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("hub-content").style.display = "block";
+  }
+  
+  // Allow Enter key to submit
+  document.getElementById("password-input").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") checkPassword();
+  });
+</script>
+
+</body>
+</html>
