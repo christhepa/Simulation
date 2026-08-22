@@ -734,6 +734,15 @@
     const dd = String(d.getDate()).padStart(2,'0');
     return mm+'/'+dd+'/'+d.getFullYear();
   }
+  /* Patient DOB is stored/edited as 'YYYY-MM-DD' (required by the native
+     <input type="date"> control), but is always displayed to the user as
+     MM-DD-YYYY. Falls back to the raw string if it isn't a plain date. */
+  function fmtDob(dobStr){
+    if (!dobStr) return '';
+    const m = String(dobStr).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return dobStr;
+    return m[2]+'-'+m[3]+'-'+m[1];
+  }
   function fmtTimeOnly(ts){
     const d = new Date(ts);
     let h = d.getHours();
@@ -770,97 +779,275 @@
      range; a patient's labProfile can override any component's value by
      its component id. Values are fixed per patient (not randomized) so
      a given case is reproducible for every student who opens it.
+
+     Reference ranges throughout this library are sourced from the
+     NCCPA Adult Laboratory Values reference sheet (normal values for
+     healthy adults). A few notes on how that source was applied:
+       - Where the source gives separate male/female ranges, the
+         component uses `rangeBySex` / `defBySex` (see resolveRange /
+         resolveDef below) instead of a flat `range` / `def`.
+       - Magnesium and CSF Opening Pressure are reported in this sim in
+         the units it already used (mg/dL and cmH2O respectively) rather
+         than the source's mEq/L / mmH2O, so existing case values did
+         not need to be rewritten; the reference bounds themselves are
+         converted from the source using standard unit conversions.
+       - FSH and LH vary by menstrual/menopausal phase in the source.
+         Where the source gives no male reference (LH), the single
+         reference the source does provide is used for all patients;
+         see the fsh/lh panel definitions for specifics.
+       - CRP, high-sensitivity is reported by the source as three risk
+         bands (Low/Average/High) rather than a single normal range;
+         it is modeled here as numeric with the "Average" ceiling as
+         the upper bound of normal.
   --------------------------------------------------------------- */
   const BMP_COMPONENTS = [
-    {id:'na',   label:'Sodium',      unit:'mmol/L',   range:[136,145], def:140, dec:0},
-    {id:'k',    label:'Potassium',   unit:'mmol/L',   range:[3.5,5.0], def:4.2, dec:1, critLow:2.5, critHigh:6.5},
-    {id:'cl',   label:'Chloride',    unit:'mmol/L',   range:[98,107],  def:102, dec:0},
-    {id:'co2',  label:'CO2 (Bicarb)',unit:'mmol/L',   range:[22,29],   def:25, dec:0},
-    {id:'bun',  label:'BUN',         unit:'mg/dL',    range:[7,20],    def:14, dec:0},
-    {id:'cr',   label:'Creatinine',  unit:'mg/dL',    range:[0.6,1.2], def:0.9, dec:1},
-    {id:'glu',  label:'Glucose',     unit:'mg/dL',    range:[70,99],   def:95, dec:0}
+    {id:'na',   label:'Sodium',            unit:'mEq/L', range:[136,145], def:140, dec:0},
+    {id:'k',    label:'Potassium',         unit:'mEq/L', range:[3.5,5.0], def:4.2, dec:1, critLow:2.5, critHigh:6.5},
+    {id:'cl',   label:'Chloride',          unit:'mEq/L', range:[95,105],  def:100, dec:0},
+    {id:'co2',  label:'CO2 (Bicarbonate)', unit:'mEq/L', range:[22,28],   def:25, dec:0},
+    {id:'bun',  label:'BUN',               unit:'mg/dL', range:[7,18],    def:14, dec:0},
+    {id:'cr',   label:'Creatinine',        unit:'mg/dL', range:[0.6,1.2], def:0.9, dec:1},
+    {id:'glu',  label:'Glucose',           unit:'mg/dL', range:[70,99],   def:95, dec:0},
+    {id:'ca',   label:'Calcium',           unit:'mg/dL', range:[8.4,10.2],def:9.5, dec:1}
   ];
   const LIVER_COMPONENTS = [
-    {id:'ast',      label:'AST',        unit:'U/L',   range:[10,40],  def:22, dec:0},
-    {id:'alt',      label:'ALT',        unit:'U/L',   range:[7,56],   def:25, dec:0},
-    {id:'alkphos',  label:'Alk Phos',   unit:'U/L',   range:[44,147], def:80, dec:0},
-    {id:'tbili',    label:'Total Bili', unit:'mg/dL', range:[0.1,1.2],def:0.6, dec:1},
-    {id:'albumin',  label:'Albumin',    unit:'g/dL',  range:[3.5,5.0],def:4.2, dec:1},
-    {id:'tprotein', label:'Total Protein', unit:'g/dL', range:[6.0,8.3], def:7.0, dec:1}
+    {id:'ast',      label:'AST',              unit:'U/L',   range:[8,20],   def:14, dec:0},
+    {id:'alt',      label:'ALT',              unit:'U/L',   range:[8,20],   def:14, dec:0},
+    {id:'alkphos',  label:'Alk Phos',         unit:'U/L',   range:[20,70],  def:45, dec:0},
+    {id:'tbili',    label:'Total Bilirubin',  unit:'mg/dL', range:[0.1,1.0],def:0.5, dec:1},
+    {id:'dbili',    label:'Direct Bilirubin', unit:'mg/dL', range:[0.0,0.3],def:0.1, dec:1},
+    {id:'albumin',  label:'Albumin',          unit:'g/dL',  range:[3.5,5.5],def:4.2, dec:1},
+    {id:'tprotein', label:'Total Protein',    unit:'g/dL',  range:[6.0,7.8],def:7.0, dec:1},
+    {id:'globulin', label:'Globulin',         unit:'g/dL',  range:[2.3,3.5],def:2.8, dec:1}
   ];
 
   const LAB_PANELS = {
+    /* ---------------- Hematology ---------------- */
     cbc: { label:'CBC with Differential', category:'Hematology', kind:'numeric', components:[
-      {id:'wbc', label:'WBC',       unit:'x10^3/uL', range:[4.5,11.0], def:7.2, dec:1, critHigh:30},
-      {id:'hgb', label:'Hemoglobin',unit:'g/dL',     range:[12.0,16.0],def:13.5, dec:1, critLow:6.5},
-      {id:'hct', label:'Hematocrit',unit:'%',        range:[36,46],    def:40, dec:0},
-      {id:'plt', label:'Platelets', unit:'x10^3/uL', range:[150,400], def:250, dec:0, critLow:20}
+      {id:'wbc',   label:'WBC',                  unit:'x10^3/uL', range:[4.5,11.0], def:7.2, dec:1, critHigh:30},
+      {id:'rbc',   label:'RBC Count',            unit:'x10^6/uL', rangeBySex:{M:[4.3,5.9],F:[3.5,5.5]}, defBySex:{M:5.0,F:4.5}, dec:1},
+      {id:'hgb',   label:'Hemoglobin',           unit:'g/dL',     rangeBySex:{M:[13.5,17.5],F:[12.0,16.0]}, defBySex:{M:15.0,F:13.5}, dec:1, critLow:6.5},
+      {id:'hct',   label:'Hematocrit',           unit:'%',        rangeBySex:{M:[41,53],F:[36,46]}, defBySex:{M:47,F:40}, dec:0},
+      {id:'mcv',   label:'MCV',                  unit:'fL',       range:[80,100],    def:90, dec:0},
+      {id:'mch',   label:'MCH',                  unit:'pg/cell',  range:[25.4,34.6], def:30.0, dec:1},
+      {id:'mchc',  label:'MCHC',                 unit:'g/dL',     range:[32,36],     def:34, dec:1},
+      {id:'rdw',   label:'RDW',                  unit:'%',        range:[11.5,14.5], def:13.0, dec:1},
+      {id:'plt',   label:'Platelets',            unit:'x10^3/uL', range:[150,400],   def:250, dec:0, critLow:20},
+      {id:'segs',  label:'Segmented Neutrophils',unit:'%',        range:[54,62],     def:58, dec:0},
+      {id:'bands', label:'Bands',                unit:'%',        range:[3,5],       def:4, dec:0},
+      {id:'eos',   label:'Eosinophils',          unit:'%',        range:[1,3],       def:2, dec:0},
+      {id:'basos', label:'Basophils',            unit:'%',        range:[0,0.75],    def:0.3, dec:2},
+      {id:'lymphs',label:'Lymphocytes',          unit:'%',        range:[25,33],     def:29, dec:0},
+      {id:'monos', label:'Monocytes',            unit:'%',        range:[3,7],       def:5, dec:0}
     ]},
+    esr: { label:'Erythrocyte Sedimentation Rate (ESR)', category:'Hematology', kind:'numeric', components:[
+      {id:'esr', label:'ESR', unit:'mm/hr', rangeBySex:{M:[0,15],F:[0,20]}, defBySex:{M:8,F:8}, dec:0}
+    ]},
+
+    /* ---------------- Chemistry ---------------- */
     bmp: { label:'Basic Metabolic Panel (BMP)', category:'Chemistry', kind:'numeric', components: BMP_COMPONENTS },
     cmp: { label:'Comprehensive Metabolic Panel (CMP)', category:'Chemistry', kind:'numeric', components: BMP_COMPONENTS.concat(LIVER_COMPONENTS) },
     magphos: { label:'Magnesium & Phosphorus', category:'Chemistry', kind:'numeric', components:[
-      {id:'mg',   label:'Magnesium',  unit:'mg/dL', range:[1.6,2.4], def:2.0, dec:1},
-      {id:'phos', label:'Phosphorus', unit:'mg/dL', range:[2.5,4.5], def:3.4, dec:1}
+      {id:'mg',   label:'Magnesium',  unit:'mg/dL', range:[1.8,2.4], def:2.0, dec:1},
+      {id:'phos', label:'Phosphorus', unit:'mg/dL', range:[3.0,4.5], def:3.6, dec:1}
     ]},
-    troponin: { label:'Troponin', category:'Cardiac', kind:'numeric', components:[
-      {id:'troponin', label:'Troponin I', unit:'ng/mL', range:[0,0.04], def:0.01, dec:2, critHigh:0.5}
+    ammonia: { label:'Ammonia', category:'Chemistry', kind:'numeric', components:[
+      {id:'ammonia', label:'Ammonia', unit:'\u00b5g/dL', range:[10,80], def:35, dec:0}
     ]},
-    bnp: { label:'BNP', category:'Cardiac', kind:'numeric', components:[
-      {id:'bnp', label:'BNP', unit:'pg/mL', range:[0,100], def:35, dec:0}
+    amylase: { label:'Amylase', category:'Chemistry', kind:'numeric', components:[
+      {id:'amylase', label:'Amylase', unit:'U/L', range:[25,125], def:70, dec:0}
+    ]},
+    ggt: { label:'Gamma-Glutamyl Transferase (GGT)', category:'Chemistry', kind:'numeric', components:[
+      {id:'ggt', label:'GGT', unit:'U/L', range:[0,30], def:18, dec:0}
+    ]},
+    ldh: { label:'Lactate Dehydrogenase (LDH)', category:'Chemistry', kind:'numeric', components:[
+      {id:'ldh', label:'LDH', unit:'U/L', range:[45,90], def:65, dec:0}
     ]},
     lactate: { label:'Lactate', category:'Chemistry', kind:'numeric', components:[
-      {id:'lactate', label:'Lactate', unit:'mmol/L', range:[0.5,2.2], def:1.1, dec:1, critHigh:4}
+      {id:'lactate', label:'Lactate', unit:'mEq/L', range:[0.5,2.0], def:1.1, dec:1, critHigh:4}
     ]},
     lipase: { label:'Lipase', category:'Chemistry', kind:'numeric', components:[
-      {id:'lipase', label:'Lipase', unit:'U/L', range:[10,140], def:45, dec:0}
+      {id:'lipase', label:'Lipase', unit:'U/L', range:[0,160], def:60, dec:0}
     ]},
-    coags: { label:'Coagulation Panel (PT/INR/PTT)', category:'Hematology', kind:'numeric', components:[
-      {id:'pt',  label:'PT',  unit:'sec', range:[11,13.5], def:12.2, dec:1},
+    uricacid: { label:'Uric Acid', category:'Chemistry', kind:'numeric', components:[
+      {id:'uricacid', label:'Uric Acid', unit:'mg/dL', range:[3.0,8.2], def:5.0, dec:1}
+    ]},
+    glu2hpp: { label:'Glucose, 2-Hour Postprandial', category:'Chemistry', kind:'numeric', components:[
+      {id:'glu2hpp', label:'Glucose (2-hr postprandial)', unit:'mg/dL', range:[0,120], def:100, dec:0}
+    ]},
+    ck: { label:'Creatine Kinase (CK)', category:'Chemistry', kind:'numeric', components:[
+      {id:'ck', label:'CK', unit:'U/L', rangeBySex:{M:[25,90],F:[10,70]}, defBySex:{M:55,F:40}, dec:0}
+    ]},
+    abg: { label:'Arterial Blood Gas (ABG)', category:'Chemistry', kind:'numeric', components:[
+      {id:'ph',   label:'pH',   unit:'',      range:[7.35,7.45], def:7.40, dec:2},
+      {id:'pco2', label:'pCO2', unit:'mmHg',  range:[33,45],     def:40, dec:0},
+      {id:'po2',  label:'pO2',  unit:'mmHg',  range:[75,105],    def:92, dec:0},
+      {id:'hco3', label:'HCO3', unit:'mEq/L', range:[22,26],     def:24, dec:0}
+    ]},
+
+    /* ---------------- Lipids ---------------- */
+    lipid: { label:'Lipid Panel', category:'Lipids', kind:'numeric', components:[
+      {id:'totalchol', label:'Total Cholesterol', unit:'mg/dL', range:[0,199],  def:180, dec:0},
+      {id:'ldl',       label:'LDL Cholesterol',   unit:'mg/dL', range:[0,129],  def:100, dec:0},
+      {id:'hdl',       label:'HDL Cholesterol',   unit:'mg/dL', range:[60,100], def:65, dec:0},
+      {id:'tg',        label:'Triglycerides',     unit:'mg/dL', range:[0,149],  def:120, dec:0}
+    ]},
+
+    /* ---------------- Cardiac ---------------- */
+    troponin: { label:'Troponin I (Conventional)', category:'Cardiac', kind:'numeric', components:[
+      {id:'troponin', label:'Troponin I', unit:'ng/mL', range:[0,0.04], def:0.01, dec:2, critHigh:0.5}
+    ]},
+    troponinT: { label:'Troponin T (Conventional)', category:'Cardiac', kind:'numeric', components:[
+      {id:'troponinT', label:'Troponin T', unit:'ng/mL', range:[0,0.01], def:0.005, dec:3}
+    ]},
+    hstroponinI: { label:'Troponin I, High-Sensitivity', category:'Cardiac', kind:'numeric', components:[
+      {id:'hstni', label:'hs-Troponin I', unit:'ng/L', rangeBySex:{M:[0,20],F:[0,15]}, defBySex:{M:5,F:5}, dec:0}
+    ]},
+    hstroponinT: { label:'Troponin T, High-Sensitivity', category:'Cardiac', kind:'numeric', components:[
+      {id:'hstnt', label:'hs-Troponin T', unit:'ng/L', range:[0,14], def:5, dec:0}
+    ]},
+    bnp: { label:'BNP', category:'Cardiac', kind:'numeric', components:[
+      {id:'bnp', label:'BNP', unit:'pg/mL', range:[0,50], def:20, dec:0}
+    ]},
+
+    /* ---------------- Coagulation ---------------- */
+    coags: { label:'Coagulation Panel (PT/INR/PTT)', category:'Coagulation', kind:'numeric', components:[
+      {id:'pt',  label:'PT',  unit:'sec', range:[11,15],   def:12.5, dec:1},
       {id:'inr', label:'INR', unit:'',    range:[0.8,1.1], def:1.0, dec:1},
-      {id:'ptt', label:'PTT', unit:'sec', range:[25,35],   def:29, dec:0}
+      {id:'ptt', label:'PTT', unit:'sec', range:[25,40],   def:30, dec:0}
     ]},
+    fibrinogen: { label:'Fibrinogen', category:'Coagulation', kind:'numeric', components:[
+      {id:'fibrinogen', label:'Fibrinogen', unit:'mg/dL', range:[200,400], def:300, dec:0}
+    ]},
+    thrombintime: { label:'Thrombin Time', category:'Coagulation', kind:'numeric', components:[
+      {id:'thrombintime', label:'Thrombin Time', unit:'sec', range:[7,12], def:9, dec:0}
+    ]},
+    ddimer: { label:'D-dimer', category:'Coagulation', kind:'numeric', components:[
+      {id:'ddimer', label:'D-dimer', unit:'ug/mL FEU', range:[0,0.50], def:0.25, dec:2}
+    ]},
+
+    /* ---------------- Endocrine ---------------- */
     tsh: { label:'TSH', category:'Endocrine', kind:'numeric', components:[
-      {id:'tsh', label:'TSH', unit:'mIU/L', range:[0.4,4.0], def:2.1, dec:1}
+      {id:'tsh', label:'TSH', unit:'\u00b5U/mL', range:[0.5,5.0], def:2.1, dec:1}
     ]},
     ft4: { label:'Free T4', category:'Endocrine', kind:'numeric', components:[
       {id:'ft4', label:'Free T4', unit:'ng/dL', range:[0.9,2.1], def:1.3, dec:1}
     ]},
+    t4total: { label:'Thyroxine (T4), Total', category:'Endocrine', kind:'numeric', components:[
+      {id:'t4total', label:'T4, Total', unit:'\u00b5g/dL', range:[5,12], def:8, dec:1}
+    ]},
+    t3total: { label:'Triiodothyronine (T3), Total', category:'Endocrine', kind:'numeric', components:[
+      {id:'t3total', label:'T3, Total', unit:'ng/dL', range:[115,190], def:150, dec:0}
+    ]},
+    ft3: { label:'Free T3', category:'Endocrine', kind:'numeric', components:[
+      {id:'ft3', label:'Free T3', unit:'pg/dL', range:[230,420], def:320, dec:0}
+    ]},
+    t3ru: { label:'T3 Resin Uptake', category:'Endocrine', kind:'numeric', components:[
+      {id:'t3ru', label:'T3 Resin Uptake', unit:'%', range:[25,35], def:30, dec:0}
+    ]},
     hba1c: { label:'Hemoglobin A1c', category:'Endocrine', kind:'numeric', components:[
-      {id:'hba1c', label:'HbA1c', unit:'%', range:[4.0,5.6], def:5.3, dec:1}
+      {id:'hba1c', label:'HbA1c', unit:'%', range:[4.0,5.7], def:5.3, dec:1}
     ]},
-    ddimer: { label:'D-dimer', category:'Hematology', kind:'numeric', components:[
-      {id:'ddimer', label:'D-dimer', unit:'ug/mL FEU', range:[0,0.50], def:0.25, dec:2}
+    pth: { label:'Parathyroid Hormone (PTH)', category:'Endocrine', kind:'numeric', components:[
+      {id:'pth', label:'PTH', unit:'pg/mL', range:[11,54], def:35, dec:0}
     ]},
-    abg: { label:'Arterial Blood Gas (ABG)', category:'Chemistry', kind:'numeric', components:[
-      {id:'ph',   label:'pH',    unit:'',     range:[7.35,7.45], def:7.40, dec:2},
-      {id:'pco2', label:'pCO2', unit:'mmHg', range:[35,45],     def:40, dec:0},
-      {id:'po2',  label:'pO2',  unit:'mmHg', range:[80,100],    def:92, dec:0},
-      {id:'hco3', label:'HCO3', unit:'mmol/L', range:[22,26],   def:24, dec:0}
+    /* FSH: the source gives a male range and, for females, separate
+       premenopausal / midcycle-peak / postmenopausal bands. The
+       premenopausal (baseline) band is used as the female reference
+       here, since a single cycle-day-independent value is the most
+       defensible default for a training case; the fuller picture is
+       worth discussing with students as a teaching point in its own
+       right. */
+    fsh: { label:'Follicle-Stimulating Hormone (FSH)', category:'Endocrine', kind:'numeric', components:[
+      {id:'fsh', label:'FSH', unit:'mIU/mL', rangeBySex:{M:[4,25],F:[4,30]}, defBySex:{M:12,F:12}, dec:0}
     ]},
-    lipid: { label:'Lipid Panel', category:'Chemistry', kind:'numeric', components:[
-      {id:'ldl', label:'LDL',        unit:'mg/dL', range:[0,99],  def:95, dec:0},
-      {id:'hdl', label:'HDL',        unit:'mg/dL', range:[40,60], def:50, dec:0},
-      {id:'tg',  label:'Triglycerides', unit:'mg/dL', range:[0,149], def:120, dec:0},
-      {id:'totalchol', label:'Total Cholesterol', unit:'mg/dL', range:[0,199], def:180, dec:0}
+    /* LH: the source provides only female (by cycle phase), no male
+       range. The follicular-phase female band is applied to all
+       patients as the sole reference the source supports. */
+    lh: { label:'Luteinizing Hormone (LH)', category:'Endocrine', kind:'numeric', components:[
+      {id:'lh', label:'LH', unit:'mU/mL', range:[1,18], def:8, dec:0}
     ]},
+    prolactin: { label:'Prolactin', category:'Endocrine', kind:'numeric', components:[
+      {id:'prolactin', label:'Prolactin', unit:'ng/mL', range:[0,20], def:8, dec:0}
+    ]},
+
+    /* ---------------- Inflammatory Markers ---------------- */
+    crp: { label:'C-Reactive Protein (CRP)', category:'Inflammatory Markers', kind:'numeric', components:[
+      {id:'crp', label:'CRP', unit:'mg/L', range:[0,5], def:2, dec:1}
+    ]},
+    crphs: { label:'C-Reactive Protein, High-Sensitivity', category:'Inflammatory Markers', kind:'numeric', components:[
+      {id:'crphs', label:'hs-CRP', unit:'mg/L', range:[0,3.0], def:1.0, dec:1}
+    ]},
+    pct: { label:'Procalcitonin (PCT)', category:'Inflammatory Markers', kind:'numeric', components:[
+      {id:'pct', label:'Procalcitonin', unit:'\u00b5g/L', range:[0,0.05], def:0.02, dec:2}
+    ]},
+
+    /* ---------------- Iron Studies / Hematinics ---------------- */
+    iron: { label:'Iron', category:'Iron Studies', kind:'numeric', components:[
+      {id:'iron', label:'Iron', unit:'\u00b5g/dL', range:[50,170], def:90, dec:0}
+    ]},
+    tibc: { label:'Total Iron-Binding Capacity (TIBC)', category:'Iron Studies', kind:'numeric', components:[
+      {id:'tibc', label:'TIBC', unit:'\u00b5g/dL', range:[250,370], def:310, dec:0}
+    ]},
+    ferritin: { label:'Ferritin', category:'Iron Studies', kind:'numeric', components:[
+      {id:'ferritin', label:'Ferritin', unit:'ng/mL', rangeBySex:{M:[15,200],F:[12,150]}, defBySex:{M:80,F:60}, dec:0}
+    ]},
+    folate: { label:'Folate', category:'Iron Studies', kind:'numeric', components:[
+      {id:'folate', label:'Folate', unit:'ng/mL', range:[3,20], def:10, dec:0}
+    ]},
+    vitb12: { label:'Vitamin B12', category:'Iron Studies', kind:'numeric', components:[
+      {id:'vitb12', label:'Vitamin B12', unit:'pg/mL', range:[200,600], def:400, dec:0}
+    ]},
+    retic: { label:'Reticulocyte Count', category:'Iron Studies', kind:'numeric', components:[
+      {id:'retic', label:'Reticulocyte Count', unit:'% of RBCs', range:[0.5,1.5], def:1.0, dec:1}
+    ]},
+
+    /* ---------------- Urine ---------------- */
     ua: { label:'Urinalysis (UA)', category:'Urine', kind:'text',
       defaultText:'Color: yellow. Clarity: clear. SG 1.018. pH 6.0. Negative for blood, protein, leukocyte esterase, nitrites, and glucose. <5 WBC/hpf, <5 RBC/hpf. No bacteria seen.' },
+    urinesg: { label:'Urine Specific Gravity', category:'Urine', kind:'numeric', components:[
+      {id:'urinesg', label:'Specific Gravity', unit:'', range:[1.002,1.028], def:1.018, dec:3}
+    ]},
+    urinena: { label:'Urine Sodium, 24-Hour', category:'Urine', kind:'numeric', components:[
+      {id:'urinena', label:'Urine Sodium', unit:'mEq/24hr', range:[60,260], def:150, dec:0}
+    ]},
+    urineprotein24: { label:'Urine Protein, 24-Hour', category:'Urine', kind:'numeric', components:[
+      {id:'urineprotein24', label:'Urine Protein', unit:'mg/day', rangeBySex:{M:[0,60],F:[0,90]}, defBySex:{M:20,F:20}, dec:0}
+    ]},
+    creatclearance: { label:'Creatinine Clearance', category:'Urine', kind:'numeric', components:[
+      {id:'creatclearance', label:'Creatinine Clearance', unit:'mL/min', rangeBySex:{M:[97,137],F:[88,128]}, defBySex:{M:115,F:105}, dec:0}
+    ]},
+
+    /* ---------------- Microbiology / Blood Bank ---------------- */
     urinecx: { label:'Urine Culture', category:'Microbiology', kind:'text',
       defaultText:'Pending — no growth at 24 hours. Final results (with sensitivities, if positive) available at 48–72 hours.' },
     bloodcx: { label:'Blood Cultures x2', category:'Microbiology', kind:'text',
       defaultText:'Pending — no growth to date on either bottle set. Final results in 5 days if no growth.' },
     typescreen: { label:'Type & Screen', category:'Blood Bank', kind:'text',
-      defaultText:'Blood type O positive. Antibody screen: negative.' }
+      defaultText:'Blood type O positive. Antibody screen: negative.' },
+
+    /* ---------------- Sweat / Synovial Fluid ---------------- */
+    sweatcl: { label:'Sweat Chloride', category:'Sweat', kind:'numeric', components:[
+      {id:'sweatcl', label:'Sweat Chloride', unit:'mmol/L', range:[0,35], def:15, dec:0}
+    ]},
+    synovial: { label:'Synovial Fluid Analysis', category:'Synovial Fluid', kind:'text',
+      defaultText:'Appearance: clear, light yellow. Viscosity: high. WBC <200/\u00b5L. RBC: 0/\u00b5L. PMNs <25%. Glucose: nearly equal to serum glucose.' }
   };
 
   /* CSF panel is only produced via the Lumbar Puncture procedure, not
-     directly orderable as a "lab" from the list — kept separate. */
+     directly orderable as a "lab" from the list — kept separate.
+     Opening pressure is reported in cmH2O (this sim's existing
+     convention, and the more common clinical convention) rather than
+     the source's mmH2O; the range below is the source's 70-180 mmH2O
+     converted to cmH2O (\u00f710). */
   const CSF_COMPONENTS = [
-    {id:'csfopening', label:'Opening Pressure', unit:'cmH2O', range:[10,20], def:14, dec:0},
+    {id:'csfopening', label:'Opening Pressure', unit:'cmH2O',  range:[7,18],   def:12, dec:0},
     {id:'csfwbc',     label:'CSF WBC',   unit:'/uL',   range:[0,5],   def:2, dec:0},
     {id:'csfrbc',     label:'CSF RBC',   unit:'/uL',   range:[0,0],   def:0, dec:0},
-    {id:'csfprotein', label:'Protein',   unit:'mg/dL', range:[15,45], def:30, dec:0},
-    {id:'csfglucose', label:'Glucose',   unit:'mg/dL', range:[40,70], def:55, dec:0}
+    {id:'csfprotein', label:'Protein',   unit:'mg/dL', range:[0,40],  def:25, dec:0},
+    {id:'csfglucose', label:'Glucose',   unit:'mg/dL', range:[40,70], def:55, dec:0},
+    {id:'csfchloride',label:'Chloride',  unit:'mEq/L', range:[118,132], def:124, dec:0},
+    {id:'csfgamma',   label:'Gamma Globulin', unit:'% of total protein', range:[3,12], def:7, dec:0}
   ];
   const CSF_DEFAULT_GRAM = 'No organisms seen on Gram stain.';
 
@@ -870,17 +1057,35 @@
     return entry.stages.find(function(s){ return s.id===entry.activeStageId; }) || null;
   }
 
+  /* Some analytes (see LAB_PANELS comments above) have distinct male/
+     female reference ranges. A component carries `rangeBySex` / `defBySex`
+     instead of (or alongside) a flat `range` / `def`; these resolvers pick
+     the right one for a given patient's sex, falling back to whichever
+     sex-specific value is available if an exact match isn't defined
+     (e.g. a component with only a female range still resolves for a
+     male patient rather than throwing). */
+  function resolveRange(comp, sex){
+    if (comp.rangeBySex) return comp.rangeBySex[sex] || comp.rangeBySex.M || comp.rangeBySex.F;
+    return comp.range;
+  }
+  function resolveDef(comp, sex){
+    if (comp.defBySex) return (comp.defBySex[sex]!==undefined) ? comp.defBySex[sex] : comp.defBySex.M;
+    return comp.def;
+  }
+
   /* Shared line builder: given a component definition and a raw numeric value,
      apply the reference range / critical thresholds and return a display line.
-     `compId` and `raw` are carried through so the Trends view can pivot on them. */
-  function buildLabLine(comp, val){
+     `compId` and `raw` are carried through so the Trends view can pivot on them.
+     `sex` resolves sex-specific reference ranges where the component defines them. */
+  function buildLabLine(comp, val, sex){
+    const range = resolveRange(comp, sex);
     let flag = '';
     if (comp.critHigh!==undefined && val>=comp.critHigh) flag='C';
     else if (comp.critLow!==undefined && val<=comp.critLow) flag='C';
-    else if (val>comp.range[1]) flag='H';
-    else if (val<comp.range[0]) flag='L';
+    else if (val>range[1]) flag='H';
+    else if (val<range[0]) flag='L';
     return { compId: comp.id, raw: val, value: val.toFixed(comp.dec), flag: flag,
-             unit: comp.unit, label: comp.label, range: comp.range.join('\u2013') };
+             unit: comp.unit, label: comp.label, range: range.join('\u2013') };
   }
 
   function getLabComponentValue(patient, comp){
@@ -888,8 +1093,8 @@
     const stageVal = (stage && stage.profile) ? stage.profile[comp.id] : undefined;
     const profile = patient.labProfile || {};
     const baseVal = profile[comp.id];
-    const val = (stageVal!==undefined) ? stageVal : ((baseVal!==undefined) ? baseVal : comp.def);
-    return buildLabLine(comp, val);
+    const val = (stageVal!==undefined) ? stageVal : ((baseVal!==undefined) ? baseVal : resolveDef(comp, patient.sex));
+    return buildLabLine(comp, val, patient.sex);
   }
 
   /* ---------------------------------------------------------------
@@ -914,10 +1119,11 @@
     const profile = patient.labProfile || {};
     const lines = panel.components.map(function(comp){
       const entered = vals[comp.id];
+      const fallbackDef = resolveDef(comp, patient.sex);
       const val = (entered!==undefined && entered!==null && entered!=='')
         ? parseFloat(entered)
-        : ((profile[comp.id]!==undefined) ? profile[comp.id] : comp.def);
-      return buildLabLine(comp, isNaN(val) ? comp.def : val);
+        : ((profile[comp.id]!==undefined) ? profile[comp.id] : fallbackDef);
+      return buildLabLine(comp, isNaN(val) ? fallbackDef : val, patient.sex);
     });
     return { kind:'numeric', lines: lines, text: null };
   }
@@ -1746,10 +1952,10 @@
     problemList:['Second-degree AV block, Type I (Wenckebach) — new','Coronary artery disease, s/p RCA stenting','Hypertension','Osteoarthritis'],
     homeMeds:['Metoprolol succinate 50 mg PO daily','Lisinopril 10 mg PO daily','Aspirin 81 mg PO daily','Atorvastatin 40 mg PO daily','Acetaminophen 500 mg PO PRN joint pain'],
     vitals:{temp:98.4,hr:45,bp:'118/72',rr:14,spo2:98,pain:0},
-    labProfile:{ wbc:6, hgb:16, hct:40, plt:400,
-      na:140, k:3.5, cl:99, co2:25, bun:20, cr:1.5, glu:90,
+    labProfile:{ wbc:6, hgb:16, hct:45, plt:400,
+      na:140, k:3.5, cl:99, co2:25, bun:16, cr:1.5, glu:90,
       ast:12, alt:15, alkphos:52, tbili:0.5, albumin:3.8, tprotein:6.0,
-      troponin:0.02, bnp:25, tsh:3.0, ft4:1.2, mg:1.7 },
+      troponin:0.02, bnp:25, tsh:3.0, ft4:1.2, mg:2.0 },
     imagingFindings:{
       ekg:{ findings:'Progressive prolongation of the PR interval over several consecutive beats, culminating in a nonconducted P wave (dropped QRS) in a repeating group-beating pattern, best appreciated on the lead II rhythm strip. Underlying atrial rate approximately 75/min; ventricular rate slower and irregular, averaging in the 40s. QRS complexes are narrow (<120 ms) when conducted. No acute ST-segment or T-wave changes.',
         impression:'Second-degree AV block, Mobitz Type I (Wenckebach). No evidence of acute ischemia.' },
@@ -2327,7 +2533,7 @@
     }).join('');
   }
 
-  function renderLabValueFieldsHtml(panelId, values){
+  function renderLabValueFieldsHtml(panelId, values, sex){
     const panel = LAB_PANELS[panelId];
     if (!panel) return '';
     if (panel.kind==='text'){
@@ -2337,9 +2543,10 @@
     }
     return '<div class="hist-vals">'+panel.components.map(function(c){
       const v = (values && values[c.id]!==undefined) ? values[c.id] : '';
+      const def = resolveDef(c, sex);
       return '<div class="hist-val"><label>'+escapeHtml(c.label)+
         '<span class="hist-val-unit">'+escapeHtml(c.unit||'')+'</span></label>'+
-        '<input type="text" data-comp="'+c.id+'" value="'+escapeHtml(String(v))+'" placeholder="'+c.def+'"></div>';
+        '<input type="text" data-comp="'+c.id+'" value="'+escapeHtml(String(v))+'" placeholder="'+escapeHtml(String(def))+'"></div>';
     }).join('')+'</div>';
   }
 
@@ -2359,7 +2566,10 @@
     const sel = row.querySelector('[data-panel]');
     if (e.panelId) sel.value = e.panelId;
     const valsHost = row.querySelector('.hist-vals-host');
-    function paint(){ valsHost.innerHTML = renderLabValueFieldsHtml(sel.value, (e.panelId===sel.value) ? e.values : null); }
+    function paint(){
+      const sexEl = document.getElementById('npSex');
+      valsHost.innerHTML = renderLabValueFieldsHtml(sel.value, (e.panelId===sel.value) ? e.values : null, sexEl ? sexEl.value : undefined);
+    }
     sel.addEventListener('change', paint);
     paint();
     row.querySelector('.hist-del').addEventListener('click', function(){ row.remove(); });
@@ -2428,13 +2638,15 @@
   /* Every unique numeric analyte across all panels, grouped by category, so a
      facilitator can set this admission's values without opening the Facilitator
      Panel separately. */
-  function renderBaselineValueFieldsHtml(){
+  function renderBaselineValueFieldsHtml(sex){
     return getUniqueLabComponentsGrouped().map(function(g){
       return '<details class="order-group"><summary>'+escapeHtml(g.category)+'</summary>'+
         '<div class="hist-vals">'+g.items.map(function(c){
+          const range = resolveRange(c, sex);
+          const def = resolveDef(c, sex);
           return '<div class="hist-val"><label>'+escapeHtml(c.label)+
-            '<span class="hist-val-unit">'+escapeHtml(c.unit||'')+', ref '+c.range.join('\u2013')+'</span></label>'+
-            '<input type="text" data-basecomp="'+c.id+'" placeholder="'+c.def+'"></div>';
+            '<span class="hist-val-unit">'+escapeHtml(c.unit||'')+', ref '+range.join('\u2013')+'</span></label>'+
+            '<input type="text" data-basecomp="'+c.id+'" placeholder="'+escapeHtml(String(def))+'"></div>';
         }).join('')+'</div></details>';
     }).join('');
   }
@@ -2578,7 +2790,19 @@
         '<button class="btn-primary" id="npSaveBtn" type="button">Save Patient</button>'+
       '</div>';
 
-    document.getElementById('npBaselineVals').innerHTML = renderBaselineValueFieldsHtml();
+    (function(){
+      const sexEl = document.getElementById('npSex');
+      const paintBaseline = function(){
+        const preserved = readBaselineValuesFromForm();
+        document.getElementById('npBaselineVals').innerHTML = renderBaselineValueFieldsHtml(sexEl ? sexEl.value : undefined);
+        Array.prototype.forEach.call(document.querySelectorAll('[data-basecomp]'), function(inp){
+          const v = preserved[inp.getAttribute('data-basecomp')];
+          if (v!==undefined) inp.value = v;
+        });
+      };
+      paintBaseline();
+      if (sexEl) sexEl.addEventListener('change', paintBaseline);
+    })();
     document.getElementById('npAddLabRow').addEventListener('click', function(){ addLabHistRow(); });
     document.getElementById('npAddImgRow').addEventListener('click', function(){ addImgHistRow(); });
     document.getElementById('npAddProcRow').addEventListener('click', function(){ addProcHistRow(); });
@@ -2774,7 +2998,7 @@
     const p = PATIENT_BY_ID[patientId];
     const age = calcAge(p.dob);
     bannerName.textContent = p.last+', '+p.first;
-    bannerMeta.textContent = 'MRN '+p.mrn+'  ·  DOB '+p.dob+' (age '+age+')  ·  '+p.sex+'  ·  Room '+p.room+'  ·  Admitted '+fmtDate(p.admitAt);
+    bannerMeta.textContent = 'MRN '+p.mrn+'  ·  DOB '+fmtDob(p.dob)+' (age '+age+')  ·  '+p.sex+'  ·  Room '+p.room+'  ·  Admitted '+fmtDate(p.admitAt);
     updateAllergyBand(p);
     updateProblemList(p);
 
@@ -2907,7 +3131,7 @@
       if (updated){
         const age = calcAge(updated.dob);
         bannerName.textContent = updated.last+', '+updated.first;
-        bannerMeta.textContent = 'MRN '+updated.mrn+'  \u00b7  DOB '+updated.dob+' (age '+age+')  \u00b7  '+updated.sex+'  \u00b7  Room '+updated.room+'  \u00b7  Admitted '+fmtDate(updated.admitAt);
+        bannerMeta.textContent = 'MRN '+updated.mrn+'  \u00b7  DOB '+fmtDob(updated.dob)+' (age '+age+')  \u00b7  '+updated.sex+'  \u00b7  Room '+updated.room+'  \u00b7  Admitted '+fmtDate(updated.admitAt);
         updateAllergyBand(updated);
         updateProblemList(updated);
         const allergyChip = (updated.allergies.length===1 && updated.allergies[0]==='NKDA')
@@ -2994,7 +3218,7 @@
       '<div class="two-col">'+
         '<div class="card"><h3>Demographics &amp; Admission</h3>'+
           '<div class="kv"><span class="k">MRN</span><span>'+escapeHtml(p.mrn)+'</span></div>'+
-          '<div class="kv"><span class="k">DOB / Age</span><span>'+escapeHtml(p.dob)+' ('+age+' y)</span></div>'+
+          '<div class="kv"><span class="k">DOB / Age</span><span>'+escapeHtml(fmtDob(p.dob))+' ('+age+' y)</span></div>'+
           '<div class="kv"><span class="k">Sex</span><span>'+p.sex+'</span></div>'+
           '<div class="kv"><span class="k">Room</span><span>'+escapeHtml(p.room)+'</span></div>'+
           '<div class="kv"><span class="k">Admitted</span><span>'+fmtDateTime(p.admitAt)+'</span></div>'+
@@ -3498,9 +3722,9 @@
 
   /* Build an inline outside-records entry form (mirrors the new-patient builder
      hist rows, but rendered in-place inside the Trends panel). */
-  function renderOutsideRecordsFormHtml(panelId, values){
+  function renderOutsideRecordsFormHtml(panelId, values, sex){
     // Reuse the existing per-component value fields renderer
-    return renderLabValueFieldsHtml(panelId, values || null);
+    return renderLabValueFieldsHtml(panelId, values || null, sex);
   }
 
   function bindOutsideRecordsPanel(p, host){
@@ -3540,7 +3764,7 @@
     }
 
     function paintVals(){
-      valsHost.innerHTML = renderOutsideRecordsFormHtml(panelSel.value, null);
+      valsHost.innerHTML = renderOutsideRecordsFormHtml(panelSel.value, null, p.sex);
     }
 
     paintList();
@@ -4246,15 +4470,17 @@
       .map(function(id){ return { id:id, label: LAB_PANELS[id].label }; });
   }
 
-  function renderLabOverrideFormHtml(stage){
+  function renderLabOverrideFormHtml(stage, sex){
     const groups = getUniqueLabComponentsGrouped();
     let html = groups.map(function(g){
       return '<details class="order-group" open><summary>'+escapeHtml(g.category)+'</summary>'+
         '<div class="labov-grid">'+
         g.items.map(function(comp){
           const val = (stage.profile && stage.profile[comp.id]!==undefined) ? stage.profile[comp.id] : '';
-          return '<div class="labov-field"><label>'+escapeHtml(comp.label)+' <span class="labov-unit">('+escapeHtml(comp.unit||'unitless')+', ref '+comp.range.join('\u2013')+')</span></label>'+
-            '<input type="text" data-comp="'+comp.id+'" value="'+escapeHtml(String(val))+'" placeholder="default '+comp.def+'"></div>';
+          const range = resolveRange(comp, sex);
+          const def = resolveDef(comp, sex);
+          return '<div class="labov-field"><label>'+escapeHtml(comp.label)+' <span class="labov-unit">('+escapeHtml(comp.unit||'unitless')+', ref '+range.join('\u2013')+')</span></label>'+
+            '<input type="text" data-comp="'+comp.id+'" value="'+escapeHtml(String(val))+'" placeholder="default '+def+'"></div>';
         }).join('')+
         '</div></details>';
     }).join('');
@@ -4299,7 +4525,7 @@
       '</div>'+
       '<div class="card"><h3>Intended Values \u2014 '+escapeHtml(editingStage.label)+'</h3>'+
         '<p style="font-size:12px;color:var(--ink-dim);margin-top:0;">Leave a field blank to fall back to this patient\u2019s baseline/default value. Values here apply the next time a student orders that test while this stage is active \u2014 orders already placed and resulted are untouched.</p>'+
-        '<div class="order-groups">'+renderLabOverrideFormHtml(editingStage)+'</div>'+
+        '<div class="order-groups">'+renderLabOverrideFormHtml(editingStage, p.sex)+'</div>'+
         '<div class="order-submit-row"><button class="btn-primary" id="saveStageValuesBtn" type="button">Save Changes to This Stage</button></div>'+
       '</div>';
 
