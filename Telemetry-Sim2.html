@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Telemetry Central Station — 8-Bed Monitoring Exercise</title>
+<script>
+  // Session authentication check - redirect to hub if not authenticated
+  if (sessionStorage.getItem("sim-authenticated") !== "true") {
+    window.location.href = "index.html";
+  }
+</script>
+<style>
+  :root{
+    --bg:#0a0a0b;
+    --panel:#111316;
+    --panel-border:#23262a;
+    --text:#d7dadd;
+    --text-dim:#7d838a;
+    --accent:#e0932f;
+    --c-ecg:#39ff6a;
+    --c-ecg-dim:#1c8f3c;
+    --c-spo2:#29c5ff;
+    --c-spo2-dim:#1a6f8f;
+    --c-alarm:#ff5b5b;
+    --c-alarm-dim:#7a2020;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Menlo','Consolas','SFMono-Regular','Courier New',monospace;
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+
+  header.topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 16px;
+    border-bottom:1px solid #1c1f24;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .topbar h1{
+    font-size:14px;
+    letter-spacing:.09em;
+    margin:0 0 2px;
+    color:#c7cbd1;
+    text-transform:uppercase;
+    font-weight:700;
+  }
+  .topbar .sub{font-size:10.5px;color:var(--text-dim);letter-spacing:.03em;}
+  .topbar-controls{display:flex;align-items:center;gap:16px;font-size:11.5px;color:var(--text-dim);flex-wrap:wrap;}
+  .topbar-controls label{display:flex;align-items:center;gap:5px;cursor:pointer;}
+  .topbar-controls input[type=checkbox]{cursor:pointer;}
+  #clockReadout{color:#c7cbd1;font-size:12.5px;letter-spacing:.03em;}
+  #alarmCount{color:var(--c-alarm);font-weight:700;display:none;}
+  button.reset-all{
+    background:#26292d;color:#e6e8ea;border:1px solid #3a3e42;border-radius:5px;
+    padding:6px 12px;font-family:inherit;font-size:11px;cursor:pointer;
+  }
+  button.reset-all:hover{background:#2f3338;}
+
+  .grid{
+    flex:1;
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    grid-template-rows:repeat(4,1fr);
+    gap:10px;
+    padding:10px;
+    min-height:0;
+  }
+
+  .tile{
+    background:#000;
+    border:2px solid var(--panel-border);
+    border-radius:8px;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    position:relative;
+    overflow:hidden;
+    transition:border-color .2s;
+  }
+  @keyframes alarmPulse{
+    0%,100%{box-shadow:0 0 6px 2px rgba(255,91,91,.35);border-color:var(--c-alarm);}
+    50%{box-shadow:0 0 16px 6px rgba(255,91,91,.65);border-color:#ff8080;}
+  }
+  .tile.alarm{animation:alarmPulse 1.1s ease-in-out infinite;}
+
+  .tile-header{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 7px;
+    background:var(--panel);
+    border-bottom:1px solid var(--panel-border);
+    font-size:11px;
+  }
+  .tile.alarm .tile-header{background:#2a1414;}
+  .bed-label{font-weight:700;color:#c7cbd1;letter-spacing:.03em;min-width:44px;flex-shrink:0;}
+  .rhythm-picker{
+    position:relative;
+    flex:1;min-width:0;
+    display:flex;
+  }
+  .rhythm-select{
+    flex:1;min-width:0;background:#0c0e10;color:transparent;
+    border:1px solid #2c2f33;border-radius:4px;font-size:10.5px;
+    padding:3px 4px;font-family:inherit;
+    appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  }
+  /* Options are rendered by the browser as a native popup, not the closed
+     control, so they need their own (visible) colors to stay pickable. */
+  .rhythm-select option{color:#111417;background:#fff;}
+  .rhythm-mask{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:3px 6px;
+    font-size:10.5px;color:#7d838a;letter-spacing:.02em;
+    pointer-events:none;
+    border-radius:4px;
+  }
+  .rhythm-mask .mask-arrow{opacity:.65;font-size:9px;}
+  /* Instructor-only override: reveals the real selected labels again */
+  .grid.reveal-labels .rhythm-select{color:#dfe2e5;}
+  .grid.reveal-labels .rhythm-mask{display:none;}
+  .rate-input{
+    width:44px;background:#0c0e10;color:#dfe2e5;
+    border:1px solid #2c2f33;border-radius:4px;font-size:10.5px;
+    padding:3px 2px;text-align:center;font-family:inherit;flex-shrink:0;
+  }
+  .rate-input:disabled{opacity:.35;}
+  .hr-readout{
+    display:flex;align-items:baseline;gap:3px;color:var(--c-ecg);
+    min-width:40px;justify-content:flex-end;flex-shrink:0;
+  }
+  .tile.alarm .hr-readout{color:var(--c-alarm);}
+  .hr-value{font-size:16px;font-weight:700;}
+  .beat-dot{width:6px;height:6px;border-radius:50%;background:var(--c-ecg-dim);transition:background .05s;flex-shrink:0;}
+  .beat-dot.lit{background:var(--c-ecg);box-shadow:0 0 6px 2px rgba(57,255,106,.7);}
+  .tile.alarm .beat-dot{background:var(--c-alarm-dim);}
+  .tile.alarm .beat-dot.lit{background:var(--c-alarm);box-shadow:0 0 6px 2px rgba(255,91,91,.7);}
+
+  .vitals-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:3px 7px;
+    background:var(--panel);
+    border-bottom:1px solid var(--panel-border);
+    font-size:10px;
+    flex-wrap:wrap;
+    row-gap:2px;
+  }
+  .tile.alarm .vitals-row{background:#2a1414;}
+  .vital-group{display:flex;align-items:baseline;gap:3px;white-space:nowrap;}
+  .nibp-group{color:var(--c-ecg);}
+  .spo2-group{color:var(--c-spo2);}
+  .tile.alarm .nibp-group,.tile.alarm .spo2-group{color:var(--c-alarm);}
+  .vital-tag{font-size:8.5px;font-weight:700;letter-spacing:.05em;opacity:.7;}
+  .vital-input{
+    width:30px;background:#0c0e10;color:inherit;
+    border:1px solid #2c2f33;border-radius:3px;font-size:10px;
+    padding:1px 1px;text-align:center;font-family:inherit;
+  }
+  .vital-input::-webkit-outer-spin-button,
+  .vital-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .vital-input[type=number]{-moz-appearance:textfield;}
+  .vital-input:disabled{opacity:.4;}
+  .vital-sep{opacity:.55;}
+  .vital-map,.vital-unit{font-size:9.5px;opacity:.85;}
+
+  .tile-canvas-wrap{flex:1;position:relative;min-height:0;}
+  canvas.ecg-canvas{width:100%;height:100%;display:block;}
+
+  .alarm-badge{
+    position:absolute;top:6px;right:6px;
+    background:var(--c-alarm);color:#fff;font-weight:800;font-size:9.5px;letter-spacing:.08em;
+    padding:3px 7px;border-radius:4px;
+    display:none;align-items:center;justify-content:center;
+    animation:badgeBlink 1s steps(1,end) infinite;
+    pointer-events:none;
+  }
+  @keyframes badgeBlink{50%{opacity:.3;}}
+
+  .silence-btn{
+    position:absolute;bottom:6px;right:6px;
+    background:#1a1c1e;color:#e6e8ea;border:1px solid var(--c-alarm);border-radius:4px;
+    font-size:9.5px;padding:4px 8px;cursor:pointer;display:none;font-family:inherit;
+  }
+  .silence-btn:hover{background:#2a1414;}
+  .silence-btn.silenced{opacity:.5;cursor:default;border-color:#555;}
+
+  @media (max-width:900px){
+    .grid{grid-template-columns:1fr;grid-template-rows:none;overflow-y:auto;}
+    .tile{min-height:190px;}
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1>Telemetry Central</h1>
+    <div class="sub">Charleston Southern University PA Program</div>
+  </div>
+  <div class="topbar-controls">
+    <span id="clockReadout">--:--</span>
+    <span id="alarmCount"></span>
+    <label><input type="checkbox" id="soundToggle" checked> Alarm sound</label>
+    <label><input type="checkbox" id="revealToggle"> Reveal rhythm labels (instructor)</label>
+    <button class="reset-all" id="resetAllBtn" type="button">Reset All to NSR</button>
+  </div>
+</header>
+<div class="grid" id="grid"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ---------------------------------------------------------------
+     Math helpers — synthetic PQRST waveform built from Gaussian bumps
+     (same underlying rhythm engine as the bedside monitor/defibrillator
+     simulator this tool is adapted from)
+  --------------------------------------------------------------- */
+  function gauss(x, amp, width){ return amp * Math.exp(-(x*x)/(2*width*width)); }
+
+  function cyclicDelta(pos, center, cycleLen){
+    let d = pos - center;
+    d = d - cycleLen * Math.round(d/cycleLen);
+    return d;
+  }
+
+  function narrowQRS(dt){ return gauss(dt+16,-0.10,7) + gauss(dt,1.15,11) + gauss(dt-16,-0.22,9); }
+  function wideQRS(dt){ return gauss(dt+14,-0.12,18) + gauss(dt,0.95,32) + gauss(dt-22,0.35,26); }
+  function tNarrow(dt){ return gauss(dt-170,0.28,55); }
+  function tWide(dt){ return gauss(dt-230,-0.18,65); }
+  function pWaveShape(dt){ return gauss(dt,0.13,38); }
+
+  function qrsAndT(dt, wide){
+    return wide ? (wideQRS(dt)+tWide(dt)) : (narrowQRS(dt)+tNarrow(dt));
+  }
+
+  function sumEvents(posInCycle, events, cycleLen){
+    let v = 0;
+    for (let i=0;i<events.length;i++){
+      const e = events[i];
+      const d = cyclicDelta(posInCycle, e.c, cycleLen);
+      if (e.t==='p') v += pWaveShape(d);
+      else if (e.t==='qrs') v += qrsAndT(d, !!e.w);
+    }
+    return v;
+  }
+
+  function cycleSample(t, cycleLen, events){
+    const pos = ((t % cycleLen) + cycleLen) % cycleLen;
+    return sumEvents(pos, events, cycleLen);
+  }
+
+  function aflutterSample(t, ventRate){
+    const atrialPeriod=200;
+    const qrsPeriod=60000/ventRate;
+    const posA = ((t%atrialPeriod)+atrialPeriod)%atrialPeriod;
+    const phase = posA/atrialPeriod;
+    const flutter = 0.16*(1-4*Math.abs(((phase+0.25)%1)-0.5));
+    const qrsPos = ((t%qrsPeriod)+qrsPeriod)%qrsPeriod;
+    const dCenter = cyclicDelta(qrsPos,0,qrsPeriod);
+    return flutter + qrsAndT(dCenter,false);
+  }
+
+  function chbSample(t, escapeRate){
+    const pPeriod=650;
+    const qrsPeriod=60000/escapeRate;
+    const pPos=((t%pPeriod)+pPeriod)%pPeriod;
+    const pD=cyclicDelta(pPos,0,pPeriod);
+    const qPos=((t%qrsPeriod)+qrsPeriod)%qrsPeriod;
+    const qD=cyclicDelta(qPos,300,qrsPeriod);
+    return pWaveShape(pD) + qrsAndT(qD,true);
+  }
+
+  /* AFib and VFib need persistent scratch state. Each tile passes its own
+     state object so eight independent tracings never share randomness. */
+  function afibSample(state, t, meanRate){
+    if (!state.beats) state.beats = [0];
+    const arr = state.beats;
+    const meanRR = 60000/meanRate;
+    let last = arr[arr.length-1];
+    while (last < t + 3000){
+      const rr = meanRR + (Math.random()-0.5)*meanRR*0.9;
+      const clamped = Math.max(meanRR*0.55, Math.min(meanRR*1.7, rr));
+      last = last + clamped;
+      arr.push(last);
+    }
+    while (arr.length>6 && arr[1] < t-3000) arr.shift();
+
+    let nearest = arr[0], best=Infinity;
+    for (let i=0;i<arr.length;i++){
+      const d=Math.abs(arr[i]-t);
+      if (d<best){ best=d; nearest=arr[i]; }
+    }
+    const dt = t-nearest;
+    let v = qrsAndT(dt,false);
+    v += 0.05*Math.sin(t*0.045) + 0.035*Math.sin(t*0.071+1.1) + 0.03*Math.sin(t*0.098+2.3);
+    return v;
+  }
+
+  function wenckebachSample(t, atrialRate){
+    const ap = 60000/atrialRate;
+    return cycleSample(t, ap*4, [
+      {t:'p',c:0},        {t:'qrs',c:160},
+      {t:'p',c:ap},        {t:'qrs',c:ap+220},
+      {t:'p',c:ap*2},      {t:'qrs',c:ap*2+300},
+      {t:'p',c:ap*3}
+    ]);
+  }
+
+  function mobitz2Sample(t, atrialRate){
+    const ap = 60000/atrialRate;
+    return cycleSample(t, ap*4, [
+      {t:'p',c:0},        {t:'qrs',c:180,w:true},
+      {t:'p',c:ap},        {t:'qrs',c:ap+180,w:true},
+      {t:'p',c:ap*2},      {t:'qrs',c:ap*2+180,w:true},
+      {t:'p',c:ap*3}
+    ]);
+  }
+
+  function ectopicBeatSample(t, rate, hasP, wide, compensatory){
+    const RR = 60000/rate;
+    const pf = 0.62;
+    const preBeats = 5;
+    const ectopicCenter = preBeats*RR + pf*RR;
+    const postInterval = compensatory ? (2*RR - pf*RR) : RR;
+    const nextCenter = ectopicCenter + postInterval;
+    const cycleLen = nextCenter + RR;
+    const events = [];
+    for (let i=0;i<=preBeats;i++){
+      events.push({t:'p', c:i*RR - 160});
+      events.push({t:'qrs', c:i*RR});
+    }
+    if (hasP) events.push({t:'p', c:ectopicCenter - 90});
+    events.push({t:'qrs', c:ectopicCenter, w:wide});
+    events.push({t:'p', c:nextCenter - 160});
+    events.push({t:'qrs', c:nextCenter});
+    return cycleSample(t, cycleLen, events);
+  }
+  function pacSample(t, rate){ return ectopicBeatSample(t, rate, true, false, false); }
+  function pjcSample(t, rate){ return ectopicBeatSample(t, rate, false, false, false); }
+  function pvcSample(t, rate){ return ectopicBeatSample(t, rate, false, true, true); }
+
+  function vfibSample(state, t){
+    if (state.env===undefined){ state.env=0.3; state.phases=[0.7,1.3,2.1,3.3,4.7]; }
+    state.env += (Math.random()-0.5)*0.02;
+    if (state.env<0.15) state.env=0.15;
+    if (state.env>0.55) state.env=0.55;
+    const freqs=[0.031,0.047,0.065,0.083,0.11];
+    let v=0;
+    for (let i=0;i<freqs.length;i++){ v += Math.sin(t*freqs[i]+state.phases[i]); }
+    return v*state.env*0.22;
+  }
+
+  function asystoleSample(){
+    return (Math.random()-0.5)*0.02;
+  }
+
+  /* ---------------------------------------------------------------
+     Rhythm library — identical clinical set to the bedside monitor
+     simulator, minus defibrillator-specific fields this tool doesn't use
+  --------------------------------------------------------------- */
+  const RHYTHMS = {
+    nsr: { label:'Normal Sinus Rhythm', group:'Sinus Rhythms', pulse:true, alarm:false,
+      rateLabel:'Heart Rate', defaultRate:78, minRate:60, maxRate:100,
+      sample:(t,rate)=>cycleSample(t,60000/rate,[{t:'p',c:-160},{t:'qrs',c:0}]) },
+    sinusbrady: { label:'Sinus Bradycardia', group:'Sinus Rhythms', pulse:true, alarm:false,
+      rateLabel:'Heart Rate', defaultRate:45, minRate:20, maxRate:59,
+      sample:(t,rate)=>cycleSample(t,60000/rate,[{t:'p',c:-160},{t:'qrs',c:0}]) },
+    sinustach: { label:'Sinus Tachycardia', group:'Sinus Rhythms', pulse:true, alarm:false,
+      rateLabel:'Heart Rate', defaultRate:132, minRate:101, maxRate:180,
+      sample:(t,rate)=>cycleSample(t,60000/rate,[{t:'p',c:-140},{t:'qrs',c:0}]) },
+    afib: { label:'Atrial Fibrillation', group:'Atrial Arrhythmias', pulse:true, alarm:false,
+      rateLabel:'Ventricular Response Rate', defaultRate:110, minRate:50, maxRate:170,
+      sample:(t,rate,state)=>afibSample(state,t,rate) },
+    aflutter: { label:'Atrial Flutter', group:'Atrial Arrhythmias', pulse:true, alarm:false,
+      rateLabel:'Ventricular Response Rate', defaultRate:150, minRate:50, maxRate:180,
+      sample:(t,rate)=>aflutterSample(t,rate) },
+    svt: { label:'Supraventricular Tachycardia (SVT)', group:'Atrial Arrhythmias', pulse:true, alarm:false,
+      rateLabel:'Heart Rate', defaultRate:182, minRate:150, maxRate:250,
+      sample:(t,rate)=>cycleSample(t,60000/rate,[{t:'qrs',c:0}]) },
+    pac: { label:'Sinus Rhythm with PACs', group:'Atrial Arrhythmias', pulse:true, alarm:false,
+      rateLabel:'Underlying Sinus Rate', defaultRate:74, minRate:50, maxRate:110,
+      sample:(t,rate)=>pacSample(t,rate) },
+    avb1: { label:'First-Degree AV Block', group:'AV Conduction Blocks', pulse:true, alarm:false,
+      rateLabel:'Heart Rate', defaultRate:76, minRate:50, maxRate:100,
+      sample:(t,rate)=>cycleSample(t,60000/rate,[{t:'p',c:-280},{t:'qrs',c:0}]) },
+    wenckebach: { label:'2° AV Block, Type I (Wenckebach)', group:'AV Conduction Blocks', pulse:true, alarm:false,
+      rateLabel:'Atrial Rate', defaultRate:86, minRate:60, maxRate:130,
+      sample:(t,rate)=>wenckebachSample(t,rate) },
+    mobitz2: { label:'2° AV Block, Type II (Mobitz II)', group:'AV Conduction Blocks', pulse:true, alarm:false,
+      rateLabel:'Atrial Rate', defaultRate:75, minRate:60, maxRate:130,
+      sample:(t,rate)=>mobitz2Sample(t,rate) },
+    chb: { label:'Third-Degree (Complete) AV Block', group:'AV Conduction Blocks', pulse:true, alarm:false,
+      rateLabel:'Escape Rate', defaultRate:35, minRate:15, maxRate:50,
+      sample:(t,rate)=>chbSample(t,rate) },
+    pjc: { label:'Sinus Rhythm with PJCs', group:'Junctional Rhythms', pulse:true, alarm:false,
+      rateLabel:'Underlying Sinus Rate', defaultRate:74, minRate:50, maxRate:110,
+      sample:(t,rate)=>pjcSample(t,rate) },
+    vt: { label:'Ventricular Tachycardia (with pulse)', group:'Ventricular Arrhythmias', pulse:true, alarm:false,
+      rateLabel:'Heart Rate', defaultRate:168, minRate:100, maxRate:250,
+      sample:(t,rate)=>cycleSample(t,60000/rate,[{t:'qrs',c:0,w:true}]) },
+    pvc: { label:'Sinus Rhythm with PVCs', group:'Ventricular Arrhythmias', pulse:true, alarm:false,
+      rateLabel:'Underlying Sinus Rate', defaultRate:72, minRate:50, maxRate:110,
+      sample:(t,rate)=>pvcSample(t,rate) },
+    vtpulseless: { label:'Ventricular Tachycardia (pulseless)', group:'Ventricular Arrhythmias', pulse:false, alarm:true,
+      rateLabel:'Heart Rate', defaultRate:195, minRate:100, maxRate:250,
+      sample:(t,rate)=>cycleSample(t,60000/rate,[{t:'qrs',c:0,w:true}]) },
+    vfib: { label:'Ventricular Fibrillation', group:'Ventricular Arrhythmias', pulse:false, alarm:true,
+      rateLabel:null, defaultRate:null, minRate:null, maxRate:null,
+      sample:(t,rate,state)=>vfibSample(state,t) },
+    asystole: { label:'Asystole', group:'Pulseless / Lethal Rhythms', pulse:false, alarm:true,
+      rateLabel:null, defaultRate:null, minRate:null, maxRate:null,
+      sample:()=>asystoleSample() },
+    pea: { label:'Pulseless Electrical Activity (PEA)', group:'Pulseless / Lethal Rhythms', pulse:false, alarm:true,
+      rateLabel:'Heart Rate', defaultRate:42, minRate:20, maxRate:100,
+      sample:(t,rate)=>cycleSample(t,60000/rate,[{t:'p',c:-160},{t:'qrs',c:0}]) }
+  };
+
+  /* ---------------------------------------------------------------
+     Engine constants
+  --------------------------------------------------------------- */
+  const SAMPLE_RATE = 250;
+  const SAMPLE_INTERVAL = 1000/SAMPLE_RATE;
+  const DISPLAY_SECONDS = 6;
+  const N = SAMPLE_RATE*DISPLAY_SECONDS;
+  const GAP = 22;
+  const THRESHOLD = 0.5;
+  const REFRACTORY = 200;
+  const CHIME_REPEAT_MS = 1000;
+
+  let soundEnabled = true;
+
+  /* ---------------------------------------------------------------
+     Audio — a distinct alarm chime, separate from any per-beat sound.
+     A real telemetry room does not beep on every heartbeat for every
+     bed — only on a critical rhythm — so no QRS tone is used here.
+  --------------------------------------------------------------- */
+  let audioCtx = null;
+  function ensureAudio(){
+    if (!audioCtx){
+      try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; }
+    }
+    if (audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+  }
+  function playAlarmChime(){
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const freqs = [980, 780, 980];
+    freqs.forEach(function(f,i){
+      try{
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.value = f;
+        const t0 = now + i*0.16;
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(0.15, t0+0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0+0.13);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(t0);
+        osc.stop(t0+0.15);
+      }catch(e){ /* ignore audio errors */ }
+    });
+  }
+
+  /* ---------------------------------------------------------------
+     Rhythm <select> population (shared by all tiles)
+  --------------------------------------------------------------- */
+  function populateRhythmSelect(selectEl){
+    const groups = {};
+    const order = [];
+    Object.keys(RHYTHMS).forEach(id=>{
+      const r = RHYTHMS[id];
+      if (!groups[r.group]){ groups[r.group]=[]; order.push(r.group); }
+      groups[r.group].push(id);
+    });
+    order.forEach(g=>{
+      const og = document.createElement('optgroup');
+      og.label = g;
+      groups[g].forEach(id=>{
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = RHYTHMS[id].label;
+        og.appendChild(opt);
+      });
+      selectEl.appendChild(og);
+    });
+  }
+
+  /* ---------------------------------------------------------------
+     Tile (one independent patient tracing)
+  --------------------------------------------------------------- */
+  const grid = document.getElementById('grid');
+  const tiles = [];
+
+  function createTile(bedNumber, defaultId){
+    const tileEl = document.createElement('div');
+    tileEl.className = 'tile';
+    tileEl.innerHTML =
+      '<div class="tile-header">' +
+        '<span class="bed-label">Bed ' + bedNumber + '</span>' +
+        '<span class="rhythm-picker">' +
+          '<select class="rhythm-select" title="Select rhythm"></select>' +
+          '<span class="rhythm-mask">Rhythm <span class="mask-arrow">&#9662;</span></span>' +
+        '</span>' +
+        '<input type="number" class="rate-input" title="Intrinsic rate (bpm)">' +
+        '<span class="hr-readout"><span class="hr-value">--</span><span class="beat-dot"></span></span>' +
+      '</div>' +
+      '<div class="vitals-row">' +
+        '<span class="vital-group nibp-group" title="Noninvasive blood pressure">' +
+          '<span class="vital-tag">NIBP</span>' +
+          '<input type="number" class="nibp-sbp-input vital-input" title="Systolic (mmHg)" min="40" max="260">' +
+          '<span class="vital-sep">/</span>' +
+          '<input type="number" class="nibp-dbp-input vital-input" title="Diastolic (mmHg)" min="20" max="160">' +
+          '<span class="vital-map">(<span class="nibp-map-value">--</span>)</span>' +
+        '</span>' +
+        '<span class="vital-group spo2-group" title="Oxygen saturation">' +
+          '<span class="vital-tag">SpO2</span>' +
+          '<input type="number" class="spo2-input vital-input" title="SpO2 (%)" min="50" max="100">' +
+          '<span class="vital-unit">%</span>' +
+        '</span>' +
+      '</div>' +
+      '<div class="tile-canvas-wrap">' +
+        '<canvas class="ecg-canvas"></canvas>' +
+        '<div class="alarm-badge">ALARM</div>' +
+        '<button class="silence-btn" type="button">Silence</button>' +
+      '</div>';
+    grid.appendChild(tileEl);
+
+    const rhythmSelect = tileEl.querySelector('.rhythm-select');
+    populateRhythmSelect(rhythmSelect);
+    const rateInput = tileEl.querySelector('.rate-input');
+    const hrValueEl = tileEl.querySelector('.hr-value');
+    const beatDotEl = tileEl.querySelector('.beat-dot');
+    const canvas = tileEl.querySelector('.ecg-canvas');
+    const alarmBadge = tileEl.querySelector('.alarm-badge');
+    const silenceBtn = tileEl.querySelector('.silence-btn');
+    const nibpSbpInput = tileEl.querySelector('.nibp-sbp-input');
+    const nibpDbpInput = tileEl.querySelector('.nibp-dbp-input');
+    const nibpMapEl = tileEl.querySelector('.nibp-map-value');
+    const spo2Input = tileEl.querySelector('.spo2-input');
+
+    const tile = {
+      bedNumber: bedNumber,
+      tileEl: tileEl,
+      rhythmSelect: rhythmSelect,
+      rateInput: rateInput,
+      hrValueEl: hrValueEl,
+      beatDotEl: beatDotEl,
+      canvas: canvas,
+      alarmBadge: alarmBadge,
+      silenceBtn: silenceBtn,
+      nibpSbpInput: nibpSbpInput,
+      nibpDbpInput: nibpDbpInput,
+      nibpMapEl: nibpMapEl,
+      spo2Input: spo2Input,
+      nibpSBP: 118,
+      nibpDBP: 76,
+      spo2Value: 98,
+      buffer: new Array(N).fill(null),
+      writeIndex: 0,
+      acc: 0,
+      simTime: 0,
+      lastSampleVal: 0,
+      lastRTime: -10000,
+      rrHistory: [],
+      hrDisplay: null,
+      currentId: defaultId,
+      currentRate: RHYTHMS[defaultId].defaultRate || 78,
+      rhythmState: {},
+      isAlarming: false,
+      silenced: false,
+      chimeTimer: null
+    };
+
+    nibpSbpInput.value = tile.nibpSBP;
+    nibpDbpInput.value = tile.nibpDBP;
+    spo2Input.value = tile.spo2Value;
+
+    function stopChime(){
+      if (tile.chimeTimer){ clearInterval(tile.chimeTimer); tile.chimeTimer=null; }
+    }
+
+    function triggerAlarm(){
+      if (soundEnabled && !tile.silenced) playAlarmChime();
+      stopChime();
+      tile.chimeTimer = setInterval(function(){
+        if (soundEnabled && !tile.silenced && tile.isAlarming) playAlarmChime();
+      }, CHIME_REPEAT_MS);
+    }
+
+    function setAlarmVisual(isAlarm){
+      tile.isAlarming = isAlarm;
+      tileEl.classList.toggle('alarm', isAlarm);
+      alarmBadge.style.display = isAlarm ? 'flex' : 'none';
+      silenceBtn.style.display = (isAlarm && !tile.silenced) ? 'block' : 'none';
+    }
+
+    /* NIBP/SpO2 are set independently per bed via their own inputs. A real
+       cuff or pulse-ox can't produce a reading without a perfusing pulse, so
+       whenever the selected rhythm has no pulse, the readouts blank to "--"
+       (matching the bedside monitor) while the instructor's set values are
+       preserved underneath and reappear the moment pulse returns. */
+    function updateVitals(){
+      const pulseOk = RHYTHMS[tile.currentId].pulse;
+      if (pulseOk){
+        if (nibpSbpInput.disabled){
+          nibpSbpInput.disabled = false;
+          nibpDbpInput.disabled = false;
+          spo2Input.disabled = false;
+          nibpSbpInput.value = tile.nibpSBP;
+          nibpDbpInput.value = tile.nibpDBP;
+          spo2Input.value = tile.spo2Value;
+        }
+        nibpMapEl.textContent = String(Math.round(tile.nibpDBP + (tile.nibpSBP-tile.nibpDBP)/3));
+      } else {
+        if (!nibpSbpInput.disabled){
+          nibpSbpInput.disabled = true;
+          nibpDbpInput.disabled = true;
+          spo2Input.disabled = true;
+          nibpSbpInput.value = '';
+          nibpDbpInput.value = '';
+          spo2Input.value = '';
+        }
+        nibpMapEl.textContent = '--';
+      }
+    }
+
+    function applyRhythm(id){
+      tile.currentId = id;
+      tile.rhythmState = {};
+      tile.rrHistory = [];
+      tile.lastRTime = -10000;
+      tile.buffer.fill(null);
+      tile.writeIndex = 0;
+      tile.silenced = false;
+      stopChime();
+      silenceBtn.classList.remove('silenced');
+      silenceBtn.textContent = 'Silence';
+
+      const r = RHYTHMS[id];
+      if (r.rateLabel){
+        tile.currentRate = r.defaultRate;
+        rateInput.min = r.minRate;
+        rateInput.max = r.maxRate;
+        rateInput.value = r.defaultRate;
+        rateInput.disabled = false;
+      } else {
+        rateInput.value = '';
+        rateInput.disabled = true;
+      }
+
+      const isAlarm = !!r.alarm;
+      setAlarmVisual(isAlarm);
+      if (isAlarm) triggerAlarm();
+      updateVitals();
+    }
+
+    rhythmSelect.addEventListener('change', function(){
+      ensureAudio();
+      applyRhythm(rhythmSelect.value);
+    });
+    rateInput.addEventListener('input', function(){
+      const r = RHYTHMS[tile.currentId];
+      if (!r.rateLabel) return;
+      const v = parseInt(rateInput.value,10);
+      if (!isNaN(v)) tile.currentRate = v;
+    });
+    nibpSbpInput.addEventListener('input', function(){
+      const v = parseInt(nibpSbpInput.value,10);
+      if (!isNaN(v)) tile.nibpSBP = v;
+    });
+    nibpDbpInput.addEventListener('input', function(){
+      const v = parseInt(nibpDbpInput.value,10);
+      if (!isNaN(v)) tile.nibpDBP = v;
+    });
+    spo2Input.addEventListener('input', function(){
+      const v = parseInt(spo2Input.value,10);
+      if (!isNaN(v)) tile.spo2Value = v;
+    });
+    silenceBtn.addEventListener('click', function(){
+      tile.silenced = true;
+      stopChime();
+      silenceBtn.classList.add('silenced');
+      silenceBtn.textContent = 'Silenced';
+    });
+
+    rhythmSelect.value = defaultId;
+    applyRhythm(defaultId);
+
+    tile.reset = function(){ rhythmSelect.value='nsr'; applyRhythm('nsr'); };
+
+    tiles.push(tile);
+    return tile;
+  }
+
+  function currentPulseOk(tile){
+    return RHYTHMS[tile.currentId].pulse;
+  }
+
+  function stepTile(tile){
+    tile.simTime += SAMPLE_INTERVAL;
+    const r = RHYTHMS[tile.currentId];
+    const v = r.sample(tile.simTime, tile.currentRate, tile.rhythmState);
+
+    const suppressBeat = (tile.currentId==='vfib' || tile.currentId==='asystole');
+    if (!suppressBeat){
+      if (tile.lastSampleVal < THRESHOLD && v >= THRESHOLD && (tile.simTime-tile.lastRTime) > REFRACTORY){
+        if (tile.lastRTime > -9999){
+          const rr = tile.simTime - tile.lastRTime;
+          tile.rrHistory.push(rr);
+          if (tile.rrHistory.length>8) tile.rrHistory.shift();
+        }
+        tile.lastRTime = tile.simTime;
+        tile.beatDotEl.classList.add('lit');
+        setTimeout(function(){ tile.beatDotEl.classList.remove('lit'); },90);
+      }
+    }
+    tile.lastSampleVal = v;
+
+    tile.buffer[tile.writeIndex] = v;
+    tile.buffer[(tile.writeIndex+GAP)%N] = null;
+    tile.writeIndex = (tile.writeIndex+1)%N;
+  }
+
+  function updateHR(tile){
+    if (tile.currentId==='vfib' || tile.currentId==='asystole'){
+      tile.hrDisplay = null;
+    } else if (tile.rrHistory.length===0){
+      tile.hrDisplay = null;
+    } else {
+      const avg = tile.rrHistory.reduce(function(a,b){return a+b;},0)/tile.rrHistory.length;
+      tile.hrDisplay = Math.round(60000/avg);
+    }
+  }
+
+  function drawTile(tile){
+    const canvas = tile.canvas;
+    const dpr = window.devicePixelRatio||1;
+    const cssW = canvas.clientWidth || 300;
+    const cssH = canvas.clientHeight || 120;
+    const wantW = Math.round(cssW*dpr), wantH = Math.round(cssH*dpr);
+    if (canvas.width!==wantW || canvas.height!==wantH){
+      canvas.width = wantW;
+      canvas.height = wantH;
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,cssW,cssH);
+
+    const color = tile.isAlarming ? '#ff5b5b' : '#39ff6a';
+    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 2.5;
+    ctx.beginPath();
+    let started = false;
+    const buf = tile.buffer;
+    for (let i=0;i<N;i++){
+      const v = buf[i];
+      if (v===null || v===undefined){ started=false; continue; }
+      const x = (i/(N-1))*cssW;
+      const y = cssH/2 - v*(cssH*0.34);
+      if (!started){ ctx.moveTo(x,y); started=true; } else { ctx.lineTo(x,y); }
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  /* ---------------------------------------------------------------
+     Build 8 tiles (4 rows x 2 columns), seeded with a representative
+     mix of rhythms so the board isn't blank/monotonous on load — none
+     start in an alarm state, so nothing chimes the moment the page opens
+  --------------------------------------------------------------- */
+  const DEFAULTS = ['nsr','sinustach','sinusbrady','afib','aflutter','wenckebach','pvc','svt'];
+  DEFAULTS.forEach(function(id, i){ createTile(i+1, id); });
+
+  /* ---------------------------------------------------------------
+     Top bar controls
+  --------------------------------------------------------------- */
+  const soundToggle = document.getElementById('soundToggle');
+  const revealToggle = document.getElementById('revealToggle');
+  const resetAllBtn = document.getElementById('resetAllBtn');
+  const clockReadoutEl = document.getElementById('clockReadout');
+  const alarmCountEl = document.getElementById('alarmCount');
+
+  soundToggle.addEventListener('change', function(){
+    soundEnabled = soundToggle.checked;
+    if (soundEnabled) ensureAudio();
+  });
+  /* Instructor-only escape hatch: the rhythm name is masked on every tile
+     by default (see .rhythm-mask in CSS) so students can't read the answer
+     off the dropdown. Checking this reveals the true selected labels again
+     — useful for the instructor to confirm bed assignments at a glance. */
+  revealToggle.addEventListener('change', function(){
+    grid.classList.toggle('reveal-labels', revealToggle.checked);
+  });
+  resetAllBtn.addEventListener('click', function(){
+    ensureAudio();
+    tiles.forEach(function(t){ t.reset(); });
+  });
+
+  function updateClock(){
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    clockReadoutEl.textContent = hh+':'+mm;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ---------------------------------------------------------------
+     Main loop — one shared clock steps every tile's own sample buffer
+  --------------------------------------------------------------- */
+  let lastFrameTime = null;
+  function loop(ts){
+    if (lastFrameTime===null) lastFrameTime = ts;
+    let delta = ts - lastFrameTime;
+    lastFrameTime = ts;
+    if (delta>200) delta = 200;
+
+    let alarmCount = 0;
+    tiles.forEach(function(tile){
+      tile.acc += delta;
+      while (tile.acc >= SAMPLE_INTERVAL){
+        stepTile(tile);
+        tile.acc -= SAMPLE_INTERVAL;
+      }
+      updateHR(tile);
+      drawTile(tile);
+      tile.hrValueEl.textContent = (tile.hrDisplay===null) ? '--' : String(tile.hrDisplay);
+      if (tile.isAlarming) alarmCount++;
+    });
+
+    if (alarmCount>0){
+      alarmCountEl.style.display = 'inline';
+      alarmCountEl.textContent = alarmCount + (alarmCount===1 ? ' bed in alarm' : ' beds in alarm');
+    } else {
+      alarmCountEl.style.display = 'none';
+    }
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>
