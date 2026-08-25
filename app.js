@@ -50,6 +50,29 @@
   }
   function nl2br(s){ return escapeHtml(s).replace(/\n/g,'<br>'); }
 
+  /* ---------------------------------------------------------------
+     Reference Range & Default Value Resolution (Sex-Specific Support)
+     
+     Some analytes have sex-specific reference ranges (e.g., hemoglobin,
+     RBC, creatinine). resolveRange(comp, sex) returns the appropriate
+     [low, high] bounds; resolveDef(comp, sex) returns the default value.
+     Both fall back to comp.range or comp.def if sex-specific variants
+     are not defined, ensuring backward compatibility with existing data.
+  --------------------------------------------------------------- */
+  function resolveRange(comp, sex){
+    if (!sex || (sex!=='M' && sex!=='F')) return comp.range;
+    if (sex==='M' && comp.mRange) return comp.mRange;
+    if (sex==='F' && comp.fRange) return comp.fRange;
+    return comp.range;
+  }
+
+  function resolveDef(comp, sex){
+    if (!sex || (sex!=='M' && sex!=='F')) return comp.def;
+    if (sex==='M' && comp.mDef!==undefined) return comp.mDef;
+    if (sex==='F' && comp.fDef!==undefined) return comp.fDef;
+    return comp.def;
+  }
+
   /* Simple localStorage wrapper with graceful fallback */
   const STORAGE_KEY = 'pa_training_emr_v1';
   function loadStoredState(){
@@ -228,15 +251,16 @@
      actually expects to read (e.g. 2 -> '1+'). comp.rangeLabel similarly lets
      a component show a human reference like 'Negative' instead of the raw
      numeric bounds — both are optional and every existing numeric component
-     is unaffected. */
-  function buildLabLine(comp, val){
+     is unaffected. Sex-specific ranges are resolved via resolveRange(comp, sex). */
+  function buildLabLine(comp, val, sex){
+    const range = resolveRange(comp, sex);
     let flag = '';
     if (comp.critHigh!==undefined && val>=comp.critHigh) flag='C';
     else if (comp.critLow!==undefined && val<=comp.critLow) flag='C';
-    else if (val>comp.range[1]) flag='H';
-    else if (val<comp.range[0]) flag='L';
+    else if (val>range[1]) flag='H';
+    else if (val<range[0]) flag='L';
     const displayValue = (comp.labels && comp.labels[val]!==undefined) ? comp.labels[val] : val.toFixed(comp.dec);
-    const displayRange = comp.rangeLabel || comp.range.join('\u2013');
+    const displayRange = comp.rangeLabel || range.join('\u2013');
     return { compId: comp.id, raw: val, value: displayValue, flag: flag,
              unit: comp.unit, label: comp.label, range: displayRange };
   }
@@ -246,8 +270,8 @@
     const stageVal = (stage && stage.profile) ? stage.profile[comp.id] : undefined;
     const profile = patient.labProfile || {};
     const baseVal = profile[comp.id];
-    const val = (stageVal!==undefined) ? stageVal : ((baseVal!==undefined) ? baseVal : comp.def);
-    return buildLabLine(comp, val);
+    const val = (stageVal!==undefined) ? stageVal : ((baseVal!==undefined) ? baseVal : resolveDef(comp, patient.sex));
+    return buildLabLine(comp, val, patient.sex);
   }
 
   /* ---------------------------------------------------------------
@@ -274,8 +298,8 @@
       const entered = vals[comp.id];
       const val = (entered!==undefined && entered!==null && entered!=='')
         ? parseFloat(entered)
-        : ((profile[comp.id]!==undefined) ? profile[comp.id] : comp.def);
-      return buildLabLine(comp, isNaN(val) ? comp.def : val);
+        : ((profile[comp.id]!==undefined) ? profile[comp.id] : resolveDef(comp, patient.sex));
+      return buildLabLine(comp, isNaN(val) ? resolveDef(comp, patient.sex) : val, patient.sex);
     });
     return { kind:'numeric', lines: lines, text: null };
   }
@@ -394,10 +418,11 @@
     const lines = CSF_COMPONENTS.map(function(comp){
       const profile = patient.labProfile || {};
       const raw = profile[comp.id];
-      const val = (raw!==undefined) ? raw : comp.def;
+      const val = (raw!==undefined) ? raw : resolveDef(comp, patient.sex);
+      const range = resolveRange(comp, patient.sex);
       let flag='';
-      if (val>comp.range[1]) flag='H'; else if (comp.range[1]>0 && val<comp.range[0]) flag='L';
-      return { value: val.toFixed(comp.dec), flag: flag, unit: comp.unit, label: comp.label, range: comp.range.join('–') };
+      if (val>range[1]) flag='H'; else if (range[1]>0 && val<range[0]) flag='L';
+      return { value: val.toFixed(comp.dec), flag: flag, unit: comp.unit, label: comp.label, range: range.join('–') };
     });
     return { lines: lines, gram: overrideGram };
   }
@@ -3681,15 +3706,17 @@
       .map(function(id){ return { id:id, label: LAB_PANELS[id].label }; });
   }
 
-  function renderLabOverrideFormHtml(stage){
+  function renderLabOverrideFormHtml(stage, patient){
     const groups = getUniqueLabComponentsGrouped();
     let html = groups.map(function(g){
       return '<details class="order-group" open><summary>'+escapeHtml(g.category)+'</summary>'+
         '<div class="labov-grid">'+
         g.items.map(function(comp){
           const val = (stage.profile && stage.profile[comp.id]!==undefined) ? stage.profile[comp.id] : '';
-          return '<div class="labov-field"><label>'+escapeHtml(comp.label)+' <span class="labov-unit">('+escapeHtml(comp.unit||'unitless')+', ref '+comp.range.join('\u2013')+')</span></label>'+
-            '<input type="text" data-comp="'+comp.id+'" value="'+escapeHtml(String(val))+'" placeholder="default '+comp.def+'"></div>';
+          const range = resolveRange(comp, patient && patient.sex);
+          const def = resolveDef(comp, patient && patient.sex);
+          return '<div class="labov-field"><label>'+escapeHtml(comp.label)+' <span class="labov-unit">('+escapeHtml(comp.unit||'unitless')+', ref '+range.join('\u2013')+')</span></label>'+
+            '<input type="text" data-comp="'+comp.id+'" value="'+escapeHtml(String(val))+'" placeholder="default '+def+'"></div>';
         }).join('')+
         '</div></details>';
     }).join('');
@@ -3734,7 +3761,7 @@
       '</div>'+
       '<div class="card"><h3>Intended Values \u2014 '+escapeHtml(editingStage.label)+'</h3>'+
         '<p style="font-size:12px;color:var(--ink-dim);margin-top:0;">Leave a field blank to fall back to this patient\u2019s baseline/default value. Values here apply the next time a student orders that test while this stage is active \u2014 orders already placed and resulted are untouched.</p>'+
-        '<div class="order-groups">'+renderLabOverrideFormHtml(editingStage)+'</div>'+
+        '<div class="order-groups">'+renderLabOverrideFormHtml(editingStage, p)+'</div>'+
         '<div class="order-submit-row"><button class="btn-primary" id="saveStageValuesBtn" type="button">Save Changes to This Stage</button></div>'+
       '</div>';
 
