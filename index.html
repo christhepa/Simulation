@@ -1,232 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulation Hub</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
-            background: linear-gradient(135deg, #003366 0%, #1a4a7a 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 30px 20px;
-        }
-
-        .container {
-            max-width: 1300px;
-            width: 100%;
-        }
-
-        .buttons-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 35px;
-        }
-
-        .button-card {
-            background: white;
-            border-radius: 16px;
-            padding: 40px 30px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 380px;
-            border: 2px solid transparent;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .button-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            transform: scaleX(0);
-            transform-origin: center;
-            transition: transform 0.3s ease;
-        }
-
-        .button-card:hover {
-            transform: translateY(-12px);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.35);
-            border-color: #e0e0e0;
-        }
-
-        .button-card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .button-card a {
-            text-decoration: none;
-            color: inherit;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icon {
-            width: 130px;
-            height: 130px;
-            margin-bottom: 25px;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
-        }
-
-        .button-card h2 {
-            font-size: 1.85em;
-            color: #333;
-            margin-bottom: 12px;
-            font-weight: 700;
-        }
-
-        .card-monitor:hover h2 {
-            color: #00bcd4;
-        }
-
-        .card-telemetry:hover h2 {
-            color: #ff9800;
-        }
-
-        .card-emr:hover h2 {
-            color: #9c27b0;
-        }
-
-        @media (max-width: 768px) {
-            .buttons-grid {
-                gap: 20px;
-            }
-
-            .button-card {
-                min-height: 300px;
-                padding: 25px;
-            }
-
-            .icon {
-                width: 100px;
-                height: 100px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PA Program Training EMR — Chart Simulation</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <div class="buttons-grid">
-            <!-- Bedside Monitor -->
-            <div class="button-card card-monitor">
-                <a href="Monitor-Sim.html">
-                    <svg class="icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="monitorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" style="stop-color:#e0f7fa;stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:#b3e5fc;stop-opacity:1" />
-                            </linearGradient>
-                        </defs>
-                        <rect x="20" y="25" width="160" height="115" rx="12" fill="url(#monitorGrad)" stroke="#00bcd4" stroke-width="3"/>
-                        <rect x="30" y="35" width="140" height="95" fill="white" stroke="#00bcd4" stroke-width="2" rx="8"/>
-                        <polyline points="40,85 48,85 52,70 58,95 65,80 72,75 80,90 88,70 96,95 104,75 112,85 120,70 128,90 136,80 145,85 155,80"
-                                  fill="none" stroke="#e91e63" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M 70 150 L 130 150 L 125 160 L 75 160 Z" fill="#00bcd4" stroke="#00bcd4" stroke-width="2"/>
-                        <rect x="85" y="160" width="30" height="10" fill="#00bcd4" rx="2"/>
-                        <circle cx="45" cy="50" r="4" fill="#4caf50"/>
-                        <circle cx="155" cy="50" r="4" fill="#4caf50"/>
-                    </svg>
-                    <h2>Bedside Monitor</h2>
-                </a>
-            </div>
 
-            <!-- Telemetry -->
-            <div class="button-card card-telemetry">
-                <a href="Telemetry-Sim.html">
-                    <svg class="icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="telemetryGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" style="stop-color:#fff3e0;stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:#ffe0b2;stop-opacity:1" />
-                            </linearGradient>
-                        </defs>
-                        <rect x="30" y="30" width="140" height="130" rx="12" fill="url(#telemetryGrad)" stroke="#ff9800" stroke-width="3"/>
-                        <rect x="40" y="40" width="120" height="85" fill="white" stroke="#ff9800" stroke-width="2" rx="8"/>
-                        <g stroke="#ffcccc" stroke-width="0.4" opacity="0.4">
-                            <line x1="50" y1="50" x2="50" y2="120"/>
-                            <line x1="60" y1="50" x2="60" y2="120"/>
-                            <line x1="70" y1="50" x2="70" y2="120"/>
-                            <line x1="80" y1="50" x2="80" y2="120"/>
-                            <line x1="90" y1="50" x2="90" y2="120"/>
-                            <line x1="100" y1="50" x2="100" y2="120"/>
-                            <line x1="110" y1="50" x2="110" y2="120"/>
-                            <line x1="120" y1="50" x2="120" y2="120"/>
-                            <line x1="130" y1="50" x2="130" y2="120"/>
-                            <line x1="140" y1="60" x2="140" y2="120"/>
-                            <line x1="50" y1="70" x2="140" y2="70"/>
-                            <line x1="50" y1="80" x2="140" y2="80"/>
-                            <line x1="50" y1="90" x2="140" y2="90"/>
-                            <line x1="50" y1="100" x2="140" y2="100"/>
-                            <line x1="50" y1="110" x2="140" y2="110"/>
-                        </g>
-                        <polyline points="50,95 58,95 62,75 68,110 74,85 82,95 90,75 100,105 108,88 115,95 122,80 130,110"
-                                  fill="none" stroke="#f57c00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <rect x="45" y="135" width="110" height="12" fill="#fff9c4" rx="2" stroke="#fbc02d" stroke-width="1"/>
-                        <text x="100" y="144" font-size="9" fill="#f57c00" text-anchor="middle" font-weight="bold" font-family="monospace">HR: 72  RR: 16  O₂: 98%</text>
-                        <circle cx="50" cy="160" r="4" fill="#4caf50"/>
-                        <text x="58" y="163" font-size="10" fill="#666">Recording</text>
-                    </svg>
-                    <h2>Telemetry</h2>
-                </a>
-            </div>
+<header class="topbar">
+  <div class="brand">
+    <div class="name">PA Program Training EMR</div>
+    <div class="sub">Charleston Southern University PA Program — Chart Simulation Environment</div>
+  </div>
+  <div class="topbar-right">
+    <span id="clockReadout">--:--</span>
+    <button class="topbtn ghost" id="aboutBtn" type="button">About this tool</button>
+    <button class="topbtn danger" id="resetAllBtn" type="button">Reset course data</button>
+  </div>
+</header>
 
-            <!-- EMR -->
-            <div class="button-card card-emr">
-                <a href="EMR-Sim.html">
-                    <svg class="icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="emrGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" style="stop-color:#f3e5f5;stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:#ede7f6;stop-opacity:1" />
-                            </linearGradient>
-                        </defs>
-                        <rect x="35" y="25" width="130" height="160" rx="8" fill="url(#emrGrad)" stroke="#9c27b0" stroke-width="3"/>
-                        <rect x="42" y="32" width="116" height="15" fill="#9c27b0" opacity="0.15" rx="4"/>
-                        <text x="100" y="43" font-size="10" fill="#7b1fa2" text-anchor="middle" font-weight="bold">PATIENT RECORD</text>
-                        <g stroke="#9c27b0" stroke-width="1.5" opacity="0.4">
-                            <line x1="50" y1="58" x2="150" y2="58"/>
-                            <line x1="50" y1="68" x2="140" y2="68"/>
-                            <line x1="50" y1="78" x2="145" y2="78"/>
-                            <line x1="50" y1="88" x2="135" y2="88"/>
-                            <line x1="50" y1="98" x2="150" y2="98"/>
-                            <line x1="50" y1="108" x2="142" y2="108"/>
-                            <line x1="50" y1="118" x2="148" y2="118"/>
-                        </g>
-                        <g fill="#e91e63" opacity="0.9">
-                            <rect x="88" y="135" width="24" height="6" rx="2"/>
-                            <rect x="94" y="129" width="12" height="18" rx="2"/>
-                        </g>
-                        <circle cx="155" cy="155" r="10" fill="#4caf50"/>
-                        <text x="155" y="160" font-size="12" fill="white" text-anchor="middle" font-weight="bold">✓</text>
-                    </svg>
-                    <h2>EMR</h2>
-                </a>
-            </div>
-        </div>
+<main>
+
+  <section class="view active" id="viewList">
+    <div class="disclaimer">
+      <b>Training environment only.</b> All patients, encounters, and data on this screen are fictional and were created for PA education. This simulator's layout and navigation are designed to resemble common commercial EMR conventions (including Epic-style chart navigation) so students build transferable workflow familiarity. It is an independent educational tool, not affiliated with, endorsed by, or a certified replica of Epic Systems Corporation or any other EMR vendor. Nothing entered here is a real health record; do not enter real patient information. All data is stored only in this browser (locally) — nothing is transmitted anywhere.
     </div>
+    <div class="list-toolbar">
+      <h2>Patient List <span class="count" id="patientCount"></span></h2>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="searchInput" placeholder="Search by name, room, or diagnosis…">
+        <button class="btn-primary" id="addPatientBtn" type="button">+ Add Patient</button>
+      </div>
+    </div>
+    <table class="ptable">
+      <thead>
+        <tr>
+          <th>Room</th><th>Patient</th><th>Age / Sex</th><th>Chief Complaint / Working Dx</th>
+          <th>Attending / Team</th><th>Code Status</th><th>Allergies</th><th>New Labs</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="patientTableBody"></tbody>
+    </table>
+  </section>
+
+  <section class="view" id="viewChart">
+    <div class="chart-shell">
+      <aside class="storyboard" id="storyboard">
+        <div class="sb-allergy-band" id="sbAllergyBand"></div>
+        <div class="sb-patient">
+          <div class="sb-name" id="bannerName">—</div>
+          <div class="sb-meta" id="bannerMeta">—</div>
+        </div>
+        <div class="sb-section-label">Storyboard</div>
+        <div class="sb-chips" id="bannerChips"></div>
+        <div class="sb-section-label">Problem List</div>
+        <ul class="sb-problem-list" id="sbProblemList"></ul>
+        <div class="sb-actions">
+          <button class="backbtn" id="editPatientBtn" type="button">Edit demographics</button>
+          <button class="backbtn" id="perPatientResetBtn" type="button">Reset chart</button>
+          <button class="backbtn danger-btn" id="deletePatientBtn" type="button">Delete patient</button>
+          <button class="backbtn" id="backToListBtn" type="button">← Patient list</button>
+        </div>
+      </aside>
+      <div class="chart-main">
+        <div class="tab-strip">
+          <button class="tab-btn active" data-tab="overview">Summary</button>
+          <button class="tab-btn" data-tab="notes">Notes</button>
+          <button class="tab-btn" data-tab="orders">Orders &amp; Results</button>
+          <button class="tab-btn" data-tab="medications">Medications</button>
+          <button class="tab-btn" data-tab="vitals">Vitals</button>
+          <button class="tab-btn" data-tab="io">I&amp;O</button>
+          <button class="tab-btn facilitator-tab" data-tab="facilitator">Facilitator Panel</button>
+        </div>
+        <div class="tab-panels">
+          <div class="tab-panel active" id="panelOverview"></div>
+          <div class="tab-panel" id="panelNotes"></div>
+          <div class="tab-panel" id="panelOrders"></div>
+          <div class="tab-panel" id="panelMedications"></div>
+          <div class="tab-panel" id="panelVitals"></div>
+          <div class="tab-panel" id="panelIO"></div>
+          <div class="tab-panel" id="panelFacilitator"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Edit Patient Demographics modal -->
+<div class="modal-overlay" id="editDemoModal">
+  <div class="modal-box" style="max-width:580px;">
+    <div class="modal-head">
+      <h3>Edit Patient Demographics</h3>
+      <button class="modal-close" id="editDemoClose" type="button">&times;</button>
+    </div>
+    <div class="modal-body" id="editDemoBody" style="max-height:70vh;overflow-y:auto;"></div>
+    <div class="modal-foot" id="editDemoFoot"></div>
+  </div>
+</div>
+
+
+<!-- Note editor / viewer modal -->
+<div class="modal-overlay" id="noteModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="noteModalTitle">Note</h3>
+      <button class="modal-close" id="noteModalClose" type="button">&times;</button>
+    </div>
+    <div class="modal-body" id="noteModalBody"></div>
+    <div class="modal-foot" id="noteModalFoot"></div>
+  </div>
+</div>
+
+<!-- Add Custom Patient modal -->
+<div class="modal-overlay" id="patientModal">
+  <div class="modal-box" style="max-width:760px;">
+    <div class="modal-head">
+      <h3>Add Custom Patient</h3>
+      <button class="modal-close" id="patientModalClose" type="button">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="subtab-strip">
+        <button class="subtab-btn active" data-psub="build" type="button">Quick Builder</button>
+        <button class="subtab-btn" data-psub="import" type="button">Import JSON</button>
+      </div>
+      <div class="subtab-panel active" id="psubBuild"></div>
+      <div class="subtab-panel" id="psubImport"></div>
+    </div>
+  </div>
+</div>
+
+<!-- About modal -->
+<div class="modal-overlay" id="aboutModal">
+  <div class="modal-box" style="max-width:560px;">
+    <div class="modal-head">
+      <h3>About this tool</h3>
+      <button class="modal-close" id="aboutModalClose" type="button">&times;</button>
+    </div>
+    <div class="modal-body about-body">
+      <p>This is a self-contained <b>training EMR simulator</b> built for PA program small-group and case-based instruction. Its purpose is to give students hands-on practice with the everyday mechanics of electronic charting — reviewing a patient list, opening a chart, placing orders, reviewing results, and writing standard note types. The interface layout and navigation (storyboard sidebar, activity tabs, chart flow) are modeled on conventions common to commercial EMRs, including Epic, to build workflow familiarity that transfers to clinical rotations. This tool is independently built for educational use and is not affiliated with, endorsed by, or a certified replica of Epic Systems Corporation or any other EMR vendor.</p>
+      <p>Included in this simulation:</p>
+      <ul>
+        <li>A panel of fictional patients, each with a self-contained case (history, baseline vitals, and a pre-written admission History &amp; Physical to review)</li>
+        <li>Order entry for common labs, imaging studies, bedside/invasive procedures, and medications — including a free-text custom medication order and a basic teaching-oriented allergy-alert check — with a simulated pending → resulted/active lifecycle</li>
+        <li>Documentation tools for Progress Notes, History &amp; Physical notes, Consultations, and Discharge Summaries</li>
+        <li>An "+ Add Patient" tool for instructors or students to author additional cases, either through a guided form or by importing a JSON case file</li>
+        <li>A per-patient "Facilitator Panel" for pre-authoring the intended lab results of a progressively unfolding case across multiple stages, and revealing each stage on cue</li>
+      </ul>
+      <p>All data is stored only in this browser's local storage. Nothing is sent to a server, and nothing here should ever be substituted for a real medical record system or used with real patient information. Use <b>Reset course data</b> (top right) to wipe all student-entered notes and orders and restore every chart to its original seeded state.</p>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
