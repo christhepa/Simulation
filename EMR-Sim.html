@@ -36,8 +36,7 @@
 
 <div id="emrGate">
   <div class="gate-box">
-    <h2>EMR Simulator — Restricted</h2>
-    <p class="gate-sub">This training environment is password protected for class use. Enter the password provided by your instructor.</p>
+    <h2>Enter your password</h2>
     <input type="password" id="emrGatePassword" placeholder="Password" autocomplete="off">
     <button type="button" id="emrGateSubmit">Enter</button>
     <p class="gate-error" id="emrGateError">Incorrect password. Try again.</p>
@@ -48,8 +47,7 @@
 
 <header class="topbar">
   <div class="brand">
-    <div class="name">PA Program Training EMR</div>
-    <div class="sub">Charleston Southern University PA Program — Chart Simulation Environment</div>
+    <div class="name">Training EMR</div>
   </div>
   <div class="topbar-right">
     <span id="clockReadout">--:--</span>
@@ -61,14 +59,11 @@
 <main>
 
   <section class="view active" id="viewList">
-    <div class="disclaimer">
-      <b>Training environment only.</b> All patients, encounters, and data on this screen are fictional and were created for PA education. This simulator's layout and navigation are designed to resemble common commercial EMR conventions (including Epic-style chart navigation) so students build transferable workflow familiarity. It is an independent educational tool, not affiliated with, endorsed by, or a certified replica of Epic Systems Corporation or any other EMR vendor. Nothing entered here is a real health record; do not enter real patient information. All data is stored only in this browser (locally) — nothing is transmitted anywhere.
-    </div>
     <div class="list-toolbar">
       <h2>Patient List <span class="count" id="patientCount"></span></h2>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="text" id="searchInput" placeholder="Search by name, room, or diagnosis…">
-        <button class="btn-primary" id="addPatientBtn" type="button">+ Add Patient</button>
+        <button class="btn-primary" id="addPatientBtn" type="button">Add Patient</button>
       </div>
     </div>
     <table class="ptable">
@@ -177,13 +172,13 @@
       <button class="modal-close" id="aboutModalClose" type="button">&times;</button>
     </div>
     <div class="modal-body about-body">
-      <p>This is a self-contained <b>training EMR simulator</b> built for PA program small-group and case-based instruction. Its purpose is to give students hands-on practice with the everyday mechanics of electronic charting — reviewing a patient list, opening a chart, placing orders, reviewing results, and writing standard note types. The interface layout and navigation (storyboard sidebar, activity tabs, chart flow) are modeled on conventions common to commercial EMRs, including Epic, to build workflow familiarity that transfers to clinical rotations. This tool is independently built for educational use and is not affiliated with, endorsed by, or a certified replica of Epic Systems Corporation or any other EMR vendor.</p>
-      <p>Included in this simulation:</p>
+      <p>This is a self-contained <b>training EMR simulator</b> built for case-based instruction. The purpose is to give you hands-on practice with the everyday mechanics of electronic charting — reviewing a patient list, opening a chart, placing orders, reviewing results, and writing standard note types. The interface layout and navigation (storyboard sidebar, activity tabs, chart flow) are modeled on conventions common to commercial EMRs to build workflow familiarity that transfers to clinical rotations. This tool is independently built for educational use and is not affiliated with any EMR vendor.</p>
+      <p>This simulator includes:</p>
       <ul>
         <li>A panel of fictional patients, each with a self-contained case (history, baseline vitals, and a pre-written admission History &amp; Physical to review)</li>
         <li>Order entry for common labs, imaging studies, bedside/invasive procedures, and medications — including a free-text custom medication order and a basic teaching-oriented allergy-alert check — with a simulated pending → resulted/active lifecycle</li>
         <li>Documentation tools for Progress Notes, History &amp; Physical notes, Consultations, and Discharge Summaries</li>
-        <li>An "+ Add Patient" tool for instructors or students to author additional cases, either through a guided form or by importing a JSON case file</li>
+        <li>An "Add Patient" tool for instructors or students to author additional cases, either through a guided form or by importing a JSON case file</li>
         <li>A per-patient "Facilitator Panel" for pre-authoring the intended lab results of a progressively unfolding case across multiple stages, and revealing each stage on cue</li>
       </ul>
       <p>All data is stored only in this browser's local storage. Nothing is sent to a server, and nothing here should ever be substituted for a real medical record system or used with real patient information. Use <b>Reset course data</b> (top right) to wipe all student-entered notes and orders and restore every chart to its original seeded state.</p>
