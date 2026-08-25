@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PA Program Training EMR — Chart Simulation</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="name">PA Program Training EMR</div>
+    <div class="sub">Charleston Southern University PA Program — Chart Simulation Environment</div>
+  </div>
+  <div class="topbar-right">
+    <span id="clockReadout">--:--</span>
+    <button class="topbtn ghost" id="aboutBtn" type="button">About this tool</button>
+    <button class="topbtn danger" id="resetAllBtn" type="button">Reset course data</button>
+  </div>
+</header>
+
+<main>
+
+  <section class="view active" id="viewList">
+    <div class="disclaimer">
+      <b>Training environment only.</b> All patients, encounters, and data on this screen are fictional and were created for PA education. This simulator's layout and navigation are designed to resemble common commercial EMR conventions (including Epic-style chart navigation) so students build transferable workflow familiarity. It is an independent educational tool, not affiliated with, endorsed by, or a certified replica of Epic Systems Corporation or any other EMR vendor. Nothing entered here is a real health record; do not enter real patient information. All data is stored only in this browser (locally) — nothing is transmitted anywhere.
+    </div>
+    <div class="list-toolbar">
+      <h2>Patient List <span class="count" id="patientCount"></span></h2>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="searchInput" placeholder="Search by name, room, or diagnosis…">
+        <button class="btn-primary" id="addPatientBtn" type="button">+ Add Patient</button>
+      </div>
+    </div>
+    <table class="ptable">
+      <thead>
+        <tr>
+          <th>Room</th><th>Patient</th><th>Age / Sex</th><th>Chief Complaint / Working Dx</th>
+          <th>Attending / Team</th><th>Code Status</th><th>Allergies</th><th>New Labs</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="patientTableBody"></tbody>
+    </table>
+  </section>
+
+  <section class="view" id="viewChart">
+    <div class="chart-shell">
+      <aside class="storyboard" id="storyboard">
+        <div class="sb-allergy-band" id="sbAllergyBand"></div>
+        <div class="sb-patient">
+          <div class="sb-name" id="bannerName">—</div>
+          <div class="sb-meta" id="bannerMeta">—</div>
+        </div>
+        <div class="sb-section-label">Storyboard</div>
+        <div class="sb-chips" id="bannerChips"></div>
+        <div class="sb-section-label">Problem List</div>
+        <ul class="sb-problem-list" id="sbProblemList"></ul>
+        <div class="sb-actions">
+          <button class="backbtn" id="editPatientBtn" type="button">Edit demographics</button>
+          <button class="backbtn" id="perPatientResetBtn" type="button">Reset chart</button>
+          <button class="backbtn danger-btn" id="deletePatientBtn" type="button">Delete patient</button>
+          <button class="backbtn" id="backToListBtn" type="button">← Patient list</button>
+        </div>
+      </aside>
+      <div class="chart-main">
+        <div class="tab-strip">
+          <button class="tab-btn active" data-tab="overview">Summary</button>
+          <button class="tab-btn" data-tab="notes">Notes</button>
+          <button class="tab-btn" data-tab="orders">Orders &amp; Results</button>
+          <button class="tab-btn" data-tab="medications">Medications</button>
+          <button class="tab-btn" data-tab="vitals">Vitals</button>
+          <button class="tab-btn" data-tab="io">I&amp;O</button>
+          <button class="tab-btn facilitator-tab" data-tab="facilitator">Facilitator Panel</button>
+        </div>
+        <div class="tab-panels">
+          <div class="tab-panel active" id="panelOverview"></div>
+          <div class="tab-panel" id="panelNotes"></div>
+          <div class="tab-panel" id="panelOrders"></div>
+          <div class="tab-panel" id="panelMedications"></div>
+          <div class="tab-panel" id="panelVitals"></div>
+          <div class="tab-panel" id="panelIO"></div>
+          <div class="tab-panel" id="panelFacilitator"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Edit Patient Demographics modal -->
+<div class="modal-overlay" id="editDemoModal">
+  <div class="modal-box" style="max-width:580px;">
+    <div class="modal-head">
+      <h3>Edit Patient Demographics</h3>
+      <button class="modal-close" id="editDemoClose" type="button">&times;</button>
+    </div>
+    <div class="modal-body" id="editDemoBody" style="max-height:70vh;overflow-y:auto;"></div>
+    <div class="modal-foot" id="editDemoFoot"></div>
+  </div>
+</div>
+
+
+<!-- Note editor / viewer modal -->
+<div class="modal-overlay" id="noteModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="noteModalTitle">Note</h3>
+      <button class="modal-close" id="noteModalClose" type="button">&times;</button>
+    </div>
+    <div class="modal-body" id="noteModalBody"></div>
+    <div class="modal-foot" id="noteModalFoot"></div>
+  </div>
+</div>
+
+<!-- Add Custom Patient modal -->
+<div class="modal-overlay" id="patientModal">
+  <div class="modal-box" style="max-width:760px;">
+    <div class="modal-head">
+      <h3>Add Custom Patient</h3>
+      <button class="modal-close" id="patientModalClose" type="button">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="subtab-strip">
+        <button class="subtab-btn active" data-psub="build" type="button">Quick Builder</button>
+        <button class="subtab-btn" data-psub="import" type="button">Import JSON</button>
+      </div>
+      <div class="subtab-panel active" id="psubBuild"></div>
+      <div class="subtab-panel" id="psubImport"></div>
+    </div>
+  </div>
+</div>
+
+<!-- About modal -->
+<div class="modal-overlay" id="aboutModal">
+  <div class="modal-box" style="max-width:560px;">
+    <div class="modal-head">
+      <h3>About this tool</h3>
+      <button class="modal-close" id="aboutModalClose" type="button">&times;</button>
+    </div>
+    <div class="modal-body about-body">
+      <p>This is a self-contained <b>training EMR simulator</b> built for PA program small-group and case-based instruction. Its purpose is to give students hands-on practice with the everyday mechanics of electronic charting — reviewing a patient list, opening a chart, placing orders, reviewing results, and writing standard note types. The interface layout and navigation (storyboard sidebar, activity tabs, chart flow) are modeled on conventions common to commercial EMRs, including Epic, to build workflow familiarity that transfers to clinical rotations. This tool is independently built for educational use and is not affiliated with, endorsed by, or a certified replica of Epic Systems Corporation or any other EMR vendor.</p>
+      <p>Included in this simulation:</p>
+      <ul>
+        <li>A panel of fictional patients, each with a self-contained case (history, baseline vitals, and a pre-written admission History &amp; Physical to review)</li>
+        <li>Order entry for common labs, imaging studies, bedside/invasive procedures, and medications — including a free-text custom medication order and a basic teaching-oriented allergy-alert check — with a simulated pending → resulted/active lifecycle</li>
+        <li>Documentation tools for Progress Notes, History &amp; Physical notes, Consultations, and Discharge Summaries</li>
+        <li>An "+ Add Patient" tool for instructors or students to author additional cases, either through a guided form or by importing a JSON case file</li>
+        <li>A per-patient "Facilitator Panel" for pre-authoring the intended lab results of a progressively unfolding case across multiple stages, and revealing each stage on cue</li>
+      </ul>
+      <p>All data is stored only in this browser's local storage. Nothing is sent to a server, and nothing here should ever be substituted for a real medical record system or used with real patient information. Use <b>Reset course data</b> (top right) to wipe all student-entered notes and orders and restore every chart to its original seeded state.</p>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
