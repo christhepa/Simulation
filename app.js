@@ -1193,6 +1193,11 @@
     labTextProfile:{urinalysis:'Color dark yellow, clear. Specific gravity 1.028, pH 5.5. Negative for blood, protein, leukocyte esterase, nitrites, glucose, ketones. <5 WBC/hpf, <5 RBC/hpf, no bacteria.',urineSodium:'42 mEq/L (confounded by active thiazide effect)',urineOsmolality:'410 mOsm/kg (concentrated; exceeds serum osmolality ~261)'},
     imagingFindings:{ctHead:{findings:'No acute intracranial hemorrhage, mass effect, or midline shift. No acute infarct. Age-appropriate cerebral volume loss.',impression:'No acute intracranial abnormality.'},cxr:{findings:'Lungs clear bilaterally without focal consolidation, effusion, or pneumothorax. Cardiomediastinal silhouette normal in size and contour. Mild degenerative changes of the thoracic spine.',impression:'No acute cardiopulmonary process.'}},
     procedureNotes:{ekg:'Sinus rhythm at 75 bpm. Normal intervals. No acute ST-segment changes.'},
+    priorRecords:{labs:[
+      {date:'2025-10-15', panelId:'bmp', values:{na:140, k:4.0, cl:101, co2:26, bun:14, cr:0.8, glu:92}, orderedBy:'Primary care physician — outside records'},
+      {date:'2026-05-20', panelId:'bmp', values:{na:134, k:3.8, cl:99, co2:25, bun:16, cr:0.9, glu:90}, orderedBy:'Primary care physician — outside records'},
+      {date:'2026-07-14', panelId:'bmp', values:{na:129, k:3.6, cl:96, co2:26, bun:20, cr:1.0, glu:94}, orderedBy:'Primary care physician — outside records'}
+    ]},
     seedHP:{cc:'Fall at home; found weak and confused',
       hpi:'78-year-old woman brought to ED by daughter after a fall at home this morning. Husband of 52 years died 3 months ago; patient living alone since. Daughter reports ~3 weeks of progressive fatigue, weakness, and poor appetite — surviving mostly on tea and toast. Estimated 9-lb unintentional weight loss over 3 weeks. Several episodes over past week of seeming "foggy" or slow to respond. Found on kitchen floor after apparently losing balance while standing; no witnessed LOC, seizure, or head strike. Patient reports 2 weeks of worsening dizziness on standing, generalized weakness, feeling "not herself" since husband\'s death. Denies chest pain, palpitations, fever, vomiting, diarrhea, dysuria, suicidal ideation.',
       pmh:'Hypertension; osteoarthritis; bilateral knee replacements; hyperlipidemia.',

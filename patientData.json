@@ -1578,6 +1578,52 @@
       "pe": "Gen: thin, frail-appearing, no acute distress, fatigued. Vitals: BP 108/64 supine, 88/54 standing; HR 98 supine, 122 standing; RR 16; SpO2 97% RA; Temp 98.2\u00b0F; Ht 64 in, Wt 118 lb (\u2193 from 127). Skin: dry with \u2193 turgor on forearms; 2-cm ecchymotic abrasion L forearm, no active bleeding. HEENT: dry oral mucosa; sunken eyes; oropharynx clear, no erythema/exudate; no scalp hematoma/facial trauma. Respiratory: CTAB, no wheezes/rales/rhonchi, no increased WOB. Cardiovascular: tachycardic, regular rhythm, normal S1/S2, no murmurs/rubs/gallops; no JVD; capillary refill 3 sec. GI: abdomen soft, nontender, nondistended, normoactive BS, no organomegaly. GU: deferred. MSK: mild bilateral knee crepitus without effusion/erythema consistent with OA; L forearm abrasion; full ROM elsewhere; no deformity/focal tenderness; no evidence of hip/long-bone fracture. Neuro: alert; oriented person/place, mildly slow and inconsistent orientation to date; CN II-XII intact; strength 4/5 bilateral UE/LE symmetric; sensation intact; no focal deficits. Psych: flat affect, tearful re: husband; cooperative, appropriate; linear thought process. Endocrine: no thyromegaly/nodules.",
       "assessment": "1) Hypovolemic hyponatremia, severe (Na 122 mEq/L), secondary to hydrochlorothiazide + low dietary solute/fluid intake. 2) Acute kidney injury, stage 1, prerenal, secondary to volume depletion. 3) Major depressive disorder / complicated grief with self-neglect and unintentional weight loss. 4) Mechanical fall, multifactorial (orthostatic hypotension, generalized weakness).",
       "plan": "1) Hyponatremia: D/C HCTZ; admit for cautious correction with isotonic 0.9% NS at conservative rate; monitor urine output hourly \u2014 if >250 mL/h or abruptly dilute (SG <1.005), hold NS and initiate desmopressin to prevent overcorrection; serial BMP q2-4h initially; limit sodium correction to \u22646-8 mEq/L first 24h given multiple ODS risk factors (malnutrition, hypokalemia, chronicity >48h); correct K cautiously (K repletion raises serum Na); nephrology/endocrinology consult if difficult control or overcorrection. 2) AKI: hold nephrotoxic agents; monitor renal function; expect improvement with volume repletion. 3) Nutrition/self-neglect: nutrition consult; oral supplementation; Na/protein-appropriate diet as tolerated when electrolytes stabilizing. 4) Fall/safety: fall precautions; PT/OT eval; home safety assessment before discharge. 5) Psychosocial: PHQ-9; social work consult for grief support; consider outpatient counseling/bereavement resources; reassess safety (currently denies SI/HI). 6) Med reconciliation: consider alternative antihypertensive to replace HCTZ once stable. 7) Case management: home health services, community nutrition support (Meals on Wheels), caregiver/family involvement planning before discharge."
+    },
+    "priorRecords": {
+      "labs": [
+        {
+          "date": "2025-10-15",
+          "panelId": "bmp",
+          "values": {
+            "na": 140,
+            "k": 4.0,
+            "cl": 101,
+            "co2": 26,
+            "bun": 14,
+            "cr": 0.8,
+            "glu": 92
+          },
+          "orderedBy": "Primary care physician \u2014 outside records"
+        },
+        {
+          "date": "2026-05-20",
+          "panelId": "bmp",
+          "values": {
+            "na": 134,
+            "k": 3.8,
+            "cl": 99,
+            "co2": 25,
+            "bun": 16,
+            "cr": 0.9,
+            "glu": 90
+          },
+          "orderedBy": "Primary care physician \u2014 outside records"
+        },
+        {
+          "date": "2026-07-14",
+          "panelId": "bmp",
+          "values": {
+            "na": 129,
+            "k": 3.6,
+            "cl": 96,
+            "co2": 26,
+            "bun": 20,
+            "cr": 1.0,
+            "glu": 94
+          },
+          "orderedBy": "Primary care physician \u2014 outside records"
+        }
+      ]
     }
   }
 ]
