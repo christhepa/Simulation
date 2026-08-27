@@ -199,7 +199,39 @@
     bloodcx: { label:'Blood Cultures x2', category:'Microbiology', kind:'text',
       defaultText:'Pending — no growth to date on either bottle set. Final results in 5 days if no growth.' },
     typescreen: { label:'Type & Screen', category:'Blood Bank', kind:'text',
-      defaultText:'Blood type O positive. Antibody screen: negative.' }
+      defaultText:'Blood type O positive. Antibody screen: negative.' },
+    ogtt: { label:'Oral Glucose Tolerance Test (OGTT)', category:'Endocrine', kind:'numeric', components:[
+      {id:'glu',    label:'Fasting Glucose',   unit:'mg/dL', range:[70,99],  def:95,  dec:0},
+      {id:'glu2hr', label:'2-Hour Glucose (post 75g load)', unit:'mg/dL', range:[0,139], def:110, dec:0}
+    ]},
+    reproHormones: { label:'Reproductive Hormone Panel (Testosterone, DHEA-S, Prolactin)', category:'Endocrine', kind:'numeric', components:[
+      {id:'freeT',    label:'Free Testosterone',  unit:'pg/mL', range:[0.1,4.2], def:1.5, dec:1},
+      {id:'totalT',   label:'Total Testosterone', unit:'ng/dL', range:[8,60],    def:35,  dec:0},
+      {id:'dheas',    label:'DHEA-S',             unit:'µg/dL', range:[45,270], def:150, dec:0},
+      {id:'prolactin',label:'Prolactin',          unit:'ng/mL', range:[4,23],    def:10,  dec:1}
+    ]},
+    hcgQual: { label:'Urine/Serum Pregnancy Test (Qualitative hCG)', category:'Endocrine', kind:'numeric', components:[
+      {id:'hcgqual', label:'hCG, Qualitative', unit:'', range:[0,0], def:0, dec:0,
+        labels:{0:'Negative',1:'Positive'}, rangeLabel:'Negative' }
+    ]},
+    hcgQuant: { label:'Quantitative Serum Beta-hCG', category:'Endocrine', kind:'numeric', components:[
+      {id:'hcgquant', label:'Beta-hCG, Quantitative', unit:'mIU/mL', range:[0,5], def:0, dec:0, rangeLabel:'<5 (non-pregnant)'}
+    ]},
+    inflamMarkers: { label:'Inflammatory Markers (ESR/CRP)', category:'Chemistry', kind:'numeric', components:[
+      {id:'esr', label:'ESR', unit:'mm/hr', range:[0,20], def:10, dec:0},
+      {id:'crp', label:'CRP', unit:'mg/L',  range:[0,10], def:3,  dec:0}
+    ]},
+    arthritisSerology: { label:'Autoimmune/Infectious Arthritis Serologies (RF, ANA, Lyme Ab)', category:'Serology', kind:'numeric', components:[
+      {id:'rf',     label:'Rheumatoid Factor', unit:'', range:[0,0], def:0, dec:0, labels:{0:'Negative',1:'Positive'}, rangeLabel:'Negative'},
+      {id:'ana',    label:'ANA',               unit:'', range:[0,0], def:0, dec:0, labels:{0:'Negative',1:'Positive'}, rangeLabel:'Negative'},
+      {id:'lymeab', label:'Lyme Antibody',     unit:'', range:[0,0], def:0, dec:0, labels:{0:'Negative',1:'Positive'}, rangeLabel:'Negative'}
+    ]},
+    stiNaat: { label:'Gonorrhea/Chlamydia NAAT (Endocervical/Urine)', category:'Microbiology', kind:'text',
+      defaultText:'Neisseria gonorrhoeae NAAT: Negative. Chlamydia trachomatis NAAT: Negative.' },
+    hivAgAb: { label:'HIV Ag/Ab Combo (4th Generation)', category:'Serology', kind:'text',
+      defaultText:'Non-reactive.' },
+    rpr: { label:'RPR (Syphilis Screen)', category:'Serology', kind:'text',
+      defaultText:'Non-reactive.' }
   };
 
   /* CSF panel is only produced via the Lumbar Puncture procedure, not
@@ -212,6 +244,15 @@
     {id:'csfglucose', label:'Glucose',   unit:'mg/dL', range:[40,70], def:55, dec:0}
   ];
   const CSF_DEFAULT_GRAM = 'No organisms seen on Gram stain.';
+
+  /* Synovial fluid panel is only produced via the Arthrocentesis procedure,
+     not directly orderable as a "lab" from the list — mirrors the CSF /
+     Lumbar Puncture pattern above. */
+  const SYNOVIAL_COMPONENTS = [
+    {id:'synWbc', label:'Synovial Fluid WBC',    unit:'/µL', range:[0,200], def:100, dec:0},
+    {id:'synPmn', label:'Synovial Fluid % PMNs', unit:'%',   range:[0,25],  def:10,  dec:0}
+  ];
+  const SYNOVIAL_DEFAULT_GRAM = 'No organisms seen on Gram stain.';
 
   function getActiveLabStage(patientId){
     const entry = STATE.labOverrides && STATE.labOverrides[patientId];
@@ -402,6 +443,19 @@
     return { lines: lines, gram: overrideGram };
   }
 
+  function buildSynovialResultText(patient){
+    const overrideGram = (patient.synovialGram!==undefined) ? patient.synovialGram : SYNOVIAL_DEFAULT_GRAM;
+    const lines = SYNOVIAL_COMPONENTS.map(function(comp){
+      const profile = patient.labProfile || {};
+      const raw = profile[comp.id];
+      const val = (raw!==undefined) ? raw : comp.def;
+      let flag='';
+      if (val>comp.range[1]) flag='H'; else if (comp.range[1]>0 && val<comp.range[0]) flag='L';
+      return { value: val.toFixed(comp.dec), flag: flag, unit: comp.unit, label: comp.label, range: comp.range.join('–') };
+    });
+    return { lines: lines, gram: overrideGram };
+  }
+
   /* ---------------------------------------------------------------
      Build the lab order picker groups directly from LAB_PANELS
   --------------------------------------------------------------- */
@@ -460,7 +514,13 @@
       defImpression:'No acute intracranial abnormality.' },
     xrExtremity: { label:'X-ray, Extremity', category:'Radiography', exam:'Radiograph of the affected extremity, multiple views.',
       defFindings:'No acute fracture or dislocation. Soft tissues are unremarkable. No osseous erosion or periosteal reaction.',
-      defImpression:'No acute osseous abnormality.' }
+      defImpression:'No acute osseous abnormality.' },
+    usPelvis: { label:'Pelvic Ultrasound (Transvaginal)', category:'Ultrasound', exam:'Transvaginal pelvic ultrasound.',
+      defFindings:'Uterus is normal in size, shape, and echogenicity with a normal endometrial stripe. Both ovaries are normal in size and morphology without cystic or solid masses. No free fluid in the cul-de-sac.',
+      defImpression:'Normal transvaginal pelvic ultrasound.' },
+    usBreast: { label:'Breast Ultrasound', category:'Ultrasound', exam:'Targeted breast ultrasound.',
+      defFindings:'No discrete solid or cystic mass. No skin thickening or architectural distortion. Normal breast parenchyma for the stated location.',
+      defImpression:'No sonographic abnormality.' }
   };
 
   function buildImagingOrderGroups(){
@@ -505,6 +565,8 @@
       note:'Under ultrasound guidance and sterile technique, a paracentesis needle/catheter was inserted into the left lower quadrant. Straw-colored ascitic fluid was drained and sent for cell count, albumin, and culture. Procedure tolerated well without complication.' },
     thoracentesis: { label:'Thoracentesis', category:'Invasive', indication:'Diagnostic/therapeutic drainage of pleural effusion.',
       note:'Under ultrasound guidance and sterile technique, a thoracentesis catheter was placed in the posterior right chest at the site of maximal effusion. Fluid was drained and sent for cell count, protein, LDH, and culture. Post-procedure the patient remained without dyspnea or chest pain; no pneumothorax on subsequent imaging.' },
+    arthrocentesis: { label:'Arthrocentesis (Joint Aspiration)', category:'Invasive', indication:'Diagnostic aspiration of synovial fluid for suspected septic or inflammatory arthritis.',
+      note:'Under sterile technique, the affected joint was entered via a standard approach with a syringe and needle. Synovial fluid was aspirated without complication and sent for cell count with differential, Gram stain, culture, and crystal analysis. Needle withdrawn and a pressure dressing applied.' },
     iandd: { label:'Incision & Drainage', category:'Bedside', indication:'Drainage of a soft-tissue abscess.',
       note:'The area of fluctuance was prepped in sterile fashion and infiltrated with local anesthetic. An incision was made over the point of maximal fluctuance with expression of purulent material, sent for culture. The cavity was irrigated and loosely packed. Dressing applied.' },
     intubation: { label:'Endotracheal Intubation', category:'Invasive', indication:'Airway protection / respiratory failure.',
@@ -568,6 +630,13 @@
         text += l.label+': '+l.value+' '+l.unit+(l.flag? ' ['+l.flag+']':'')+' (ref '+l.range+')\n';
       });
       text += 'Gram stain: '+csf.gram;
+    } else if (procId==='arthrocentesis'){
+      const syn = buildSynovialResultText(patient);
+      text += '\n\nSYNOVIAL FLUID RESULTS:\n';
+      syn.lines.forEach(function(l){
+        text += l.label+': '+l.value+' '+l.unit+(l.flag? ' ['+l.flag+']':'')+' (ref '+l.range+')\n';
+      });
+      text += 'Gram stain: '+syn.gram+'\nCulture: pending.';
     }
     return text;
   }
@@ -1183,34 +1252,539 @@
       assessment:'1) Acute Kidney Injury, Stage 3 \u2014 an estimated 3\u20134-fold rise in creatinine from baseline (see BMP in Orders & Results for the exact value). Multifactorial etiology: (a) NSAID-induced afferent arteriolar vasoconstriction superimposed on (b) chronic volume depletion from unrecognized hyperglycemic osmotic diuresis (a hemodynamically mediated \u201cpseudo-prerenal\u201d pattern), layered on (c) pre-existing subclinical diabetic and hypertensive nephropathy. Urine studies (FENa, urine sodium, urine osmolality, and the BUN:creatinine ratio \u2014 see BMP and the Urine Studies panel) support a hemodynamic mechanism rather than ATN; hyaline casts on urinalysis are nonspecific. Proteinuria and an elevated UACR (see the UACR panel) reflect pre-existing diabetic nephropathy rather than acute injury. Findings on chest imaging indicate volume overload requiring diuresis, not aggressive crystalloid resuscitation. Renal ultrasound excludes obstruction. 2) Essential Hypertension with end-organ damage \u2014 S4 gallop, left ventricular hypertrophy and left atrial enlargement on EKG, nonproliferative diabetic retinopathy, and contribution to nephrosclerosis. 3) Type 2 Diabetes Mellitus, newly diagnosed, with nonproliferative retinopathy and peripheral neuropathy \u2014 classic triad of polyuria, polydipsia, and unintentional weight loss, with markedly elevated random glucose and HbA1c (see labs for exact values); acanthosis nigricans, dot-and-blot hemorrhages/hard exudates, and stocking-distribution sensory loss support chronic undiagnosed hyperglycemia. 4) Dyslipidemia with high cardiovascular risk \u2014 a significantly abnormal lipid panel (see Orders & Results) requiring statin therapy given diabetes, hypertension, obesity, and family history of premature CAD. 5) Hyperkalemia with peaked T waves on EKG \u2014 see BMP and EKG results for details.',
       plan:'TRANSFER TO ED OR ADMIT DIRECTLY IF ADMITTING PRIVILEGES AVAILABLE. AKI management: (1) Discontinue ibuprofen/all NSAIDs immediately. (2) Fluid restriction to 1 L/day; aggressive crystalloid bolus contraindicated. (3) Furosemide 40\u201380 mg IV push now, then titrate to UOP 0.3\u20130.5 mL/kg/hr once euvolemia approached \u2014 goal is decongestion, not forced diuresis. (4) Foley catheter for accurate UOP; reassess volume status frequently. (5) Serial BMP, CBC, phosphorus, magnesium, UA with microscopy, urine electrolytes/FENa, urine osmolality. (6) Renal ultrasound to exclude obstruction \u2014 completed, no obstruction. (7) 12-lead EKG for hyperkalemia changes \u2014 completed. (8) CXR for pulmonary edema/cardiomegaly \u2014 completed. Hyperkalemia management: (9) Calcium gluconate 1 g IV over 2\u20135 min now for cardiac membrane stabilization; repeat if EKG changes persist after 5 min. (10) Insulin 10 units IV + dextrose 25 g IV (D50W 50 mL) to shift potassium intracellularly (onset 10\u201320 min, lasts 4\u20136 hr); monitor glucose closely. (11) Albuterol 10\u201320 mg nebulized (or 0.5 mg IV) for additional potassium shift. Glucose/diabetes management: (12) Hold insulin infusions until oral intake improves. (13) Conservative SQ regimen: basal 10 units daily + rapid-acting 4\u20136 units with meals once tolerating diet. (14) Target fasting glucose 140\u2013180 mg/dL, random <250 mg/dL during acute illness; capillary glucose q4h until stable, then premeal/bedtime; check electrolytes/renal function before insulin dose changes. Hypertension/renoprotection: (15) Withhold ACE-I/ARB during acute AKI. (16) Amlodipine 5 mg PO daily for BP control (safe in AKI). (17) Once AKI resolves, initiate lisinopril or losartan for renoprotection; target BP <130/80 mmHg; recheck BMP 1\u20132 weeks after initiation. Lipid management: (18) Atorvastatin 40 mg PO daily for primary ASCVD prevention; continue despite AKI. Avoid nephrotoxins: (19) Avoid NSAIDs, aminoglycosides, IV contrast, high-dose calcineurin inhibitors until renal function recovers. Patient education: (20) New T2DM diagnosis, lifestyle modification (diet, weight loss, activity). (21) Medication adherence to prevent complications. (22) Complete avoidance of NSAIDs/OTC meds without consulting a provider; mechanism of NSAID-induced kidney injury. (23) Relationship between uncontrolled HTN, diabetes, and progressive kidney disease. (24) Refer to DSMES program and registered dietitian. Emergency return precautions: seek immediate care for anuria, worsening SOB, chest pain, palpitations/irregular heartbeat, confusion/lethargy, or rapidly worsening swelling. Follow-up: (25) Serial BMP q12\u201324h during hospitalization. (26) Transition to outpatient management once AKI resolving. (27) Outpatient PCP follow-up in 1 week; initiate ACE-I/ARB once creatinine stabilizes. (28) Nephrology referral if renal function does not improve within 3\u20137 days or proteinuria persists. (29) Ophthalmology consult for diabetic retinopathy. (30) Cardiology evaluation if LV dysfunction develops.' } },
 
-  { id:'p23', last:'Doyle', first:'Margaret', mrn:'TR-100451', dob:'1948-01-15', sex:'F', room:'4212',
-    admitAt:daysAgo(2), attending:'Dr. Patricia Alvarez', team:'Medicine A', codeStatus:'Full Code',
-    chiefComplaint:'Fall at home; found weak and confused',
-    allergies:['NKDA'], problemList:['Severe hyponatremia (Na 122 mEq/L)','Acute kidney injury, stage 1 (prerenal)','Major depressive disorder / complicated grief','Hypertension','Hyperlipidemia','Osteoarthritis bilateral knees'],
-    homeMeds:['Hydrochlorothiazide 25 mg PO daily','Atorvastatin 20 mg PO daily','Acetaminophen 500 mg PO PRN','Vitamin D3 1000 IU PO daily'],
-    vitals:{temp:98.2,hr:98,bp:'108/64',rr:16,spo2:97,pain:3},
-    labProfile:{na:122, k:3.2, cl:88, co2:30, bun:34, cr:1.3, glu:92, wbc:6.8, rbc:3.9, hgb:11.6, hct:36, mcv:88, mch:29.0, mchc:33, rdw:13.2, plt:210, ast:24, alt:19, alkphos:68, tbili:0.6, dbili:0.1, albumin:3.1, tprotein:5.8, tsh:2.8, ft4:1.2, uasg:1.028, urna:42, urosm:410},
-    labTextProfile:{urinalysis:'Color dark yellow, clear. Specific gravity 1.028, pH 5.5. Negative for blood, protein, leukocyte esterase, nitrites, glucose, ketones. <5 WBC/hpf, <5 RBC/hpf, no bacteria.',urineSodium:'42 mEq/L (confounded by active thiazide effect)',urineOsmolality:'410 mOsm/kg (concentrated; exceeds serum osmolality ~261)'},
-    imagingFindings:{ctHead:{findings:'No acute intracranial hemorrhage, mass effect, or midline shift. No acute infarct. Age-appropriate cerebral volume loss.',impression:'No acute intracranial abnormality.'},cxr:{findings:'Lungs clear bilaterally without focal consolidation, effusion, or pneumothorax. Cardiomediastinal silhouette normal in size and contour. Mild degenerative changes of the thoracic spine.',impression:'No acute cardiopulmonary process.'}},
-    procedureNotes:{ekg:'Sinus rhythm at 75 bpm. Normal intervals. No acute ST-segment changes.'},
-    priorRecords:{labs:[
-      {date:'2025-10-15', panelId:'bmp', values:{na:140, k:4.0, cl:101, co2:26, bun:14, cr:0.8, glu:92}, orderedBy:'Primary care physician — outside records'},
-      {date:'2026-05-20', panelId:'bmp', values:{na:134, k:3.8, cl:99, co2:25, bun:16, cr:0.9, glu:90}, orderedBy:'Primary care physician — outside records'},
-      {date:'2026-07-14', panelId:'bmp', values:{na:129, k:3.6, cl:96, co2:26, bun:20, cr:1.0, glu:94}, orderedBy:'Primary care physician — outside records'}
-    ]},
-    seedHP:{cc:'Fall at home; found weak and confused',
-      hpi:'78-year-old woman brought to ED by daughter after a fall at home this morning. Husband of 52 years died 3 months ago; patient living alone since. Daughter reports ~3 weeks of progressive fatigue, weakness, and poor appetite — surviving mostly on tea and toast. Estimated 9-lb unintentional weight loss over 3 weeks. Several episodes over past week of seeming "foggy" or slow to respond. Found on kitchen floor after apparently losing balance while standing; no witnessed LOC, seizure, or head strike. Patient reports 2 weeks of worsening dizziness on standing, generalized weakness, feeling "not herself" since husband\'s death. Denies chest pain, palpitations, fever, vomiting, diarrhea, dysuria, suicidal ideation.',
-      pmh:'Hypertension; osteoarthritis; bilateral knee replacements; hyperlipidemia.',
-      psh:'Right total knee arthroplasty; remote appendectomy.',
-      meds:'Hydrochlorothiazide 25 mg daily; atorvastatin 20 mg daily; acetaminophen PRN; vitamin D3 1000 IU daily.',
-      allergies:'NKDA.',
-      fhx:'Mother — hypertension, died age 84 of natural causes. Father — CAD, MI at age 68. One younger brother, living, with hypertension.',
-      shx:'Retired schoolteacher. Widowed 3 months ago after 52-year marriage. Never smoker. Occasional wine in past; none since husband\'s death. Denies recreational drug use. Lives alone in single-story home; previously independent with ADLs/IADLs. Vaccinations up to date.',
-      ros:'General: fatigue, weakness, 9-lb unintentional weight loss over 3 weeks; denies fever/chills. Skin: denies rash/itching/easy bruising except abrasion from fall. HEENT: denies headache/vision changes/hearing changes/sore throat; endorses dry mouth. Respiratory: denies cough/SOB/wheeze. Cardiovascular: denies CP/palpitations; endorses lightheadedness with standing. GI: poor appetite, decreased PO intake x weeks; denies N/V/D/constipation/abdominal pain. GU: denies dysuria/frequency/hematuria; reports decreased urine output x several days. Musculoskeletal: chronic bilateral knee discomfort at baseline unchanged; denies new swelling/focal pain except L forearm abrasion. Neuro: weakness, intermittent mild confusion/slowed thinking past several days per daughter; denies focal weakness/numbness/seizure/LOC with fall. Psych: low mood, tearfulness, poor sleep, decreased interest in prior activities since husband\'s death; denies suicidal/homicidal ideation. Endocrine: denies heat/cold intolerance/excessive thirst/polyuria. Heme/Lymph: denies easy bruising/bleeding/lymph node swelling.',
-      pe:'Gen: thin, frail-appearing, no acute distress, fatigued. Vitals: BP 108/64 supine, 88/54 standing; HR 98 supine, 122 standing; RR 16; SpO2 97% RA; Temp 98.2°F; Ht 64 in, Wt 118 lb (↓ from 127). Skin: dry with ↓ turgor on forearms; 2-cm ecchymotic abrasion L forearm, no active bleeding. HEENT: dry oral mucosa; sunken eyes; oropharynx clear, no erythema/exudate; no scalp hematoma/facial trauma. Respiratory: CTAB, no wheezes/rales/rhonchi, no increased WOB. Cardiovascular: tachycardic, regular rhythm, normal S1/S2, no murmurs/rubs/gallops; no JVD; capillary refill 3 sec. GI: abdomen soft, nontender, nondistended, normoactive BS, no organomegaly. GU: deferred. MSK: mild bilateral knee crepitus without effusion/erythema consistent with OA; L forearm abrasion; full ROM elsewhere; no deformity/focal tenderness; no evidence of hip/long-bone fracture. Neuro: alert; oriented person/place, mildly slow and inconsistent orientation to date; CN II-XII intact; strength 4/5 bilateral UE/LE symmetric; sensation intact; no focal deficits. Psych: flat affect, tearful re: husband; cooperative, appropriate; linear thought process. Endocrine: no thyromegaly/nodules.',
-      assessment:'1) Hypovolemic hyponatremia, severe (Na 122 mEq/L), secondary to hydrochlorothiazide + low dietary solute/fluid intake. 2) Acute kidney injury, stage 1, prerenal, secondary to volume depletion. 3) Major depressive disorder / complicated grief with self-neglect and unintentional weight loss. 4) Mechanical fall, multifactorial (orthostatic hypotension, generalized weakness).',
-      plan:'1) Hyponatremia: D/C HCTZ; admit for cautious correction with isotonic 0.9% NS at conservative rate; monitor urine output hourly — if >250 mL/h or abruptly dilute (SG <1.005), hold NS and initiate desmopressin to prevent overcorrection; serial BMP q2-4h initially; limit sodium correction to ≤6-8 mEq/L first 24h given multiple ODS risk factors (malnutrition, hypokalemia, chronicity >48h); correct K cautiously (K repletion raises serum Na); nephrology/endocrinology consult if difficult control or overcorrection. 2) AKI: hold nephrotoxic agents; monitor renal function; expect improvement with volume repletion. 3) Nutrition/self-neglect: nutrition consult; oral supplementation; Na/protein-appropriate diet as tolerated when electrolytes stabilizing. 4) Fall/safety: fall precautions; PT/OT eval; home safety assessment before discharge. 5) Psychosocial: PHQ-9; social work consult for grief support; consider outpatient counseling/bereavement resources; reassess safety (currently denies SI/HI). 6) Med reconciliation: consider alternative antihypertensive to replace HCTZ once stable. 7) Case management: home health services, community nutrition support (Meals on Wheels), caregiver/family involvement planning before discharge.' } }
-  ];
+  {
+    id: "p23",
+    last: "Martinez",
+    first: "Sophia",
+    mrn: "TR-100425",
+    dob: "1998-03-14",
+    sex: "F",
+    room: "",
+    admitAt: daysAgo(0),
+    attending: "Dr. Rachel Chen",
+    team: "Gynecology",
+    codeStatus: "Full Code",
+    chiefComplaint: "Irregular periods and facial hair x3 years",
+    allergies: [
+      "NKDA"
+    ],
+    problemList: [
+      "Polycystic ovarian syndrome",
+      "Acne vulgaris",
+      "Obesity",
+      "Stage 1 hypertension"
+    ],
+    homeMeds: [],
+    vitals: {
+      temp: 98.6,
+      hr: 84,
+      bp: "138/84",
+      rr: 16,
+      spo2: 98,
+      pain: 0
+    },
+    labProfile: {
+      wbc: 7.2,
+      hgb: 13.8,
+      hct: 41.5,
+      plt: 268,
+      na: 138,
+      k: 4.1,
+      cl: 102,
+      co2: 24,
+      bun: 16,
+      cr: 0.85,
+      glu: 101,
+      ast: 24,
+      alt: 22,
+      tsh: 1.8,
+      ft4: 1.1,
+      totalchol: 218,
+      ldl: 145,
+      hdl: 38,
+      tg: 162,
+      glu2hr: 158,
+      freeT: 6.8,
+      totalT: 58,
+      dheas: 185,
+      prolactin: 8.2
+    },
+    imagingFindings: {
+      usPelvis: {
+        findings: "Right ovary: Volume 12.5 cm³, containing 24 follicles measuring 2–9 mm in diameter, distributed throughout the ovarian stroma. No dominant follicle. Left ovary: Volume 11.8 cm³, containing 22 follicles measuring 2–9 mm, distributed throughout. Bilateral ovarian morphology consistent with polycystic appearance. Endometrium: Measures 8 mm in thickness (normal, not thickened, and no hyperplasia). Uterus: Normal size and echogenicity. No adnexal masses or free fluid.",
+        impression: "Bilateral polycystic ovarian morphology. Endometrial thickness and uterine anatomy normal. No evidence of ovarian or adrenal tumor. Findings support diagnosis of PCOS."
+      }
+    },
+    priorRecords: {
+      labs: [
+        {
+          date: "2024-08-27",
+          panelId: "cbc",
+          values: {
+            wbc: 7,
+            hgb: 13.5,
+            hct: 40.5,
+            plt: 265
+          }
+        },
+        {
+          date: "2024-08-27",
+          panelId: "bmp",
+          values: {
+            bun: 15,
+            cr: 0.84,
+            glu: 98
+          }
+        },
+        {
+          date: "2024-08-27",
+          panelId: "tsh",
+          values: {
+            tsh: 1.9
+          }
+        },
+        {
+          date: "2024-08-27",
+          panelId: "ft4",
+          values: {
+            ft4: 1
+          }
+        },
+        {
+          date: "2025-08-27",
+          panelId: "cbc",
+          values: {
+            wbc: 7.1,
+            hgb: 13.7,
+            hct: 41.2,
+            plt: 266
+          }
+        },
+        {
+          date: "2025-08-27",
+          panelId: "bmp",
+          values: {
+            bun: 16,
+            cr: 0.85,
+            glu: 99
+          }
+        },
+        {
+          date: "2025-08-27",
+          panelId: "tsh",
+          values: {
+            tsh: 1.8
+          }
+        },
+        {
+          date: "2025-08-27",
+          panelId: "ft4",
+          values: {
+            ft4: 1.1
+          }
+        }
+      ]
+    },
+    seedHP: {
+      cc: "Irregular periods and facial hair x3 years",
+      hpi: "28-year-old woman presenting to clinic with 3-year history of progressively worsening amenorrhea and hirsutism. Reports menarche age 12 with initially regular 28-day cycles. At age 25, cycles became irregular (40–90 days), progressing to complete amenorrhea for 4–6 month stretches interrupted by heavy vaginal bleeding. Concurrent progressive facial hair (upper lip, chin, lower abdomen), acne resistant to OTC treatments, weight gain ~35 lbs over 3 years despite stable diet/activity. Denies galactorrhea, temperature intolerance. Reports fatigue. Concerned about fertility. Prior TSH and prolactin normal 2 years ago. No OCPs or androgenic agents.",
+      pmh: "No significant PMH. Denies diabetes, hypertension, thyroid disease.",
+      psh: "None.",
+      meds: "None. OTC acne treatments (benzoyl peroxide) without sustained benefit.",
+      allergies: "NKDA.",
+      fhx: "Mother: Type 2 diabetes, hypertension (diagnosed age 52). Father: Hypertension. Sister: No significant medical history.",
+      shx: "Office manager, lives with partner. Exercises 2–3x/week, 30 min. Western diet, occasional fast food. Denies tobacco, illicit drugs. Occasional alcohol (2–3 drinks/week). Vaccinations up to date.",
+      ros: "General: Fatigue, occasional mood swings; denies night sweats or unintentional weight loss. Skin: Progressive acne face/upper back, dark coarse hair upper lip/chin/lower abdomen (hirsutism). HEENT: No visual changes, headaches, or galactorrhea. Respiratory: No dyspnea, cough, wheezing. Cardiovascular: No chest pain, palpitations, syncope; BP occasionally elevated at home (140s/80s systolic). GI: No nausea, vomiting, diarrhea, abdominal pain. GU: Irregular menses and amenorrhea as noted; no dysuria, hematuria, polyuria. MSK: No joint pain/swelling. Neuro: No tremor, vertigo, focal deficits. Psych: Occasional mood swings related to menstrual dysfunction; denies suicidal ideation. Endocrine: Fatigue; no temperature intolerance, hyperreflexia, hypothermia. Heme/Lymph: No easy bruising, lymphadenopathy.",
+      pe: "Vitals: BP 138/84, HR 84, RR 16, Temp 98.6°F. Ht 5'6\", Wt 195 lbs (BMI 31.5—obese). General: Alert, well-developed woman, no acute distress, mild central obesity. Skin: Multiple comedones/inflammatory papules face/upper back (acne); dark coarse hair upper lip (fine moustache), chin, lower abdomen (male-pattern distribution); no skin tags, acanthosis nigricans. HEENT: Normocephalic, atraumatic, symmetric; no galactorrhea on breast exam. Respiratory: Lungs clear bilaterally. Cardiovascular: RRR, no murmurs/rubs/gallops. Abdomen: Soft, non-tender, no hepatosplenomegaly, normal bowel sounds. Pelvic (external only): No vulvar lesions/discharge, normal labia, no clitoromegaly. Neuro: A&Ox3, CN II–XII intact, motor/sensory intact, no focal deficits. Psych: Cooperative, appropriate affect, no depression/anxiety by observation.",
+      studies: "CBC: WBC 7.2, Hgb 13.8, Hct 41.5, Plt 268 (all normal). CMP: Na 138, K 4.1, Cl 102, CO2 24, BUN 16, Cr 0.85, glucose 101 (fasting, abnormal), Ca 9.3, Total Protein 7.0, Albumin 4.2, ALT 22, AST 24, Alk Phos 62, Total Bili 0.7. Lipid Panel: Total Cholesterol 218 (↑), LDL 145 (↑), HDL 38 (↓), TG 162 (↑) — dyslipidemia pattern consistent with metabolic syndrome. OGTT: Fasting glucose 101 (↑), 2-hour glucose 158 (↑) — impaired fasting glucose and impaired glucose tolerance; prediabetes. Endocrine: TSH 1.8 (normal), Free T4 1.1 (normal), Prolactin 8.2 (normal), Free Testosterone 6.8 (↑; normal <4.2 pg/mL), Total Testosterone 58 (↑; normal but elevated for female with symptoms), DHEA-S 185 (normal, 45–270 µg/dL). Pelvic ultrasound (transvaginal): Right ovary volume 12.5 cm³ with 24 follicles 2–9 mm distributed throughout stroma; left ovary volume 11.8 cm³ with 22 follicles 2–9 mm. Bilateral polycystic morphology. Endometrial thickness 8 mm (normal, no hyperplasia). No adnexal masses.",
+      assessment: "1) Polycystic ovarian syndrome, confirmed. Meets Rotterdam criteria: oligoamenorrhea/amenorrhea + clinical hyperandrogenism (hirsutism, acne) + polycystic ovary morphology on imaging. Mild biochemical hyperandrogenism (elevated free testosterone, upper-normal total testosterone). Insulin resistance likely given obesity, dyslipidemia, prediabetes. 2) Acne vulgaris, moderate, androgen-driven. 3) Dyslipidemia (elevated LDL, reduced HDL, elevated triglycerides). 4) Impaired glucose tolerance/prediabetes. 5) Obesity (BMI 31.5 kg/m², central distribution). 6) Hypertension, stage 1 (BP 138/84 mmHg). 7) Metabolic syndrome (obesity + hypertension + dyslipidemia + glucose dysregulation).",
+      plan: "1) Lifestyle modification (first-line, all PCOS patients): Weight loss goal 5–10% (~10–19 lbs); target 1–2 lbs/week via caloric deficit. Minimum 150 min/week moderate-intensity aerobic + 2–3 days resistance training. Dietary counseling: whole grains, lean proteins, healthy fats, high fiber; limit refined carbs/sugary beverages. Referral to registered dietitian if available. Home BP monitoring; target <130/80 mmHg. 2) Medical management: Combined oral contraceptive pill (OCP) first-line for menstrual regulation and hirsutism/acne (suppress GnRH → reduce ovarian androgens, increase SHBG). Choose lower-androgenic progestin (norgestimate, desogestrel). Start 28-day or extended-cycle regimen. Counsel on break-through bleeding initially and non-contraceptive benefits (acne/hirsutism improvement over 6–12 months). Recheck lipids/glucose after 3 months OCP. 3) Metformin 500 mg BID initially (titrate to minimize GI effects), especially given prediabetes and likely insulin resistance. Improves ovulation rates and metabolic parameters. Monitor renal function; adjust if Cr rises. 4) Consider spironolactone 50–100 mg daily adjunct to OCP if inadequate hirsutism/acne response after 6 months. Monitor K+, Cr. Teratogenic; requires reliable contraception. 5) Blood pressure: Continue lifestyle first; if BP remains ≥130/80 mmHg after 4 weeks, initiate ACE-I or ARB (preferred in reproductive-age woman). 6) Follow-up: Return in 4 weeks for BP recheck, ultrasound review (expected within 2 weeks), androgen/glucose/lipid results review, OCP tolerance assessment. 3-month visit: Assess menses regularity, acne/hirsutism response, weight/lifestyle progress; repeat lipids/glucose if abnormal at baseline. 6-month visit: Comprehensive assessment; consider adding spironolactone if needed. Annual thereafter: Metabolic screening (glucose, lipids, BP), mood/depression screening, metformin renal monitoring if prescribed. At age 40, calculate ASCVD risk. Gynecologic screening per ACOG age-based guidelines (Pap, pelvic exams). 7) Patient education: PCOS is chronic, multifactorial, not curable but highly manageable. Insulin resistance underlying ~70% of PCOS. Fertility: PCOS is leading cause of anovulatory infertility but highly treatable with ovulation induction (clomiphene/letrozole, ~80% ovulation rate, ~50% pregnancy rate per cycle); refer to reproductive endocrinology if pregnancy desired after lifestyle optimization or no spontaneous ovulation within 6 months. Cardiovascular/metabolic risk increased; lifestyle critical. Psychological support offered; screen for depression/anxiety. 8) Red flags: Sudden severe abdominal/pelvic pain (ovarian torsion/rupture), heavy bleeding with hemodynamic instability (anemia, transfusion need), chest pain/SOB (VTE/MI—rare with OCP but consider), severe headache/visual changes with OCP (discontinue, evaluate migraine with aura)."
+    }
+  },
+
+  {
+    id: "p24",
+    last: "Torres",
+    first: "Maya",
+    mrn: "TR-100455",
+    dob: "2002-08-18",
+    sex: "F",
+    room: "—",
+    admitAt: daysAgo(0),
+    attending: "Unassigned",
+    team: "Unassigned",
+    codeStatus: "Full Code",
+    chiefComplaint: "Migratory joint pain, fever, and a rash on the hands for 4 days",
+    allergies: [
+      "NKDA"
+    ],
+    problemList: [
+      "Disseminated gonococcal infection (arthritis-dermatitis syndrome)",
+      "Chlamydia trachomatis coinfection"
+    ],
+    homeMeds: [
+      "Ethinyl estradiol/norethindrone (combined oral contraceptive) daily",
+      "Ibuprofen 400 mg PRN for joint pain"
+    ],
+    vitals: {
+      temp: 100.9,
+      hr: 98,
+      bp: "112/68",
+      rr: 16,
+      spo2: 99,
+      pain: 6
+    },
+    labProfile: {
+      wbc: 12.4,
+      hgb: 12.8,
+      hct: 38,
+      plt: 310,
+      na: 138,
+      k: 4,
+      cl: 101,
+      co2: 24,
+      bun: 12,
+      cr: 0.7,
+      glu: 92,
+      esr: 42,
+      crp: 38,
+      rf: 0,
+      ana: 0,
+      lymeab: 0,
+      synWbc: 18000,
+      synPmn: 75
+    },
+    labTextProfile: {
+      bloodcx: "No growth at 24 hours. Final results in 5 days if no growth.",
+      stiNaat: "Neisseria gonorrhoeae NAAT (endocervical): Positive. Chlamydia trachomatis NAAT (endocervical): Positive.",
+      hivAgAb: "Non-reactive.",
+      rpr: "Non-reactive."
+    },
+    imagingFindings: {
+      xrExtremity: {
+        findings: "Small joint effusion of the left knee. No fracture, dislocation, periosteal reaction, or erosive changes. No chondrocalcinosis.",
+        impression: "Nonspecific joint effusion; no acute osseous abnormality."
+      }
+    },
+    seedHP: {
+      cc: "Migratory joint pain, fever, and a rash on the hands for 4 days",
+      hpi: "24-year-old woman with 4 days of migratory joint pain beginning in the right wrist and progressing to involve the left knee and right ankle, associated with subjective fever, malaise, and new painless skin lesions on the hands. Reports mild vaginal discharge over the past week attributed to her menstrual cycle, and a new sexual partner over the past 2 months with inconsistent condom use.",
+      pmh: "No chronic medical conditions.",
+      psh: "None.",
+      meds: "Combined oral contraceptive pill daily; ibuprofen 400 mg PRN for joint pain.",
+      allergies: "NKDA.",
+      fhx: "Mother: hypothyroidism. Father: hypertension. Sibling(s): noncontributory.",
+      shx: "Works as a barista. Sexually active with a new male partner over the past 2 months; inconsistent condom use. Denies tobacco use. Drinks alcohol socially. Denies recreational drug use. Vaccinations up to date.",
+      ros: "General: fever, malaise. Skin: painless bumps on hands/wrist. Genitourinary: mild vaginal discharge, denies dysuria. Musculoskeletal: migratory joint pain and swelling in right wrist, left knee, right ankle. All other systems negative.",
+      pe: "Vitals — BP 112/68, HR 98, RR 16, SpO2 99%, Temp 100.9F. Scattered pustular skin lesions on dorsal hands/wrist. Mucopurulent, friable cervical discharge on speculum exam. Tenosynovitis of the right wrist, left knee effusion, right ankle swelling. Remainder of exam unremarkable.",
+      studies: "Neisseria gonorrhoeae NAAT (endocervical): positive. Chlamydia trachomatis NAAT (endocervical): positive. HIV Ag/Ab: non-reactive. RPR: non-reactive. Blood cultures x2: no growth at 24 hours, pending final. Synovial fluid (left knee), obtained via arthrocentesis: WBC 18,000/µL with 75% PMNs, Gram stain negative, culture pending. ESR 42 mm/hr, CRP 38 mg/L. Rheumatoid factor, ANA, and Lyme antibody all negative. Left knee X-ray: small effusion, no fracture or erosive changes.",
+      assessment: "1) Disseminated gonococcal infection (arthritis-dermatitis syndrome) 2) Chlamydia trachomatis coinfection",
+      plan: "Admit for IV ceftriaxone 1 g q24h with step-down to oral therapy to complete a 7-day minimum course; doxycycline 100 mg PO BID x7 days for confirmed chlamydia coinfection; orthopedic arthrocentesis of the left knee; HIV/syphilis screening; partner notification and treatment; NSAIDs for pain; ID/rheumatology consultation if not improving in 48–72 hours."
+    }
+  },
+
+  {
+    id: "p25",
+    last: "Turner",
+    first: "Ashley",
+    mrn: "TR-100387",
+    dob: "1997-03-12",
+    sex: "F",
+    room: "OB/GYN Clinic – Exam 2",
+    admitAt: daysAgo(0),
+    attending: "Dr. Renee Castellano",
+    team: "Women's Health",
+    codeStatus: "Full Code",
+    chiefComplaint: "Redness, pain, and warmth of the left breast with fever and chills for 2 days.",
+    allergies: [
+      "NKDA"
+    ],
+    problemList: [
+      "G1P1, 3 weeks postpartum (uncomplicated spontaneous vaginal delivery)",
+      "Exclusively breastfeeding",
+      "Areolar fissure, left nipple"
+    ],
+    homeMeds: [
+      "Prenatal multivitamin 1 tablet PO daily",
+      "Ibuprofen 400 mg PO PRN pain",
+      "Docusate sodium 100 mg PO BID"
+    ],
+    vitals: {
+      temp: 101.4,
+      hr: 102,
+      bp: "118/72",
+      rr: 16,
+      spo2: 98,
+      pain: 7
+    },
+    labProfile: {
+      wbc: 13.8,
+      hgb: 11.8,
+      hct: 35,
+      plt: 310
+    },
+    imagingFindings: {
+      usBreast: {
+        findings: "Left breast, upper-outer quadrant: skin thickening and heterogeneous hypoechoic subcutaneous tissue without a discrete anechoic fluid collection. No drainable fluid collection identified.",
+        impression: "Findings consistent with inflammatory changes of lactational mastitis; no discrete abscess identified."
+      }
+    },
+    seedHP: {
+      cc: "Redness, pain, and warmth of the left breast with fever and chills for 2 days.",
+      hpi: "29-year-old G1P1 female, 3 weeks postpartum from an uncomplicated vaginal delivery, presents with 2 days of progressive left breast pain, redness, and warmth in the upper-outer quadrant. Exclusively breastfeeding; several missed/delayed feeds this week led to engorgement that did not fully resolve with nursing. A small areolar fissure developed about a week ago from latch difficulty. Over the last 24 hours she has developed subjective fever, chills, and malaise, with throbbing pain that worsens with nursing on the affected side but improves after the breast is emptied. She has continued to breastfeed on that side and is anxious about infant safety. Denies cough, dysuria, or abdominal pain.",
+      pmh: "Unremarkable. No diabetes, autoimmune disease, or prior breast disease.",
+      psh: "None.",
+      fhx: "Mother — breast cancer at age 62 (postmenopausal), in remission. Father — hypertension.",
+      shx: "Married, stay-at-home parent (first child). Denies tobacco, alcohol, or recreational drug use. Vaccinations up to date. Reports early nipple soreness/cracking in the first two postpartum weeks while establishing latch.",
+      ros: "Positive: subjective fever, chills, malaise, fatigue; left breast redness/warmth/tenderness; tender left axillary lump. Negative: cough, dyspnea, chest pain, dysuria, abdominal pain, depressed mood/SI.",
+      pe: "Temp 101.4°F, HR 102, BP 118/72, RR 16, SpO2 98% RA. Left breast, upper-outer quadrant, with a well-demarcated wedge-shaped area of erythema ~6x4 cm, warm, tender, mild peau d'orange, without fluctuance; firm non-fluctuant area beneath consistent with inflamed lobule. Small superficial areolar fissure, no purulent drainage. Right breast unremarkable. Single tender mobile ~1 cm left axillary lymph node. Remainder of exam unremarkable; uterine fundus not palpable (expected postpartum involution).",
+      studies: "CBC: WBC 13.8 (H) with 78% segs and 8% bands (left shift), Hgb 11.8 (L, physiologic postpartum), Hct 35 (L), platelets 310. CMP within normal limits. Left breast ultrasound (obtained at 60h for persistent induration): skin thickening and heterogeneous hypoechoic subcutaneous tissue without a discrete anechoic fluid collection — no drainable abscess.",
+      assessment: "1) Left lactational mastitis, upper-outer quadrant, secondary to milk stasis and an areolar fissure portal of entry, without sonographic evidence of abscess. 2) Areolar skin fissure, left nipple, secondary to latch difficulty. 3) Mild postpartum (physiologic) anemia, incidental, asymptomatic.",
+      plan: "1) Continue breastfeeding/pumping on the affected side — do not wean. 2) Dicloxacillin 500 mg PO QID x10–14 days (or cephalexin 500 mg PO QID); avoid TMP-SMX given infant age <1 month (kernicterus risk). 3) Ibuprofen PRN pain/inflammation. 4) Warm compress before feeds, cold after; massage toward nipple during feeds. 5) Lactation consultation this week for latch correction and fissure care. 6) Reassess in 48–72h; obtain breast ultrasound if fluctuant mass develops or no improvement — would need I&D if abscess confirmed. 7) If erythema/skin changes persist despite adequate antibiotics, refer for imaging ± biopsy to exclude inflammatory breast carcinoma. 8) Reassure breastfeeding is safe to continue throughout treatment."
+    }
+  },
+
+  {
+    id: "p26",
+    last: "Dawkins",
+    first: "Rachel",
+    mrn: "TR-100467",
+    dob: "1997-02-14",
+    sex: "F",
+    room: "Clinic 3",
+    admitAt: daysAgo(0),
+    attending: "Dr. Priya Nandakumar",
+    team: "Women's Health",
+    codeStatus: "Full Code",
+    chiefComplaint: "Right lower quadrant pelvic pain x1 week, worsening x2 days, with amenorrhea and scant vaginal spotting",
+    allergies: [
+      "NKDA"
+    ],
+    problemList: [
+      "Type 2 diabetes mellitus, poorly controlled",
+      "Primary hypothyroidism (Hashimoto thyroiditis)",
+      "Polycystic ovary syndrome (historical)"
+    ],
+    homeMeds: [
+      "Metformin 1000 mg PO BID (nonadherent)",
+      "Levothyroxine 75 mcg PO daily (nonadherent)",
+      "Multivitamin OTC PRN"
+    ],
+    vitals: {
+      temp: 98.4,
+      hr: 98,
+      bp: "108/68",
+      rr: 16,
+      spo2: 99,
+      pain: 5
+    },
+    labProfile: {
+      glu: 214,
+      wbc: 8.9,
+      hgb: 11.2,
+      hct: 33.8,
+      plt: 241,
+      na: 138,
+      k: 4.2,
+      cl: 101,
+      co2: 24,
+      bun: 14,
+      cr: 0.8,
+      tsh: 9.4,
+      ft4: 0.8,
+      hba1c: 9.8,
+      hcgqual: 1,
+      hcgquant: 1610
+    },
+    labTextProfile: {
+      typescreen: "Blood type O positive. Antibody screen: negative."
+    },
+    priorRecords: {
+      labs: [
+        {
+          date: "2026-08-25",
+          panelId: "hcgQuant",
+          values: {
+            hcgquant: 1450
+          },
+          orderedBy: "Outside records (Day 1 draw)"
+        }
+      ]
+    },
+    imagingFindings: {
+      usPelvis: {
+        findings: "Uterus anteverted, normal size and contour, endometrial stripe 9 mm, no intrauterine gestational sac identified. Right adnexa contains a 2.8 cm complex extraovarian mass with a thick echogenic tubal ring, no visible fetal pole or cardiac activity. Moderate free fluid with low-level internal echoes in the posterior cul-de-sac, concerning for hemoperitoneum; no sonographic evidence of frank tubal rupture. Left ovary and adnexa unremarkable.",
+        impression: "Findings consistent with right tubal ectopic pregnancy."
+      }
+    },
+    activeMeds: [
+      {
+        drug: "Metformin",
+        dose: "1000 mg",
+        route: "PO",
+        frequency: "BID",
+        indication: "Type 2 diabetes mellitus",
+        startDate: "2021-06-10"
+      },
+      {
+        drug: "Levothyroxine",
+        dose: "75 mcg",
+        route: "PO",
+        frequency: "Daily",
+        indication: "Primary hypothyroidism",
+        startDate: "2019-09-02"
+      }
+    ],
+    seedHP: {
+      cc: "Right lower quadrant pelvic pain x1 week, worsening x2 days, with amenorrhea and scant vaginal spotting",
+      hpi: "29-year-old woman with poorly controlled type 2 diabetes and undertreated hypothyroidism presents to the outpatient women's health clinic with one week of dull, intermittent right lower quadrant pelvic pain that has become sharper and more constant over the past two days. Last menstrual period was approximately 7 weeks ago, lighter and shorter than usual. Reports 3 days of scant dark brown vaginal spotting, not enough to require a pad. Denies heavy vaginal bleeding, syncope, or dizziness. Intermittent nausea without vomiting. Has not taken a home pregnancy test. Reports mild right shoulder discomfort since yesterday, attributed by the patient to sleeping awkwardly. Denies fever, dysuria, urinary frequency, vaginal discharge, or diarrhea. Admits inconsistent metformin and levothyroxine adherence over the past 2-3 months due to an insurance change and difficulty affording refills. Reports fatigue and unintentional 4-lb weight gain over 2 months.",
+      pmh: "Type 2 diabetes mellitus (diagnosed age 24, currently poorly controlled per patient report). Primary hypothyroidism (diagnosed age 22, Hashimoto thyroiditis by prior antibody testing). Polycystic ovary syndrome, historical diagnosis in adolescence, not currently followed. Chlamydial cervicitis/salpingitis treated at age 23.",
+      psh: "None.",
+      meds: "Metformin 1000 mg PO BID (nonadherent); levothyroxine 75 mcg PO daily (nonadherent); OTC multivitamin taken inconsistently.",
+      allergies: "NKDA.",
+      fhx: "Mother — type 2 diabetes mellitus, hypothyroidism. Father — hypertension, coronary artery disease diagnosed age 58. One sister, healthy.",
+      shx: "Works full-time as a restaurant server. Cohabitating with a male partner of 3 years; sexually active, inconsistent condom use, no other contraception. Denies tobacco use. Alcohol socially, 2-3 drinks per week, last drink 2 weeks ago. Denies recreational drug use. Vaccinations up to date.",
+      ros: "Positive for fatigue, cold intolerance, unintentional weight gain, intermittent polyuria/polydipsia, nausea, right lower quadrant pain, 7-week amenorrhea, scant vaginal spotting, mild right shoulder discomfort. Negative for fever, syncope, heavy vaginal bleeding, dysuria, vaginal discharge, diarrhea.",
+      pe: "BP 108/68, HR 98, RR 16, SpO2 99% RA, T 98.4F. Alert, mildly uncomfortable, non-toxic appearing. Mild non-tender diffuse thyroid enlargement on palpation, no discrete nodules. Abdomen soft with mild right lower quadrant tenderness, no rebound or guarding. Pelvic exam: scant dark blood at the cervical os, cervix closed; mild right adnexal tenderness and mild right-sided cervical motion tenderness without a clearly palpable mass; uterus normal size and non-tender. No tenderness or restricted range of motion of the right shoulder on exam (referred pain, not musculoskeletal in origin).",
+      studies: "Urine/serum qualitative pregnancy test: positive. Quantitative serum beta-hCG: Day 1 1,450 mIU/mL; Day 3 (48-hour recheck) 1,610 mIU/mL (+11%, a suboptimal rise; an expected rise in a viable intrauterine pregnancy is at least 35% over 48 hours). Transvaginal pelvic ultrasound: uterus anteverted, normal size and contour, endometrial stripe 9 mm, no intrauterine gestational sac identified. Right adnexa contains a 2.8 cm complex extraovarian mass with a thick echogenic tubal ring, no visible fetal pole or cardiac activity. Moderate free fluid with low-level internal echoes in the posterior cul-de-sac, concerning for hemoperitoneum; no sonographic evidence of frank tubal rupture. Left ovary and adnexa unremarkable. Impression: findings consistent with right tubal ectopic pregnancy. HbA1c 9.8%. TSH 9.4 (elevated), free T4 0.8 (low-normal), consistent with undertreated hypothyroidism. CBC and CMP otherwise unremarkable aside from hyperglycemia. Blood type O positive, antibody screen negative.",
+      assessment: "1) Ectopic pregnancy, unruptured, right tubal, hemodynamically stable. 2) Type 2 diabetes mellitus, poorly controlled, with medication nonadherence. 3) Hypothyroidism, undertreated, likely secondary to medication nonadherence.",
+      plan: "1) Confirm hemodynamic stability with repeat vitals and orthostatics; obtain type and screen; administer Rh(D) immune globulin if Rh-negative. 2) Evaluate eligibility for medical management with methotrexate (hemodynamically stable, beta-hCG generally <5,000 mIU/mL, no fetal cardiac activity, no renal/hepatic contraindications); confirm renal function given comorbid diabetes prior to dosing. 3) Arrange serial beta-hCG per methotrexate protocol or surgical referral (salpingostomy/salpingectomy) if criteria for medical management are not met or the patient prefers surgery. 4) Provide explicit return precautions for rupture symptoms: worsening or severe abdominal/pelvic pain, dizziness or syncope, heavy vaginal bleeding, or worsening shoulder pain. 5) Diabetes: reinforce metformin adherence, address medication access/cost barriers via social work or pharmacy assistance, counsel on the importance of glycemic control prior to future pregnancy. 6) Thyroid: reinforce levothyroxine adherence, recheck TSH after adherence is reestablished, counsel on the link between undertreated hypothyroidism and subfertility/early pregnancy loss. 7) Coordinate follow-up with primary care or endocrinology for ongoing diabetes and thyroid management."
+    }
+  },
+
+  {
+    id: "p27",
+    last: "Heyward",
+    first: "Marcus",
+    mrn: "TR-100479",
+    dob: "2003-06-14",
+    sex: "M",
+    room: "UR-4",
+    admitAt: daysAgo(0),
+    attending: "Dr. A. Whitfield",
+    team: "Orthopedics / Urgent Care",
+    codeStatus: "Full Code",
+    chiefComplaint: "Right knee pain, swelling, and instability after plant-and-pivot injury during soccer practice.",
+    allergies: [
+      "NKDA"
+    ],
+    problemList: [
+      "Acute right ACL tear (suspected complete, midsubstance)",
+      "Acute traumatic hemarthrosis, right knee",
+      "Reactive sinus tachycardia (pain-mediated)"
+    ],
+    homeMeds: [
+      "Ibuprofen 400 mg PO PRN pain"
+    ],
+    vitals: {
+      temp: 98.6,
+      hr: 96,
+      bp: "128/78",
+      rr: 16,
+      spo2: 99,
+      pain: 6
+    },
+    labProfile: {
+      wbc: 10.2,
+      hgb: 15.2,
+      hct: 44,
+      plt: 278,
+      na: 139,
+      k: 4.1,
+      cl: 102,
+      co2: 25,
+      bun: 14,
+      cr: 0.9,
+      glu: 92,
+      ast: 22,
+      alt: 18,
+      alkphos: 68,
+      tbili: 0.8,
+      albumin: 4.5,
+      tprotein: 7,
+      uacolor: 0,
+      uaclarity: 0,
+      uasg: 1.018,
+      uaph: 6,
+      uaprotein: 0,
+      uaglucose: 0,
+      uaketones: 0,
+      uablood: 0,
+      ualeukest: 0,
+      uanitrites: 0,
+      uawbc: 0,
+      uarbc: 0,
+      uacasts: 0,
+      uabacteria: 0
+    },
+    imagingFindings: {
+      xrExtremity: {
+        findings: "No acute fracture or dislocation. Cortical margins of the distal femur, proximal tibia, and fibular head are intact. A small cortical irregularity consistent with a Segond fracture pattern (avulsion at the lateral tibial rim, approximately 4 mm) is identified — a pathognomonic radiographic sign of ACL disruption. Moderate periarticular soft tissue swelling. Joint space is maintained. No osseous erosion or periosteal reaction.",
+        impression: "Segond fracture of the lateral tibial rim — pathognomonic for ACL tear. Moderate soft tissue swelling consistent with hemarthrosis. No tibial plateau fracture. MRI right knee strongly recommended."
+      },
+      ekg: {
+        findings: "Sinus tachycardia at 96 bpm. Normal axis. Normal PR interval (160 ms). Normal QRS duration. No ST-T wave changes. No prior EKG available for comparison.",
+        impression: "Sinus tachycardia. No acute ischemic changes. Clinical context: pain-mediated sympathetic activation in setting of acute musculoskeletal injury."
+      }
+    },
+    priorRecords: {
+      labs: [
+        {
+          date: "2026-07-02",
+          panelId: "cbc",
+          values: {
+            wbc: 6.8,
+            hgb: 15.8,
+            hct: 46,
+            plt: 265,
+            segs: 58,
+            lymphs: 30,
+            monos: 5,
+            eos: 2,
+            baso: 0.4,
+            bands: 3
+          },
+          orderedBy: "Pre-season physical (outside records)"
+        },
+        {
+          date: "2026-07-02",
+          panelId: "cmp",
+          values: {
+            na: 141,
+            k: 4,
+            cl: 103,
+            co2: 26,
+            bun: 13,
+            cr: 0.88,
+            glu: 88,
+            ast: 19,
+            alt: 16,
+            alkphos: 65,
+            tbili: 0.7,
+            albumin: 4.6,
+            tprotein: 7.1
+          },
+          orderedBy: "Pre-season physical (outside records)"
+        }
+      ]
+    },
+    seedHP: {
+      cc: "Right knee pain, swelling, and instability after plant-and-pivot injury during soccer practice.",
+      hpi: "Marcus Heyward is a 22-year-old male collegiate soccer midfielder presenting approximately 3 hours after an acute right knee injury sustained during practice. While planting his right foot and pivoting to change direction, he felt and heard an audible 'pop,' immediately fell to the ground, and was unable to bear weight. He reports sharp pain at the time of injury, now described as deep aching pressure with a strong sensation of joint instability ('it went out from under him'). Pain rated 8/10 at time of injury, now 6/10 at rest. No prior knee injuries. The athletic trainer applied ice and compression on the field. He took ibuprofen 400 mg approximately 2 hours ago with minimal relief.",
+      pmh: "No chronic medical conditions. Healthy collegiate athlete. No prior musculoskeletal injuries.",
+      psh: "None.",
+      meds: "Ibuprofen 400 mg orally as needed (taken once 2 hours ago).",
+      allergies: "NKDA.",
+      fhx: "Father: Hypertension (lisinopril). Mother: Healthy. Sister: Healthy.",
+      shx: "Collegiate soccer midfielder. Single, dormitory resident. Occasional social alcohol use (1-2 drinks on weekends). Denies tobacco and recreational drug use. Vaccinations up to date.",
+      ros: "Positive: right knee pain, swelling, instability, inability to bear weight, anxiety about athletic career. Negative: fever, chills, headache, chest pain, shortness of breath, nausea, vomiting, numbness or tingling in the right foot (beyond pain-limited function), prior joint hyperlaxity.",
+      pe: "Vitals: BP 128/78 mmHg, HR 96 bpm, RR 16, SpO2 99% RA, Temp 98.6 F, Ht 5'11\", Wt 175 lbs. General: Well-developed young male in mild-moderate distress, splinting right knee at approximately 20 degrees of flexion. Skin: Abrasions over right anterior knee; no lacerations or ecchymosis. CV: RRR, S1/S2, no murmurs; distal pulses 2+ bilateral. Right knee (primary): Marked hemarthrosis with visibly distended joint and tense effusion; ballottement of patella positive; limited ROM (extension to 10 degrees, flexion to 80 degrees). Lachman test POSITIVE (Grade 2; soft endpoint, 5-8 mm translation). Anterior Drawer test POSITIVE. Pivot Shift test POSITIVE. McMurray equivocal (limited by guarding). Valgus/varus stress tests negative. Posterior Drawer negative. Fibular head nontender. Peroneal nerve intact. Neuro: Sensation intact L3-S1 bilateral; motor 5/5 except knee extension 4/5 right (pain-limited).",
+      studies: "CBC and CMP unremarkable aside from a mild reactive leukocytosis. Urinalysis normal. Right knee radiographs (AP, lateral, tunnel views) with a Segond fracture, pathognomonic for ACL disruption. 12-lead EKG with sinus tachycardia, pain-mediated, no ischemic changes.",
+      assessment: "1) Acute right ACL tear — complete midsubstance tear strongly suspected based on mechanism (noncontact plant-and-pivot), immediate hemarthrosis, audible pop, and three concordant positive ligamentous tests (Lachman, Anterior Drawer, Pivot Shift). MRI right knee ordered urgently. 2) Acute traumatic hemarthrosis, right knee — tense effusion in setting of ACL injury. RICE protocol initiated; aspiration deferred. 3) Reactive sinus tachycardia — HR 96 bpm, pain-mediated sympathetic response; no primary cardiac etiology.",
+      plan: "1) MRI right knee without contrast (urgent, 24-48 hours) to confirm ACL tear and exclude meniscal/ligamentous co-injury. 2) Right knee radiographs (AP, lateral, tunnel views) — Segond fracture identified on plain film. 3) RICE protocol: rest, ice, compression, elevation. 4) Knee immobilizer and crutches; strict non-weight-bearing right lower extremity. 5) Ibuprofen 600 mg orally q6-8h with food; acetaminophen 500-1000 mg q6-8h PRN adjunct. 6) Orthopedic surgery referral placed (appointment within 5-7 days with MRI results). 7) Prehabilitation physical therapy referral for pre-operative quad strengthening. 8) Athletic trainer and coaching staff notified; patient removed from all practice and play. 9) Return precautions: worsening swelling, numbness/tingling in right foot, vascular compromise — return to ED immediately."
+    }
+  }
+];
 
   /* Walks a freshly-loaded (fetched) patient array and turns every
      {"__daysAgoOffset__": N} marker back into a real timestamp via

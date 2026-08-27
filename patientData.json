@@ -62,7 +62,7 @@
       "psh": "Cholecystectomy (2005).",
       "meds": "Furosemide 40 mg daily; metoprolol succinate 50 mg daily; lisinopril 10 mg daily; apixaban 5 mg BID.",
       "allergies": "NKDA.",
-      "fhx": "Father \u2014 MI at age 70. Mother \u2014 hypertension.",
+      "fhx": "Father — MI at age 70. Mother — hypertension.",
       "shx": "Lives with spouse, independent with ADLs. Former smoker, quit 20 years ago (30 pack-year history). No alcohol or illicit drug use.",
       "ros": "Positive for dyspnea, orthopnea, leg swelling, ~4 lb weight gain. Negative for chest pain, fever, cough, or palpitations.",
       "pe": "SpO2 91% RA, improved to 95% on 2L NC. JVD to the angle of the jaw. Bibasilar crackles halfway up posteriorly. Irregularly irregular rhythm, no murmur. 2+ pitting edema to the knees bilaterally. Abdomen soft, nontender.",
@@ -133,7 +133,7 @@
       "pe": "Using accessory muscles of respiration, speaking in short sentences. Diffuse expiratory wheezes and prolonged expiratory phase bilaterally. No focal crackles. No peripheral edema.",
       "studies": "ABG: pH 7.32, pCO2 58, pO2 68 on room air, HCO3 30 (chronic compensation with acute worsening). WBC mildly elevated at 11.8. CXR with hyperinflation, no infiltrate.",
       "assessment": "1) Acute COPD exacerbation with acute-on-chronic hypercapnic respiratory failure. 2) Hypertension, stable.",
-      "plan": "1) Supplemental O2 titrated to SpO2 88\u201392%. 2) Scheduled nebulized albuterol/ipratropium. 3) Systemic corticosteroids (prednisone taper). 4) Empiric azithromycin given change in sputum character. 5) Repeat ABG after initial treatment; consider BiPAP if worsening. 6) Continue home antihypertensive. 7) Smoking-cessation counseling reinforced, pulmonary rehab referral at discharge."
+      "plan": "1) Supplemental O2 titrated to SpO2 88–92%. 2) Scheduled nebulized albuterol/ipratropium. 3) Systemic corticosteroids (prednisone taper). 4) Empiric azithromycin given change in sputum character. 5) Repeat ABG after initial treatment; consider BiPAP if worsening. 6) Continue home antihypertensive. 7) Smoking-cessation counseling reinforced, pulmonary rehab referral at discharge."
     }
   },
   {
@@ -152,7 +152,7 @@
     "codeStatus": "Full Code",
     "chiefComplaint": "Fever, productive cough, and pleuritic chest pain x4 days",
     "allergies": [
-      "Sulfa \u2014 hives"
+      "Sulfa — hives"
     ],
     "problemList": [
       "Type 2 diabetes mellitus",
@@ -176,7 +176,7 @@
       "glu": 188
     },
     "labTextProfile": {
-      "bloodcx": "Pending \u2014 no growth to date on either bottle set. Final results in 5 days if no growth."
+      "bloodcx": "Pending — no growth to date on either bottle set. Final results in 5 days if no growth."
     },
     "imagingFindings": {
       "cxr": {
@@ -190,8 +190,8 @@
       "pmh": "Type 2 diabetes mellitus; obesity.",
       "psh": "C-section x2.",
       "meds": "Metformin 1000 mg BID; empagliflozin 10 mg daily.",
-      "allergies": "Sulfa drugs \u2014 hives.",
-      "fhx": "Mother \u2014 type 2 diabetes.",
+      "allergies": "Sulfa drugs — hives.",
+      "fhx": "Mother — type 2 diabetes.",
       "shx": "Works as a school administrator, lives with family. Never smoker, occasional alcohol use.",
       "ros": "Positive for fever, chills, productive cough, pleuritic chest pain, dyspnea. Negative for hemoptysis, leg swelling, sick contacts.",
       "pe": "Febrile to 102.4F, tachycardic, tachypneic, SpO2 90% RA. Dullness to percussion and bronchial breath sounds with crackles at the right base. No accessory muscle use at rest.",
@@ -308,7 +308,7 @@
       "psh": "None.",
       "meds": "Insulin glargine 18 units nightly (lapsed x3 days); insulin lispro sliding scale.",
       "allergies": "NKDA.",
-      "fhx": "Mother \u2014 type 1 diabetes.",
+      "fhx": "Mother — type 1 diabetes.",
       "shx": "College student, lives with roommates. No tobacco, alcohol, or illicit drug use.",
       "ros": "Positive for polyuria, polydipsia, nausea, vomiting, abdominal pain, fatigue. Negative for fever, diarrhea, dysuria.",
       "pe": "Tachycardic, tachypneic with deep Kussmaul respirations, fruity breath odor. Mucous membranes dry. Diffuse mild abdominal tenderness without rebound or guarding. Alert and oriented x4.",
@@ -438,13 +438,13 @@
       "psh": "None.",
       "meds": "None.",
       "allergies": "NKDA.",
-      "fhx": "Mother \u2014 gallstones, cholecystectomy.",
+      "fhx": "Mother — gallstones, cholecystectomy.",
       "shx": "Works as a nurse. No tobacco, occasional alcohol use.",
       "ros": "Positive for right upper quadrant pain, fever, nausea, vomiting. Negative for jaundice, dark urine, pale stools, diarrhea.",
       "pe": "Low-grade fever, tachycardic. Right upper quadrant tenderness with a positive Murphy sign, voluntary guarding. No jaundice. No palpable mass.",
       "studies": "WBC 12.5, mild transaminitis, alkaline phosphatase 165, total bilirubin 1.4. RUQ ultrasound with gallbladder wall thickening, pericholecystic fluid, and stones; positive sonographic Murphy sign; no CBD dilation.",
       "assessment": "1) Acute cholecystitis. 2) Mild transaminitis, likely reactive to acute cholecystitis rather than choledocholithiasis given normal CBD caliber.",
-      "plan": "1) NPO, IV fluids, analgesia, and antiemetics. 2) IV antibiotics (ceftriaxone/metronidazole). 3) Surgery consulted for laparoscopic cholecystectomy, likely within 24\u201372 hours. 4) Trend liver enzymes and bilirubin; repeat imaging/MRCP if rising or CBD dilation develops. 5) Postoperative diet advancement and discharge planning."
+      "plan": "1) NPO, IV fluids, analgesia, and antiemetics. 2) IV antibiotics (ceftriaxone/metronidazole). 3) Surgery consulted for laparoscopic cholecystectomy, likely within 24–72 hours. 4) Trend liver enzymes and bilirubin; repeat imaging/MRCP if rising or CBD dilation develops. 5) Postoperative diet advancement and discharge planning."
     }
   },
   {
@@ -508,7 +508,7 @@
       "pe": "Tachycardic, borderline hypotensive, orthostatic. Scleral icterus. Spider angiomata on chest. Abdomen mildly distended with shifting dullness, nontender. No asterixis. Guaiac-positive dark stool on rectal exam.",
       "studies": "Hgb 7.8 (down from a prior baseline ~11), platelets 88, INR 1.6, albumin 2.6, total bilirubin 2.8, transaminases mildly elevated. Type & screen sent.",
       "assessment": "1) Upper gastrointestinal bleeding, most consistent with variceal hemorrhage given known cirrhosis and varices. 2) Cirrhosis with portal hypertension, decompensated (variceal bleed). 3) Coagulopathy of liver disease.",
-      "plan": "1) Two large-bore IVs, type & crossmatch, transfuse packed red cells to a goal Hgb ~7\u20138. 2) IV octreotide infusion and IV ceftriaxone for SBP prophylaxis. 3) Urgent GI consultation for EGD with likely band ligation. 4) Correct coagulopathy per GI/hepatology recommendation. 5) Continue lactulose, monitor for hepatic encephalopathy. 6) Alcohol use counseling and social work involvement; consider addiction medicine consult."
+      "plan": "1) Two large-bore IVs, type & crossmatch, transfuse packed red cells to a goal Hgb ~7–8. 2) IV octreotide infusion and IV ceftriaxone for SBP prophylaxis. 3) Urgent GI consultation for EGD with likely band ligation. 4) Correct coagulopathy per GI/hepatology recommendation. 5) Continue lactulose, monitor for hepatic encephalopathy. 6) Alcohol use counseling and social work involvement; consider addiction medicine consult."
     }
   },
   {
@@ -552,7 +552,7 @@
     "imagingFindings": {
       "ctHead": {
         "findings": "No acute hemorrhage. Subtle loss of gray-white differentiation and effacement of sulci in the left MCA territory, without established infarct or mass effect.",
-        "impression": "Subtle early ischemic changes in the left MCA territory; no hemorrhage. Findings are consistent with hyperacute ischemic stroke \u2014 clinical correlation and follow-up imaging recommended."
+        "impression": "Subtle early ischemic changes in the left MCA territory; no hemorrhage. Findings are consistent with hyperacute ischemic stroke — clinical correlation and follow-up imaging recommended."
       }
     },
     "seedHP": {
@@ -562,7 +562,7 @@
       "psh": "None.",
       "meds": "Amlodipine 5 mg daily; atorvastatin 40 mg daily.",
       "allergies": "NKDA.",
-      "fhx": "Father \u2014 stroke at age 75.",
+      "fhx": "Father — stroke at age 75.",
       "shx": "Retired, lives with spouse. Former smoker (quit 15 years ago), occasional alcohol use.",
       "ros": "Unable to fully assess given expressive difficulty; positive for weakness and speech change per collateral history. Negative for headache, seizure, trauma per bystander report.",
       "pe": "NIHSS assessed at bedside: right facial droop, right arm drift, right leg drift, dysarthria, mild expressive aphasia (composite score in the moderate range). Pupils equal and reactive. No neglect.",
@@ -614,7 +614,7 @@
     },
     "imagingFindings": {
       "ekg": {
-        "findings": "Normal sinus rhythm. T-wave inversions in leads V2\u2013V4, no ST-segment elevation. No prior EKG available for comparison.",
+        "findings": "Normal sinus rhythm. T-wave inversions in leads V2–V4, no ST-segment elevation. No prior EKG available for comparison.",
         "impression": "T-wave inversions in the anterior leads without ST elevation; correlate with troponin trend, concerning for NSTEMI."
       }
     },
@@ -625,7 +625,7 @@
       "psh": "None.",
       "meds": "Metformin 1000 mg BID; rosuvastatin 20 mg daily.",
       "allergies": "NKDA.",
-      "fhx": "Father \u2014 MI at age 60. Sister \u2014 coronary stent at age 55.",
+      "fhx": "Father — MI at age 60. Sister — coronary stent at age 55.",
       "shx": "Works as an accountant. Never smoker, no alcohol use.",
       "ros": "Positive for chest pressure, diaphoresis, nausea. Negative for shortness of breath at rest, palpitations, syncope.",
       "pe": "Diaphoretic, uncomfortable-appearing. Cardiac exam regular rate and rhythm, no murmur, no rub. Lungs clear. No peripheral edema.",
@@ -685,7 +685,7 @@
       "psh": "None.",
       "meds": "Metformin 1000 mg BID; glipizide 10 mg daily.",
       "allergies": "NKDA.",
-      "fhx": "Father \u2014 type 2 diabetes, below-knee amputation.",
+      "fhx": "Father — type 2 diabetes, below-knee amputation.",
       "shx": "Works in a warehouse. Never smoker, occasional alcohol use.",
       "ros": "Positive for foot redness, swelling, fever, pain. Negative for numbness (though reports baseline decreased sensation), red streaking above the ankle, chills.",
       "pe": "Febrile. Left foot with well-demarcated erythema and warmth over the dorsum extending to the mid-foot, mild induration, small plantar ulceration with serous drainage, no fluctuance or crepitus. Decreased monofilament sensation bilaterally. Palpable dorsalis pedis pulse.",
@@ -746,7 +746,7 @@
       "psh": "None.",
       "meds": "Fluticasone/salmeterol BID; albuterol PRN.",
       "allergies": "NKDA.",
-      "fhx": "Mother \u2014 asthma. Brother \u2014 eczema.",
+      "fhx": "Mother — asthma. Brother — eczema.",
       "shx": "Works as a barista. Never smoker, occasional alcohol use, denies illicit drugs. Cat at home.",
       "ros": "Positive for dyspnea, wheeze, chest tightness, recent congestion/sore throat. Negative for fever, hemoptysis, leg swelling.",
       "pe": "Tachypneic, using mild accessory muscles. Diffuse expiratory wheezing bilaterally with a prolonged expiratory phase; moves air adequately without silent chest. Speaking in full sentences with effort.",
@@ -810,7 +810,7 @@
       "psh": "None.",
       "meds": "None.",
       "allergies": "NKDA.",
-      "fhx": "Mother \u2014 gallstones.",
+      "fhx": "Mother — gallstones.",
       "shx": "Works in construction. Occasional alcohol use (~2 drinks/week), denies heavy use. Never smoker.",
       "ros": "Positive for epigastric pain, back radiation, nausea, vomiting. Negative for fever until today, jaundice, dark urine, hematemesis.",
       "pe": "Low-grade fever, tachycardic. Epigastric tenderness to palpation without rebound or guarding; abdomen mildly distended, hypoactive bowel sounds. No jaundice.",
@@ -875,7 +875,7 @@
       "psh": "Right total knee arthroplasty.",
       "meds": "Acetaminophen PRN (was not on post-op anticoagulation per report).",
       "allergies": "NKDA.",
-      "fhx": "Sister \u2014 history of blood clot after pregnancy.",
+      "fhx": "Sister — history of blood clot after pregnancy.",
       "shx": "Retired teacher, been largely sedentary since surgery. Never smoker, no alcohol use.",
       "ros": "Positive for acute dyspnea, pleuritic chest discomfort, left leg swelling/pain. Negative for hemoptysis, syncope, fever.",
       "pe": "Tachycardic, tachypneic, hypoxic (SpO2 89% RA). Right heart strain findings not grossly apparent on exam. Left calf with swelling, warmth, and tenderness, positive Homans sign. Lungs clear to auscultation.",
@@ -938,7 +938,7 @@
       "psh": "None.",
       "meds": "Hydrochlorothiazide 25 mg daily; tamsulosin 0.4 mg daily.",
       "allergies": "NKDA.",
-      "fhx": "Father \u2014 pacemaker in his 80s.",
+      "fhx": "Father — pacemaker in his 80s.",
       "shx": "Retired engineer, lives with spouse. Never smoker, occasional alcohol use.",
       "ros": "Positive for one syncopal episode, brief presyncope. Negative for chest pain, palpitations, seizure activity, incontinence, head trauma.",
       "pe": "Orthostatic vital signs positive (systolic drop >20 mmHg with standing, symptomatic). Cardiac exam regular rate and rhythm, no murmur. Neurologic exam nonfocal.",
@@ -993,12 +993,12 @@
       "psh": "None.",
       "meds": "None.",
       "allergies": "NKDA.",
-      "fhx": "Father \u2014 alcohol use disorder.",
+      "fhx": "Father — alcohol use disorder.",
       "shx": "Currently unemployed, lives with his brother. Heavy daily alcohol use as above; smokes about half a pack of cigarettes per day; denies other illicit drug use.",
       "ros": "Positive for tremor, anxiety, insomnia, diaphoresis, one seizure. Negative for fever, focal weakness, head trauma reported by collateral.",
       "pe": "Tachycardic, hypertensive, diaphoretic, coarse tremor of the outstretched hands. Anxious and mildly agitated but oriented x4 currently. No focal neurologic deficit. No stigmata of acute head trauma.",
       "studies": "Magnesium 1.4, phosphorus 2.1 (both low). Platelets 68 (thrombocytopenia). Mild transaminitis, low albumin and total protein consistent with chronic liver disease.",
-      "assessment": "1) Alcohol withdrawal syndrome, complicated by a withdrawal seizure \u2014 high risk for further complications including delirium tremens. 2) Alcohol use disorder. 3) Electrolyte derangements (hypomagnesemia, hypophosphatemia) and thrombocytopenia consistent with chronic alcohol use/early liver disease.",
+      "assessment": "1) Alcohol withdrawal syndrome, complicated by a withdrawal seizure — high risk for further complications including delirium tremens. 2) Alcohol use disorder. 3) Electrolyte derangements (hypomagnesemia, hypophosphatemia) and thrombocytopenia consistent with chronic alcohol use/early liver disease.",
       "plan": "1) Symptom-triggered benzodiazepine dosing per CIWA-Ar protocol, with scheduled dosing given the seizure history and high-risk features. 2) IV thiamine before any dextrose-containing fluids, folate, and a multivitamin. 3) Electrolyte repletion (magnesium, phosphorus). 4) Seizure precautions, frequent neuro checks. 5) Continuous monitoring for escalation to delirium tremens (autonomic instability, hallucinations); low threshold for ICU-level care if uncontrolled. 6) Social work and addiction medicine consultation for outpatient treatment planning at discharge."
     }
   },
@@ -1118,12 +1118,12 @@
       "psh": "AV fistula creation, left arm.",
       "meds": "Sevelamer 800 mg with meals; amlodipine 10 mg daily.",
       "allergies": "NKDA.",
-      "fhx": "Mother \u2014 hypertension, dialysis-dependent in her final years.",
+      "fhx": "Mother — hypertension, dialysis-dependent in her final years.",
       "shx": "Lives alone, uses medical transport for dialysis. Never smoker, no alcohol use.",
       "ros": "Positive for weakness, nausea, decreased appetite, palpitations. Negative for chest pain, shortness of breath at rest, fever.",
       "pe": "Bradycardic relative to baseline, hypertensive. Fistula with palpable thrill, no bruit concern. Mild bilateral lower extremity edema. No acute distress at rest but appears fatigued. Neurologic exam nonfocal aside from generalized weakness.",
       "studies": "Potassium critically elevated at 6.8, creatinine 6.4, BUN 88, bicarbonate 16 (all consistent with missed dialysis). EKG with peaked T waves and QRS widening consistent with significant hyperkalemia.",
-      "assessment": "1) Severe hyperkalemia with EKG changes, in the setting of missed hemodialysis sessions \u2014 medical emergency. 2) End-stage renal disease on hemodialysis, non-adherent to schedule due to transportation barriers. 3) Metabolic acidosis.",
+      "assessment": "1) Severe hyperkalemia with EKG changes, in the setting of missed hemodialysis sessions — medical emergency. 2) End-stage renal disease on hemodialysis, non-adherent to schedule due to transportation barriers. 3) Metabolic acidosis.",
       "plan": "1) Emergent treatment for hyperkalemia: IV calcium gluconate for cardiac membrane stabilization, insulin/dextrose and nebulized albuterol to shift potassium intracellularly, while arranging emergent hemodialysis. 2) Continuous cardiac monitoring until potassium and EKG normalize. 3) Emergent nephrology consultation for urgent dialysis. 4) Social work involvement to address transportation barriers preventing dialysis attendance. 5) Reinforce dietary potassium restriction and dialysis adherence education. 6) Hold amlodipine while hemodynamics are being reassessed."
     }
   },
@@ -1186,7 +1186,7 @@
       "pe": "Abdomen distended and tympanitic, diffusely tender without rebound or guarding, high-pitched bowel sounds on auscultation. Well-healed midline surgical scar. No palpable hernia. Rectal vault empty, no gross blood.",
       "studies": "WBC 11.0, lactate 2.0, mild hypokalemia and hypochloremia consistent with vomiting losses. KUB with dilated small bowel loops and air-fluid levels. CT abdomen/pelvis with a transition point in the mid ileum, likely adhesive, no ischemia.",
       "assessment": "1) Small bowel obstruction, likely adhesive given prior laparotomy, without current imaging evidence of ischemia or perforation. 2) Hypokalemia and hypochloremic metabolic derangement from vomiting/NG losses.",
-      "plan": "1) NPO, nasogastric tube placement for decompression. 2) IV isotonic fluids with electrolyte repletion (potassium, chloride). 3) Serial abdominal exams and labs (WBC, lactate) to monitor for signs of ischemia or perforation; low threshold for surgery if these develop or if the patient fails to improve with conservative management. 4) Surgery following closely; if obstruction fails to resolve with 48\u201372 hours of conservative management, proceed to operative exploration and adhesiolysis. 5) Analgesia, antiemetics."
+      "plan": "1) NPO, nasogastric tube placement for decompression. 2) IV isotonic fluids with electrolyte repletion (potassium, chloride). 3) Serial abdominal exams and labs (WBC, lactate) to monitor for signs of ischemia or perforation; low threshold for surgery if these develop or if the patient fails to improve with conservative management. 4) Surgery following closely; if obstruction fails to resolve with 48–72 hours of conservative management, proceed to operative exploration and adhesiolysis. 5) Analgesia, antiemetics."
     }
   },
   {
@@ -1232,7 +1232,7 @@
       "bun": 34
     },
     "labTextProfile": {
-      "bloodcx": "Pending \u2014 no growth to date on either bottle set. Final results in 5 days if no growth."
+      "bloodcx": "Pending — no growth to date on either bottle set. Final results in 5 days if no growth."
     },
     "imagingFindings": {
       "cxr": {
@@ -1247,13 +1247,13 @@
       "psh": "Total hip arthroplasty (right).",
       "meds": "Donepezil 10 mg daily; amlodipine 5 mg daily; scheduled acetaminophen.",
       "allergies": "NKDA.",
-      "fhx": "Not obtainable \u2014 patient is a poor historian; no family contact available at this visit.",
+      "fhx": "Not obtainable — patient is a poor historian; no family contact available at this visit.",
       "shx": "Resides at a skilled nursing facility, requires assistance with ADLs at baseline. Nonsmoker.",
       "ros": "Limited by cognitive impairment; positive for fever and reported weakness/decreased intake per facility staff. No clearly localizing complaints obtainable from the patient.",
       "pe": "Febrile, tachycardic, borderline hypotensive. Confused, at her reported cognitive baseline per facility report but facility unable to confirm details today. No nuchal rigidity. Lungs clear. No costovertebral angle tenderness. No skin breakdown noted on exam. Abdomen soft, nondistended.",
       "studies": "WBC 18.9 with reported bandemia on differential, lactate 3.4, creatinine 1.8 (above documented baseline of 1.0). UA unremarkable. CXR without infiltrate. Blood cultures pending.",
       "assessment": "1) Sepsis of unclear source, meeting SIRS/qSOFA criteria, with a currently negative initial urinary and pulmonary workup. 2) Acute kidney injury, likely pre-renal in the setting of sepsis/poor intake. 3) Dementia, acute worsening of confusion likely related to acute illness (delirium superimposed on baseline dementia).",
-      "plan": "1) IV isotonic fluid resuscitation, reassess volume status given age and cardiac history unknown. 2) Empiric broad-spectrum antibiotics (e.g., vancomycin plus piperacillin-tazobactam) pending source identification, given inability to localize infection on initial workup. 3) Further source workup: skin/pressure-injury exam, consider abdominal imaging if no improvement, review facility records for additional history. 4) Trend lactate and renal function to assess response to treatment. 5) Delirium precautions, reorientation strategies, minimize deliriogenic medications. 6) Goals-of-care discussion given DNR/DNI status and dementia \u2014 involve facility-documented healthcare proxy/family as available."
+      "plan": "1) IV isotonic fluid resuscitation, reassess volume status given age and cardiac history unknown. 2) Empiric broad-spectrum antibiotics (e.g., vancomycin plus piperacillin-tazobactam) pending source identification, given inability to localize infection on initial workup. 3) Further source workup: skin/pressure-injury exam, consider abdominal imaging if no improvement, review facility records for additional history. 4) Trend lactate and renal function to assess response to treatment. 5) Delirium precautions, reorientation strategies, minimize deliriogenic medications. 6) Goals-of-care discussion given DNR/DNI status and dementia — involve facility-documented healthcare proxy/family as available."
     }
   },
   {
@@ -1275,7 +1275,7 @@
       "NKDA"
     ],
     "problemList": [
-      "Second-degree AV block, Type I (Wenckebach) \u2014 new",
+      "Second-degree AV block, Type I (Wenckebach) — new",
       "Coronary artery disease, s/p RCA stenting",
       "Hypertension",
       "Osteoarthritis"
@@ -1341,19 +1341,19 @@
       ]
     },
     "seedHP": {
-      "cc": "Dizziness and lightheadedness, \"like I\u2019m going to pass out.\"",
+      "cc": "Dizziness and lightheadedness, \"like I’m going to pass out.\"",
       "hpi": "68-year-old man with hypertension, coronary artery disease (s/p RCA stenting 3 years ago), and osteoarthritis presents to the outpatient office with dizziness and near-syncope, now transferred for further evaluation. He describes 2 weeks of episodic lightheadedness accompanied by a distinct \"skipped heartbeat\" or sudden pauses in his pulse, along with a mild, non-painful \"thumping\" sensation in his neck during these spells. Episodes last seconds to minutes, are aggravated by climbing stairs or standing up quickly, and are partially relieved by sitting down, resting, or leaning forward. They occur predictably with exertion, rated 7/10 for impairment due to the sensation of near-syncope. He also reports a month of generalized fatigue and decreased exercise tolerance. He denies true syncope, chest pain, shortness of breath, orthopnea, focal weakness, numbness, or speech changes.",
-      "pmh": "Essential hypertension. Coronary artery disease (see PSH \u2014 RCA stenting). Osteoarthritis.",
+      "pmh": "Essential hypertension. Coronary artery disease (see PSH — RCA stenting). Osteoarthritis.",
       "psh": "Percutaneous coronary intervention with stent to the right coronary artery (RCA), 3 years ago. Left total knee arthroplasty, 2021.",
       "meds": "Metoprolol succinate 50 mg PO daily; lisinopril 10 mg PO daily; aspirin 81 mg PO daily; atorvastatin 40 mg PO daily; acetaminophen 500 mg PO PRN joint pain.",
       "allergies": "NKDA.",
-      "fhx": "Mother \u2014 deceased age 82, vascular dementia and hypertension. Father \u2014 deceased age 64, coronary artery disease and type 2 diabetes.",
-      "shx": "Married, lives at home with wife; retired high school teacher. Denies tobacco or recreational drug use. Endorses 1\u20132 glasses of red wine on weekends. Normal diet. Vaccinations up to date.",
+      "fhx": "Mother — deceased age 82, vascular dementia and hypertension. Father — deceased age 64, coronary artery disease and type 2 diabetes.",
+      "shx": "Married, lives at home with wife; retired high school teacher. Denies tobacco or recreational drug use. Endorses 1–2 glasses of red wine on weekends. Normal diet. Vaccinations up to date.",
       "ros": "Positive for generalized fatigue, episodic lightheadedness/near-syncope, palpitations, and an occasionally slow pulse. Negative for fever, chills, night sweats, weight change, true syncope, chest pain, dyspnea, orthopnea, PND, peripheral edema, focal weakness, numbness, tingling, or tremor.",
-      "pe": "BP 118/72, HR 45, RR 14, SpO2 98% RA, Temp 98.4\u00b0F. Alert, mildly fatigued, no acute distress at rest. Carotid pulses 2+ bilaterally, notable for an irregular rhythm with occasional pauses; no bruits. Cardiovascular exam with a variable, irregularly irregular bradycardia; normal S1/S2; no murmurs. Lungs clear bilaterally. Peripheral pulses normal, capillary refill <3 sec, no edema. Abdomen benign. Normal strength and grossly intact cranial nerves; stable but cautious gait. A&Ox3, cooperative, normal mood/affect.",
-      "studies": "12-lead EKG obtained in the office is concerning for a high-grade AV conduction abnormality (see Orders & Results once resulted). Echocardiogram, head CT, and a full laboratory workup (BMP, CBC, troponin, BNP, magnesium, TSH, free T4) are pending on transfer to the ED \u2014 order and result each from Orders & Results to review the findings that support the working diagnosis.",
-      "assessment": "1) Second-degree AV block, Type I (Wenckebach), new \u2014 favored to be multifactorial: age-related conduction system disease, a possible sequela of prior inferior myocardial infarction (the RCA supplies the AV node in the majority of individuals), and a contributory negative dromotropic effect from home metoprolol succinate. 2) Coronary artery disease, stable, s/p RCA stenting. 3) Hypertension, currently well controlled. Differential considered: higher-grade or complete heart block, sick sinus syndrome, acute coronary syndrome, drug-induced sinus/AV-nodal bradycardia, hypothyroidism, hyperkalemia, vasovagal syncope, micturition syncope, and myocarditis.",
-      "plan": "1) Transfer to the emergency department for further evaluation and monitoring. 2) 12-lead EKG. 3) Transthoracic echocardiogram to establish baseline LVEF prior to possible pacemaker evaluation. 4) Continuous cardiac telemetry monitoring. 5) Hold home metoprolol succinate; reassess conduction after an adequate washout period (metoprolol succinate half-life 3\u20137 hours; ~48-hour washout is a common practice). 6) BMP for electrolytes, CBC (anemia/infection), troponin, BNP, magnesium, TSH, and free T4 to evaluate for reversible or contributing causes. 7) Strict bed rest; ambulate with assistance only, given fall risk. 8) Orthostatic vital signs. 9) Cardiology consult. 10) Head CT given near-syncope and fall risk. 11) NPO in anticipation of a possible procedure (permanent pacemaker), pending cardiology evaluation and metoprolol washout."
+      "pe": "BP 118/72, HR 45, RR 14, SpO2 98% RA, Temp 98.4°F. Alert, mildly fatigued, no acute distress at rest. Carotid pulses 2+ bilaterally, notable for an irregular rhythm with occasional pauses; no bruits. Cardiovascular exam with a variable, irregularly irregular bradycardia; normal S1/S2; no murmurs. Lungs clear bilaterally. Peripheral pulses normal, capillary refill <3 sec, no edema. Abdomen benign. Normal strength and grossly intact cranial nerves; stable but cautious gait. A&Ox3, cooperative, normal mood/affect.",
+      "studies": "12-lead EKG obtained in the office is concerning for a high-grade AV conduction abnormality (see Orders & Results once resulted). Echocardiogram, head CT, and a full laboratory workup (BMP, CBC, troponin, BNP, magnesium, TSH, free T4) are pending on transfer to the ED — order and result each from Orders & Results to review the findings that support the working diagnosis.",
+      "assessment": "1) Second-degree AV block, Type I (Wenckebach), new — favored to be multifactorial: age-related conduction system disease, a possible sequela of prior inferior myocardial infarction (the RCA supplies the AV node in the majority of individuals), and a contributory negative dromotropic effect from home metoprolol succinate. 2) Coronary artery disease, stable, s/p RCA stenting. 3) Hypertension, currently well controlled. Differential considered: higher-grade or complete heart block, sick sinus syndrome, acute coronary syndrome, drug-induced sinus/AV-nodal bradycardia, hypothyroidism, hyperkalemia, vasovagal syncope, micturition syncope, and myocarditis.",
+      "plan": "1) Transfer to the emergency department for further evaluation and monitoring. 2) 12-lead EKG. 3) Transthoracic echocardiogram to establish baseline LVEF prior to possible pacemaker evaluation. 4) Continuous cardiac telemetry monitoring. 5) Hold home metoprolol succinate; reassess conduction after an adequate washout period (metoprolol succinate half-life 3–7 hours; ~48-hour washout is a common practice). 6) BMP for electrolytes, CBC (anemia/infection), troponin, BNP, magnesium, TSH, and free T4 to evaluate for reversible or contributing causes. 7) Strict bed rest; ambulate with assistance only, given fall risk. 8) Orthostatic vital signs. 9) Cardiology consult. 10) Head CT given near-syncope and fall risk. 11) NPO in anticipation of a possible procedure (permanent pacemaker), pending cardiology evaluation and metoprolol washout."
     }
   },
   {
@@ -1463,167 +1463,556 @@
     },
     "seedHP": {
       "cc": "Markedly decreased urine output and bilateral leg swelling for 3 days.",
-      "hpi": "74-year-old male with no prior medical history presents to the outpatient office with a 3-day history of progressive bilateral lower extremity edema, markedly decreased urine output, and generalized fatigue. Ankle swelling began 2 days ago and has extended to the mid-shins, with an estimated 8-lb weight gain over the past 3 days. He estimates 2\u20133 voids in the past 24 hours with very small volumes each time. He endorses increasing fatigue, mild nausea without vomiting, and dull bilateral flank discomfort over the past 48 hours. He also reports persistent thirst, frequent urination, and nocturia (3\u20134 times nightly) over the past several months \u2014 which he attributed to drinking large amounts of sweet tea \u2014 and an unintentional 15-lb weight loss over the past 6 months despite no change in diet. He has taken OTC ibuprofen 600 mg PO TID for the past 2 weeks for chronic low back pain. He has not seen a healthcare provider in over 5 years and takes no prescription medications. Denies fever, hematuria, dysuria, chest pain, or shortness of breath at rest.",
+      "hpi": "74-year-old male with no prior medical history presents to the outpatient office with a 3-day history of progressive bilateral lower extremity edema, markedly decreased urine output, and generalized fatigue. Ankle swelling began 2 days ago and has extended to the mid-shins, with an estimated 8-lb weight gain over the past 3 days. He estimates 2–3 voids in the past 24 hours with very small volumes each time. He endorses increasing fatigue, mild nausea without vomiting, and dull bilateral flank discomfort over the past 48 hours. He also reports persistent thirst, frequent urination, and nocturia (3–4 times nightly) over the past several months — which he attributed to drinking large amounts of sweet tea — and an unintentional 15-lb weight loss over the past 6 months despite no change in diet. He has taken OTC ibuprofen 600 mg PO TID for the past 2 weeks for chronic low back pain. He has not seen a healthcare provider in over 5 years and takes no prescription medications. Denies fever, hematuria, dysuria, chest pain, or shortness of breath at rest.",
       "pmh": "None known. Has not seen a healthcare provider in over 5 years.",
       "psh": "Right inguinal hernia repair (age 32).",
       "meds": "Ibuprofen 600 mg PO TID (self-directed, past 2 weeks).",
       "allergies": "NKDA.",
       "fhx": "Mother: deceased, type 2 diabetes mellitus. Father: deceased, premature coronary artery disease (MI at age 58).",
-      "shx": "Retired and sedentary. Diet consists mainly of fast food and processed meals; drinks 3\u20134 cans regular soda and 2\u20133 glasses sweet tea daily. Former smoker (1 pack/day \u00d7 15 years, quit 5 years ago). Drinks 2\u20133 beers on weekends. Denies illicit drug use. Lives alone. Vaccinations up to date.",
-      "ros": "Positive: fatigue, malaise, unintentional 15-lb weight loss over 6 months, mild nausea, decreased appetite (3 days), mild dyspnea on exertion (climbing stairs), bilateral lower extremity edema with ~8-lb weight gain over 3 days, chronic nocturia (3\u20134\u00d7/night for months), polyuria/polydipsia (months), mild intermittent tingling in bilateral feet. Negative: fevers, chills, night sweats, rashes, headaches, vision changes, sore throat, cough, wheezing, chest pain, palpitations, orthopnea, vomiting, diarrhea, constipation, dysuria, hematuria, focal weakness, numbness, easy bruising, bleeding, lymphadenopathy.",
-      "pe": "BP 168/98, HR 92, RR 18, SpO2 96% RA, Temp 98.6\u00b0F. Height 5'10', Weight 228 lbs, BMI 32.7 kg/m\u00b2. Obese male appearing fatigued but in no acute distress; alert and cooperative. Skin warm, dry, intact; acanthosis nigricans at posterior neck and bilateral axillae. Fundoscopic exam: scattered dot-and-blot hemorrhages and hard exudates bilaterally. Oropharynx moist, no lesions. Diminished breath sounds at bilateral bases; mild bibasilar crackles. Regular rate and rhythm, normal S1/S2, S4 appreciated at the apex, no murmurs or rubs; peripheral pulses difficult to palpate due to edema. Abdomen soft, obese, nontender; no hepatosplenomegaly or masses. Mild bilateral costovertebral angle tenderness; no suprapubic tenderness. 2+ pitting edema bilaterally, feet to mid-shins; no joint deformity or warmth. Neurologic: A&Ox3; cranial nerves II\u2013XII intact; motor 5/5 upper and lower extremities; decreased sensation to monofilament testing in bilateral feet in a stocking distribution; DTRs 1+ at ankles, 2+ at knees and upper extremities. Appropriate affect, cooperative.",
-      "studies": "Basic metabolic panel, CBC with differential, HbA1c, magnesium/phosphorus, lipid panel, and urinalysis have resulted and are notable for markedly abnormal renal function, an elevated potassium with corresponding ECG changes, significant new-range hyperglycemia, and marked dyslipidemia \u2014 order and review each panel from Orders & Results for the exact values. Urine studies (sodium, creatinine, osmolality, FENa) and a urine albumin-to-creatinine ratio have also resulted and support a hemodynamic (\u201cpseudo-prerenal\u201d) mechanism rather than acute tubular necrosis, plus pre-existing albuminuria \u2014 order both from Orders & Results for the exact values. Chest X-ray, 12-lead EKG, and renal ultrasound have also resulted \u2014 review each study under Orders & Results to see the actual findings and impressions.",
-      "assessment": "1) Acute Kidney Injury, Stage 3 \u2014 an estimated 3\u20134-fold rise in creatinine from baseline (see BMP in Orders & Results for the exact value). Multifactorial etiology: (a) NSAID-induced afferent arteriolar vasoconstriction superimposed on (b) chronic volume depletion from unrecognized hyperglycemic osmotic diuresis (a hemodynamically mediated \u201cpseudo-prerenal\u201d pattern), layered on (c) pre-existing subclinical diabetic and hypertensive nephropathy. Urine studies (FENa, urine sodium, urine osmolality, and the BUN:creatinine ratio \u2014 see BMP and the Urine Studies panel) support a hemodynamic mechanism rather than ATN; hyaline casts on urinalysis are nonspecific. Proteinuria and an elevated UACR (see the UACR panel) reflect pre-existing diabetic nephropathy rather than acute injury. Findings on chest imaging indicate volume overload requiring diuresis, not aggressive crystalloid resuscitation. Renal ultrasound excludes obstruction. 2) Essential Hypertension with end-organ damage \u2014 S4 gallop, left ventricular hypertrophy and left atrial enlargement on EKG, nonproliferative diabetic retinopathy, and contribution to nephrosclerosis. 3) Type 2 Diabetes Mellitus, newly diagnosed, with nonproliferative retinopathy and peripheral neuropathy \u2014 classic triad of polyuria, polydipsia, and unintentional weight loss, with markedly elevated random glucose and HbA1c (see labs for exact values); acanthosis nigricans, dot-and-blot hemorrhages/hard exudates, and stocking-distribution sensory loss support chronic undiagnosed hyperglycemia. 4) Dyslipidemia with high cardiovascular risk \u2014 a significantly abnormal lipid panel (see Orders & Results) requiring statin therapy given diabetes, hypertension, obesity, and family history of premature CAD. 5) Hyperkalemia with peaked T waves on EKG \u2014 see BMP and EKG results for details.",
-      "plan": "TRANSFER TO ED OR ADMIT DIRECTLY IF ADMITTING PRIVILEGES AVAILABLE. AKI management: (1) Discontinue ibuprofen/all NSAIDs immediately. (2) Fluid restriction to 1 L/day; aggressive crystalloid bolus contraindicated. (3) Furosemide 40\u201380 mg IV push now, then titrate to UOP 0.3\u20130.5 mL/kg/hr once euvolemia approached \u2014 goal is decongestion, not forced diuresis. (4) Foley catheter for accurate UOP; reassess volume status frequently. (5) Serial BMP, CBC, phosphorus, magnesium, UA with microscopy, urine electrolytes/FENa, urine osmolality. (6) Renal ultrasound to exclude obstruction \u2014 completed, no obstruction. (7) 12-lead EKG for hyperkalemia changes \u2014 completed. (8) CXR for pulmonary edema/cardiomegaly \u2014 completed. Hyperkalemia management: (9) Calcium gluconate 1 g IV over 2\u20135 min now for cardiac membrane stabilization; repeat if EKG changes persist after 5 min. (10) Insulin 10 units IV + dextrose 25 g IV (D50W 50 mL) to shift potassium intracellularly (onset 10\u201320 min, lasts 4\u20136 hr); monitor glucose closely. (11) Albuterol 10\u201320 mg nebulized (or 0.5 mg IV) for additional potassium shift. Glucose/diabetes management: (12) Hold insulin infusions until oral intake improves. (13) Conservative SQ regimen: basal 10 units daily + rapid-acting 4\u20136 units with meals once tolerating diet. (14) Target fasting glucose 140\u2013180 mg/dL, random <250 mg/dL during acute illness; capillary glucose q4h until stable, then premeal/bedtime; check electrolytes/renal function before insulin dose changes. Hypertension/renoprotection: (15) Withhold ACE-I/ARB during acute AKI. (16) Amlodipine 5 mg PO daily for BP control (safe in AKI). (17) Once AKI resolves, initiate lisinopril or losartan for renoprotection; target BP <130/80 mmHg; recheck BMP 1\u20132 weeks after initiation. Lipid management: (18) Atorvastatin 40 mg PO daily for primary ASCVD prevention; continue despite AKI. Avoid nephrotoxins: (19) Avoid NSAIDs, aminoglycosides, IV contrast, high-dose calcineurin inhibitors until renal function recovers. Patient education: (20) New T2DM diagnosis, lifestyle modification (diet, weight loss, activity). (21) Medication adherence to prevent complications. (22) Complete avoidance of NSAIDs/OTC meds without consulting a provider; mechanism of NSAID-induced kidney injury. (23) Relationship between uncontrolled HTN, diabetes, and progressive kidney disease. (24) Refer to DSMES program and registered dietitian. Emergency return precautions: seek immediate care for anuria, worsening SOB, chest pain, palpitations/irregular heartbeat, confusion/lethargy, or rapidly worsening swelling. Follow-up: (25) Serial BMP q12\u201324h during hospitalization. (26) Transition to outpatient management once AKI resolving. (27) Outpatient PCP follow-up in 1 week; initiate ACE-I/ARB once creatinine stabilizes. (28) Nephrology referral if renal function does not improve within 3\u20137 days or proteinuria persists. (29) Ophthalmology consult for diabetic retinopathy. (30) Cardiology evaluation if LV dysfunction develops."
+      "shx": "Retired and sedentary. Diet consists mainly of fast food and processed meals; drinks 3–4 cans regular soda and 2–3 glasses sweet tea daily. Former smoker (1 pack/day × 15 years, quit 5 years ago). Drinks 2–3 beers on weekends. Denies illicit drug use. Lives alone. Vaccinations up to date.",
+      "ros": "Positive: fatigue, malaise, unintentional 15-lb weight loss over 6 months, mild nausea, decreased appetite (3 days), mild dyspnea on exertion (climbing stairs), bilateral lower extremity edema with ~8-lb weight gain over 3 days, chronic nocturia (3–4×/night for months), polyuria/polydipsia (months), mild intermittent tingling in bilateral feet. Negative: fevers, chills, night sweats, rashes, headaches, vision changes, sore throat, cough, wheezing, chest pain, palpitations, orthopnea, vomiting, diarrhea, constipation, dysuria, hematuria, focal weakness, numbness, easy bruising, bleeding, lymphadenopathy.",
+      "pe": "BP 168/98, HR 92, RR 18, SpO2 96% RA, Temp 98.6°F. Height 5'10', Weight 228 lbs, BMI 32.7 kg/m². Obese male appearing fatigued but in no acute distress; alert and cooperative. Skin warm, dry, intact; acanthosis nigricans at posterior neck and bilateral axillae. Fundoscopic exam: scattered dot-and-blot hemorrhages and hard exudates bilaterally. Oropharynx moist, no lesions. Diminished breath sounds at bilateral bases; mild bibasilar crackles. Regular rate and rhythm, normal S1/S2, S4 appreciated at the apex, no murmurs or rubs; peripheral pulses difficult to palpate due to edema. Abdomen soft, obese, nontender; no hepatosplenomegaly or masses. Mild bilateral costovertebral angle tenderness; no suprapubic tenderness. 2+ pitting edema bilaterally, feet to mid-shins; no joint deformity or warmth. Neurologic: A&Ox3; cranial nerves II–XII intact; motor 5/5 upper and lower extremities; decreased sensation to monofilament testing in bilateral feet in a stocking distribution; DTRs 1+ at ankles, 2+ at knees and upper extremities. Appropriate affect, cooperative.",
+      "studies": "Basic metabolic panel, CBC with differential, HbA1c, magnesium/phosphorus, lipid panel, and urinalysis have resulted and are notable for markedly abnormal renal function, an elevated potassium with corresponding ECG changes, significant new-range hyperglycemia, and marked dyslipidemia — order and review each panel from Orders & Results for the exact values. Urine studies (sodium, creatinine, osmolality, FENa) and a urine albumin-to-creatinine ratio have also resulted and support a hemodynamic (“pseudo-prerenal”) mechanism rather than acute tubular necrosis, plus pre-existing albuminuria — order both from Orders & Results for the exact values. Chest X-ray, 12-lead EKG, and renal ultrasound have also resulted — review each study under Orders & Results to see the actual findings and impressions.",
+      "assessment": "1) Acute Kidney Injury, Stage 3 — an estimated 3–4-fold rise in creatinine from baseline (see BMP in Orders & Results for the exact value). Multifactorial etiology: (a) NSAID-induced afferent arteriolar vasoconstriction superimposed on (b) chronic volume depletion from unrecognized hyperglycemic osmotic diuresis (a hemodynamically mediated “pseudo-prerenal” pattern), layered on (c) pre-existing subclinical diabetic and hypertensive nephropathy. Urine studies (FENa, urine sodium, urine osmolality, and the BUN:creatinine ratio — see BMP and the Urine Studies panel) support a hemodynamic mechanism rather than ATN; hyaline casts on urinalysis are nonspecific. Proteinuria and an elevated UACR (see the UACR panel) reflect pre-existing diabetic nephropathy rather than acute injury. Findings on chest imaging indicate volume overload requiring diuresis, not aggressive crystalloid resuscitation. Renal ultrasound excludes obstruction. 2) Essential Hypertension with end-organ damage — S4 gallop, left ventricular hypertrophy and left atrial enlargement on EKG, nonproliferative diabetic retinopathy, and contribution to nephrosclerosis. 3) Type 2 Diabetes Mellitus, newly diagnosed, with nonproliferative retinopathy and peripheral neuropathy — classic triad of polyuria, polydipsia, and unintentional weight loss, with markedly elevated random glucose and HbA1c (see labs for exact values); acanthosis nigricans, dot-and-blot hemorrhages/hard exudates, and stocking-distribution sensory loss support chronic undiagnosed hyperglycemia. 4) Dyslipidemia with high cardiovascular risk — a significantly abnormal lipid panel (see Orders & Results) requiring statin therapy given diabetes, hypertension, obesity, and family history of premature CAD. 5) Hyperkalemia with peaked T waves on EKG — see BMP and EKG results for details.",
+      "plan": "TRANSFER TO ED OR ADMIT DIRECTLY IF ADMITTING PRIVILEGES AVAILABLE. AKI management: (1) Discontinue ibuprofen/all NSAIDs immediately. (2) Fluid restriction to 1 L/day; aggressive crystalloid bolus contraindicated. (3) Furosemide 40–80 mg IV push now, then titrate to UOP 0.3–0.5 mL/kg/hr once euvolemia approached — goal is decongestion, not forced diuresis. (4) Foley catheter for accurate UOP; reassess volume status frequently. (5) Serial BMP, CBC, phosphorus, magnesium, UA with microscopy, urine electrolytes/FENa, urine osmolality. (6) Renal ultrasound to exclude obstruction — completed, no obstruction. (7) 12-lead EKG for hyperkalemia changes — completed. (8) CXR for pulmonary edema/cardiomegaly — completed. Hyperkalemia management: (9) Calcium gluconate 1 g IV over 2–5 min now for cardiac membrane stabilization; repeat if EKG changes persist after 5 min. (10) Insulin 10 units IV + dextrose 25 g IV (D50W 50 mL) to shift potassium intracellularly (onset 10–20 min, lasts 4–6 hr); monitor glucose closely. (11) Albuterol 10–20 mg nebulized (or 0.5 mg IV) for additional potassium shift. Glucose/diabetes management: (12) Hold insulin infusions until oral intake improves. (13) Conservative SQ regimen: basal 10 units daily + rapid-acting 4–6 units with meals once tolerating diet. (14) Target fasting glucose 140–180 mg/dL, random <250 mg/dL during acute illness; capillary glucose q4h until stable, then premeal/bedtime; check electrolytes/renal function before insulin dose changes. Hypertension/renoprotection: (15) Withhold ACE-I/ARB during acute AKI. (16) Amlodipine 5 mg PO daily for BP control (safe in AKI). (17) Once AKI resolves, initiate lisinopril or losartan for renoprotection; target BP <130/80 mmHg; recheck BMP 1–2 weeks after initiation. Lipid management: (18) Atorvastatin 40 mg PO daily for primary ASCVD prevention; continue despite AKI. Avoid nephrotoxins: (19) Avoid NSAIDs, aminoglycosides, IV contrast, high-dose calcineurin inhibitors until renal function recovers. Patient education: (20) New T2DM diagnosis, lifestyle modification (diet, weight loss, activity). (21) Medication adherence to prevent complications. (22) Complete avoidance of NSAIDs/OTC meds without consulting a provider; mechanism of NSAID-induced kidney injury. (23) Relationship between uncontrolled HTN, diabetes, and progressive kidney disease. (24) Refer to DSMES program and registered dietitian. Emergency return precautions: seek immediate care for anuria, worsening SOB, chest pain, palpitations/irregular heartbeat, confusion/lethargy, or rapidly worsening swelling. Follow-up: (25) Serial BMP q12–24h during hospitalization. (26) Transition to outpatient management once AKI resolving. (27) Outpatient PCP follow-up in 1 week; initiate ACE-I/ARB once creatinine stabilizes. (28) Nephrology referral if renal function does not improve within 3–7 days or proteinuria persists. (29) Ophthalmology consult for diabetic retinopathy. (30) Cardiology evaluation if LV dysfunction develops."
     }
   },
   {
     "id": "p23",
-    "last": "Doyle",
-    "first": "Margaret",
-    "mrn": "TR-100451",
-    "dob": "1948-01-15",
+    "last": "Martinez",
+    "first": "Sophia",
+    "mrn": "TR-100425",
+    "dob": "1998-03-14",
     "sex": "F",
-    "room": "4212",
+    "room": "",
     "admitAt": {
-      "__daysAgoOffset__": 2
+      "__daysAgoOffset__": 0
     },
-    "attending": "Dr. Patricia Alvarez",
-    "team": "Medicine A",
+    "attending": "Dr. Rachel Chen",
+    "team": "Gynecology",
     "codeStatus": "Full Code",
-    "chiefComplaint": "Fall at home; found weak and confused",
+    "chiefComplaint": "Irregular periods and facial hair x3 years",
     "allergies": [
       "NKDA"
     ],
     "problemList": [
-      "Severe hyponatremia (Na 122 mEq/L)",
-      "Acute kidney injury, stage 1 (prerenal)",
-      "Major depressive disorder / complicated grief",
-      "Hypertension",
-      "Hyperlipidemia",
-      "Osteoarthritis bilateral knees"
+      "Polycystic ovarian syndrome",
+      "Acne vulgaris",
+      "Obesity",
+      "Stage 1 hypertension"
     ],
-    "homeMeds": [
-      "Hydrochlorothiazide 25 mg PO daily",
-      "Atorvastatin 20 mg PO daily",
-      "Acetaminophen 500 mg PO PRN",
-      "Vitamin D3 1000 IU PO daily"
-    ],
+    "homeMeds": [],
     "vitals": {
-      "temp": 98.2,
-      "hr": 98,
-      "bp": "108/64",
+      "temp": 98.6,
+      "hr": 84,
+      "bp": "138/84",
       "rr": 16,
-      "spo2": 97,
-      "pain": 3
+      "spo2": 98,
+      "pain": 0
     },
     "labProfile": {
-      "na": 122,
-      "k": 3.2,
-      "cl": 88,
-      "co2": 30,
-      "bun": 34,
-      "cr": 1.3,
-      "glu": 92,
-      "wbc": 6.8,
-      "rbc": 3.9,
-      "hgb": 11.6,
-      "hct": 36,
-      "mcv": 88,
-      "mch": 29,
-      "mchc": 33,
-      "rdw": 13.2,
-      "plt": 210,
+      "wbc": 7.2,
+      "hgb": 13.8,
+      "hct": 41.5,
+      "plt": 268,
+      "na": 138,
+      "k": 4.1,
+      "cl": 102,
+      "co2": 24,
+      "bun": 16,
+      "cr": 0.85,
+      "glu": 101,
       "ast": 24,
-      "alt": 19,
-      "alkphos": 68,
-      "tbili": 0.6,
-      "dbili": 0.1,
-      "albumin": 3.1,
-      "tprotein": 5.8,
-      "tsh": 2.8,
-      "ft4": 1.2,
-      "uasg": 1.028,
-      "urna": 42,
-      "urosm": 410
-    },
-    "labTextProfile": {
-      "urinalysis": "Color dark yellow, clear. Specific gravity 1.028, pH 5.5. Negative for blood, protein, leukocyte esterase, nitrites, glucose, ketones. <5 WBC/hpf, <5 RBC/hpf, no bacteria.",
-      "urineSodium": "42 mEq/L (confounded by active thiazide effect)",
-      "urineOsmolality": "410 mOsm/kg (concentrated; exceeds serum osmolality ~261)"
+      "alt": 22,
+      "tsh": 1.8,
+      "ft4": 1.1,
+      "totalchol": 218,
+      "ldl": 145,
+      "hdl": 38,
+      "tg": 162,
+      "glu2hr": 158,
+      "freeT": 6.8,
+      "totalT": 58,
+      "dheas": 185,
+      "prolactin": 8.2
     },
     "imagingFindings": {
-      "ctHead": {
-        "findings": "No acute intracranial hemorrhage, mass effect, or midline shift. No acute infarct. Age-appropriate cerebral volume loss.",
-        "impression": "No acute intracranial abnormality."
-      },
-      "cxr": {
-        "findings": "Lungs clear bilaterally without focal consolidation, effusion, or pneumothorax. Cardiomediastinal silhouette normal in size and contour. Mild degenerative changes of the thoracic spine.",
-        "impression": "No acute cardiopulmonary process."
+      "usPelvis": {
+        "findings": "Right ovary: Volume 12.5 cm³, containing 24 follicles measuring 2–9 mm in diameter, distributed throughout the ovarian stroma. No dominant follicle. Left ovary: Volume 11.8 cm³, containing 22 follicles measuring 2–9 mm, distributed throughout. Bilateral ovarian morphology consistent with polycystic appearance. Endometrium: Measures 8 mm in thickness (normal, not thickened, and no hyperplasia). Uterus: Normal size and echogenicity. No adnexal masses or free fluid.",
+        "impression": "Bilateral polycystic ovarian morphology. Endometrial thickness and uterine anatomy normal. No evidence of ovarian or adrenal tumor. Findings support diagnosis of PCOS."
       }
-    },
-    "procedureNotes": {
-      "ekg": "Sinus rhythm at 75 bpm. Normal intervals. No acute ST-segment changes."
-    },
-    "seedHP": {
-      "cc": "Fall at home; found weak and confused",
-      "hpi": "78-year-old woman brought to ED by daughter after a fall at home this morning. Husband of 52 years died 3 months ago; patient living alone since. Daughter reports ~3 weeks of progressive fatigue, weakness, and poor appetite \u2014 surviving mostly on tea and toast. Estimated 9-lb unintentional weight loss over 3 weeks. Several episodes over past week of seeming \"foggy\" or slow to respond. Found on kitchen floor after apparently losing balance while standing; no witnessed LOC, seizure, or head strike. Patient reports 2 weeks of worsening dizziness on standing, generalized weakness, feeling \"not herself\" since husband's death. Denies chest pain, palpitations, fever, vomiting, diarrhea, dysuria, suicidal ideation.",
-      "pmh": "Hypertension; osteoarthritis; bilateral knee replacements; hyperlipidemia.",
-      "psh": "Right total knee arthroplasty; remote appendectomy.",
-      "meds": "Hydrochlorothiazide 25 mg daily; atorvastatin 20 mg daily; acetaminophen PRN; vitamin D3 1000 IU daily.",
-      "allergies": "NKDA.",
-      "fhx": "Mother \u2014 hypertension, died age 84 of natural causes. Father \u2014 CAD, MI at age 68. One younger brother, living, with hypertension.",
-      "shx": "Retired schoolteacher. Widowed 3 months ago after 52-year marriage. Never smoker. Occasional wine in past; none since husband's death. Denies recreational drug use. Lives alone in single-story home; previously independent with ADLs/IADLs. Vaccinations up to date.",
-      "ros": "General: fatigue, weakness, 9-lb unintentional weight loss over 3 weeks; denies fever/chills. Skin: denies rash/itching/easy bruising except abrasion from fall. HEENT: denies headache/vision changes/hearing changes/sore throat; endorses dry mouth. Respiratory: denies cough/SOB/wheeze. Cardiovascular: denies CP/palpitations; endorses lightheadedness with standing. GI: poor appetite, decreased PO intake x weeks; denies N/V/D/constipation/abdominal pain. GU: denies dysuria/frequency/hematuria; reports decreased urine output x several days. Musculoskeletal: chronic bilateral knee discomfort at baseline unchanged; denies new swelling/focal pain except L forearm abrasion. Neuro: weakness, intermittent mild confusion/slowed thinking past several days per daughter; denies focal weakness/numbness/seizure/LOC with fall. Psych: low mood, tearfulness, poor sleep, decreased interest in prior activities since husband's death; denies suicidal/homicidal ideation. Endocrine: denies heat/cold intolerance/excessive thirst/polyuria. Heme/Lymph: denies easy bruising/bleeding/lymph node swelling.",
-      "pe": "Gen: thin, frail-appearing, no acute distress, fatigued. Vitals: BP 108/64 supine, 88/54 standing; HR 98 supine, 122 standing; RR 16; SpO2 97% RA; Temp 98.2\u00b0F; Ht 64 in, Wt 118 lb (\u2193 from 127). Skin: dry with \u2193 turgor on forearms; 2-cm ecchymotic abrasion L forearm, no active bleeding. HEENT: dry oral mucosa; sunken eyes; oropharynx clear, no erythema/exudate; no scalp hematoma/facial trauma. Respiratory: CTAB, no wheezes/rales/rhonchi, no increased WOB. Cardiovascular: tachycardic, regular rhythm, normal S1/S2, no murmurs/rubs/gallops; no JVD; capillary refill 3 sec. GI: abdomen soft, nontender, nondistended, normoactive BS, no organomegaly. GU: deferred. MSK: mild bilateral knee crepitus without effusion/erythema consistent with OA; L forearm abrasion; full ROM elsewhere; no deformity/focal tenderness; no evidence of hip/long-bone fracture. Neuro: alert; oriented person/place, mildly slow and inconsistent orientation to date; CN II-XII intact; strength 4/5 bilateral UE/LE symmetric; sensation intact; no focal deficits. Psych: flat affect, tearful re: husband; cooperative, appropriate; linear thought process. Endocrine: no thyromegaly/nodules.",
-      "assessment": "1) Hypovolemic hyponatremia, severe (Na 122 mEq/L), secondary to hydrochlorothiazide + low dietary solute/fluid intake. 2) Acute kidney injury, stage 1, prerenal, secondary to volume depletion. 3) Major depressive disorder / complicated grief with self-neglect and unintentional weight loss. 4) Mechanical fall, multifactorial (orthostatic hypotension, generalized weakness).",
-      "plan": "1) Hyponatremia: D/C HCTZ; admit for cautious correction with isotonic 0.9% NS at conservative rate; monitor urine output hourly \u2014 if >250 mL/h or abruptly dilute (SG <1.005), hold NS and initiate desmopressin to prevent overcorrection; serial BMP q2-4h initially; limit sodium correction to \u22646-8 mEq/L first 24h given multiple ODS risk factors (malnutrition, hypokalemia, chronicity >48h); correct K cautiously (K repletion raises serum Na); nephrology/endocrinology consult if difficult control or overcorrection. 2) AKI: hold nephrotoxic agents; monitor renal function; expect improvement with volume repletion. 3) Nutrition/self-neglect: nutrition consult; oral supplementation; Na/protein-appropriate diet as tolerated when electrolytes stabilizing. 4) Fall/safety: fall precautions; PT/OT eval; home safety assessment before discharge. 5) Psychosocial: PHQ-9; social work consult for grief support; consider outpatient counseling/bereavement resources; reassess safety (currently denies SI/HI). 6) Med reconciliation: consider alternative antihypertensive to replace HCTZ once stable. 7) Case management: home health services, community nutrition support (Meals on Wheels), caregiver/family involvement planning before discharge."
     },
     "priorRecords": {
       "labs": [
         {
-          "date": "2025-10-15",
-          "panelId": "bmp",
+          "date": "2024-08-27",
+          "panelId": "cbc",
           "values": {
-            "na": 140,
-            "k": 4.0,
-            "cl": 101,
-            "co2": 26,
-            "bun": 14,
-            "cr": 0.8,
-            "glu": 92
-          },
-          "orderedBy": "Primary care physician \u2014 outside records"
+            "wbc": 7,
+            "hgb": 13.5,
+            "hct": 40.5,
+            "plt": 265
+          }
         },
         {
-          "date": "2026-05-20",
+          "date": "2024-08-27",
           "panelId": "bmp",
           "values": {
-            "na": 134,
-            "k": 3.8,
-            "cl": 99,
-            "co2": 25,
+            "bun": 15,
+            "cr": 0.84,
+            "glu": 98
+          }
+        },
+        {
+          "date": "2024-08-27",
+          "panelId": "tsh",
+          "values": {
+            "tsh": 1.9
+          }
+        },
+        {
+          "date": "2024-08-27",
+          "panelId": "ft4",
+          "values": {
+            "ft4": 1
+          }
+        },
+        {
+          "date": "2025-08-27",
+          "panelId": "cbc",
+          "values": {
+            "wbc": 7.1,
+            "hgb": 13.7,
+            "hct": 41.2,
+            "plt": 266
+          }
+        },
+        {
+          "date": "2025-08-27",
+          "panelId": "bmp",
+          "values": {
             "bun": 16,
-            "cr": 0.9,
-            "glu": 90
-          },
-          "orderedBy": "Primary care physician \u2014 outside records"
+            "cr": 0.85,
+            "glu": 99
+          }
         },
         {
-          "date": "2026-07-14",
-          "panelId": "bmp",
+          "date": "2025-08-27",
+          "panelId": "tsh",
           "values": {
-            "na": 129,
-            "k": 3.6,
-            "cl": 96,
-            "co2": 26,
-            "bun": 20,
-            "cr": 1.0,
-            "glu": 94
-          },
-          "orderedBy": "Primary care physician \u2014 outside records"
+            "tsh": 1.8
+          }
+        },
+        {
+          "date": "2025-08-27",
+          "panelId": "ft4",
+          "values": {
+            "ft4": 1.1
+          }
         }
       ]
+    },
+    "seedHP": {
+      "cc": "Irregular periods and facial hair x3 years",
+      "hpi": "28-year-old woman presenting to clinic with 3-year history of progressively worsening amenorrhea and hirsutism. Reports menarche age 12 with initially regular 28-day cycles. At age 25, cycles became irregular (40–90 days), progressing to complete amenorrhea for 4–6 month stretches interrupted by heavy vaginal bleeding. Concurrent progressive facial hair (upper lip, chin, lower abdomen), acne resistant to OTC treatments, weight gain ~35 lbs over 3 years despite stable diet/activity. Denies galactorrhea, temperature intolerance. Reports fatigue. Concerned about fertility. Prior TSH and prolactin normal 2 years ago. No OCPs or androgenic agents.",
+      "pmh": "No significant PMH. Denies diabetes, hypertension, thyroid disease.",
+      "psh": "None.",
+      "meds": "None. OTC acne treatments (benzoyl peroxide) without sustained benefit.",
+      "allergies": "NKDA.",
+      "fhx": "Mother: Type 2 diabetes, hypertension (diagnosed age 52). Father: Hypertension. Sister: No significant medical history.",
+      "shx": "Office manager, lives with partner. Exercises 2–3x/week, 30 min. Western diet, occasional fast food. Denies tobacco, illicit drugs. Occasional alcohol (2–3 drinks/week). Vaccinations up to date.",
+      "ros": "General: Fatigue, occasional mood swings; denies night sweats or unintentional weight loss. Skin: Progressive acne face/upper back, dark coarse hair upper lip/chin/lower abdomen (hirsutism). HEENT: No visual changes, headaches, or galactorrhea. Respiratory: No dyspnea, cough, wheezing. Cardiovascular: No chest pain, palpitations, syncope; BP occasionally elevated at home (140s/80s systolic). GI: No nausea, vomiting, diarrhea, abdominal pain. GU: Irregular menses and amenorrhea as noted; no dysuria, hematuria, polyuria. MSK: No joint pain/swelling. Neuro: No tremor, vertigo, focal deficits. Psych: Occasional mood swings related to menstrual dysfunction; denies suicidal ideation. Endocrine: Fatigue; no temperature intolerance, hyperreflexia, hypothermia. Heme/Lymph: No easy bruising, lymphadenopathy.",
+      "pe": "Vitals: BP 138/84, HR 84, RR 16, Temp 98.6°F. Ht 5'6\", Wt 195 lbs (BMI 31.5—obese). General: Alert, well-developed woman, no acute distress, mild central obesity. Skin: Multiple comedones/inflammatory papules face/upper back (acne); dark coarse hair upper lip (fine moustache), chin, lower abdomen (male-pattern distribution); no skin tags, acanthosis nigricans. HEENT: Normocephalic, atraumatic, symmetric; no galactorrhea on breast exam. Respiratory: Lungs clear bilaterally. Cardiovascular: RRR, no murmurs/rubs/gallops. Abdomen: Soft, non-tender, no hepatosplenomegaly, normal bowel sounds. Pelvic (external only): No vulvar lesions/discharge, normal labia, no clitoromegaly. Neuro: A&Ox3, CN II–XII intact, motor/sensory intact, no focal deficits. Psych: Cooperative, appropriate affect, no depression/anxiety by observation.",
+      "studies": "CBC: WBC 7.2, Hgb 13.8, Hct 41.5, Plt 268 (all normal). CMP: Na 138, K 4.1, Cl 102, CO2 24, BUN 16, Cr 0.85, glucose 101 (fasting, abnormal), Ca 9.3, Total Protein 7.0, Albumin 4.2, ALT 22, AST 24, Alk Phos 62, Total Bili 0.7. Lipid Panel: Total Cholesterol 218 (↑), LDL 145 (↑), HDL 38 (↓), TG 162 (↑) — dyslipidemia pattern consistent with metabolic syndrome. OGTT: Fasting glucose 101 (↑), 2-hour glucose 158 (↑) — impaired fasting glucose and impaired glucose tolerance; prediabetes. Endocrine: TSH 1.8 (normal), Free T4 1.1 (normal), Prolactin 8.2 (normal), Free Testosterone 6.8 (↑; normal <4.2 pg/mL), Total Testosterone 58 (↑; normal but elevated for female with symptoms), DHEA-S 185 (normal, 45–270 µg/dL). Pelvic ultrasound (transvaginal): Right ovary volume 12.5 cm³ with 24 follicles 2–9 mm distributed throughout stroma; left ovary volume 11.8 cm³ with 22 follicles 2–9 mm. Bilateral polycystic morphology. Endometrial thickness 8 mm (normal, no hyperplasia). No adnexal masses.",
+      "assessment": "1) Polycystic ovarian syndrome, confirmed. Meets Rotterdam criteria: oligoamenorrhea/amenorrhea + clinical hyperandrogenism (hirsutism, acne) + polycystic ovary morphology on imaging. Mild biochemical hyperandrogenism (elevated free testosterone, upper-normal total testosterone). Insulin resistance likely given obesity, dyslipidemia, prediabetes. 2) Acne vulgaris, moderate, androgen-driven. 3) Dyslipidemia (elevated LDL, reduced HDL, elevated triglycerides). 4) Impaired glucose tolerance/prediabetes. 5) Obesity (BMI 31.5 kg/m², central distribution). 6) Hypertension, stage 1 (BP 138/84 mmHg). 7) Metabolic syndrome (obesity + hypertension + dyslipidemia + glucose dysregulation).",
+      "plan": "1) Lifestyle modification (first-line, all PCOS patients): Weight loss goal 5–10% (~10–19 lbs); target 1–2 lbs/week via caloric deficit. Minimum 150 min/week moderate-intensity aerobic + 2–3 days resistance training. Dietary counseling: whole grains, lean proteins, healthy fats, high fiber; limit refined carbs/sugary beverages. Referral to registered dietitian if available. Home BP monitoring; target <130/80 mmHg. 2) Medical management: Combined oral contraceptive pill (OCP) first-line for menstrual regulation and hirsutism/acne (suppress GnRH → reduce ovarian androgens, increase SHBG). Choose lower-androgenic progestin (norgestimate, desogestrel). Start 28-day or extended-cycle regimen. Counsel on break-through bleeding initially and non-contraceptive benefits (acne/hirsutism improvement over 6–12 months). Recheck lipids/glucose after 3 months OCP. 3) Metformin 500 mg BID initially (titrate to minimize GI effects), especially given prediabetes and likely insulin resistance. Improves ovulation rates and metabolic parameters. Monitor renal function; adjust if Cr rises. 4) Consider spironolactone 50–100 mg daily adjunct to OCP if inadequate hirsutism/acne response after 6 months. Monitor K+, Cr. Teratogenic; requires reliable contraception. 5) Blood pressure: Continue lifestyle first; if BP remains ≥130/80 mmHg after 4 weeks, initiate ACE-I or ARB (preferred in reproductive-age woman). 6) Follow-up: Return in 4 weeks for BP recheck, ultrasound review (expected within 2 weeks), androgen/glucose/lipid results review, OCP tolerance assessment. 3-month visit: Assess menses regularity, acne/hirsutism response, weight/lifestyle progress; repeat lipids/glucose if abnormal at baseline. 6-month visit: Comprehensive assessment; consider adding spironolactone if needed. Annual thereafter: Metabolic screening (glucose, lipids, BP), mood/depression screening, metformin renal monitoring if prescribed. At age 40, calculate ASCVD risk. Gynecologic screening per ACOG age-based guidelines (Pap, pelvic exams). 7) Patient education: PCOS is chronic, multifactorial, not curable but highly manageable. Insulin resistance underlying ~70% of PCOS. Fertility: PCOS is leading cause of anovulatory infertility but highly treatable with ovulation induction (clomiphene/letrozole, ~80% ovulation rate, ~50% pregnancy rate per cycle); refer to reproductive endocrinology if pregnancy desired after lifestyle optimization or no spontaneous ovulation within 6 months. Cardiovascular/metabolic risk increased; lifestyle critical. Psychological support offered; screen for depression/anxiety. 8) Red flags: Sudden severe abdominal/pelvic pain (ovarian torsion/rupture), heavy bleeding with hemodynamic instability (anemia, transfusion need), chest pain/SOB (VTE/MI—rare with OCP but consider), severe headache/visual changes with OCP (discontinue, evaluate migraine with aura)."
+    }
+  },
+  {
+    "id": "p24",
+    "last": "Torres",
+    "first": "Maya",
+    "mrn": "TR-100455",
+    "dob": "2002-08-18",
+    "sex": "F",
+    "room": "—",
+    "admitAt": {
+      "__daysAgoOffset__": 0
+    },
+    "attending": "Unassigned",
+    "team": "Unassigned",
+    "codeStatus": "Full Code",
+    "chiefComplaint": "Migratory joint pain, fever, and a rash on the hands for 4 days",
+    "allergies": [
+      "NKDA"
+    ],
+    "problemList": [
+      "Disseminated gonococcal infection (arthritis-dermatitis syndrome)",
+      "Chlamydia trachomatis coinfection"
+    ],
+    "homeMeds": [
+      "Ethinyl estradiol/norethindrone (combined oral contraceptive) daily",
+      "Ibuprofen 400 mg PRN for joint pain"
+    ],
+    "vitals": {
+      "temp": 100.9,
+      "hr": 98,
+      "bp": "112/68",
+      "rr": 16,
+      "spo2": 99,
+      "pain": 6
+    },
+    "labProfile": {
+      "wbc": 12.4,
+      "hgb": 12.8,
+      "hct": 38,
+      "plt": 310,
+      "na": 138,
+      "k": 4,
+      "cl": 101,
+      "co2": 24,
+      "bun": 12,
+      "cr": 0.7,
+      "glu": 92,
+      "esr": 42,
+      "crp": 38,
+      "rf": 0,
+      "ana": 0,
+      "lymeab": 0,
+      "synWbc": 18000,
+      "synPmn": 75
+    },
+    "labTextProfile": {
+      "bloodcx": "No growth at 24 hours. Final results in 5 days if no growth.",
+      "stiNaat": "Neisseria gonorrhoeae NAAT (endocervical): Positive. Chlamydia trachomatis NAAT (endocervical): Positive.",
+      "hivAgAb": "Non-reactive.",
+      "rpr": "Non-reactive."
+    },
+    "imagingFindings": {
+      "xrExtremity": {
+        "findings": "Small joint effusion of the left knee. No fracture, dislocation, periosteal reaction, or erosive changes. No chondrocalcinosis.",
+        "impression": "Nonspecific joint effusion; no acute osseous abnormality."
+      }
+    },
+    "seedHP": {
+      "cc": "Migratory joint pain, fever, and a rash on the hands for 4 days",
+      "hpi": "24-year-old woman with 4 days of migratory joint pain beginning in the right wrist and progressing to involve the left knee and right ankle, associated with subjective fever, malaise, and new painless skin lesions on the hands. Reports mild vaginal discharge over the past week attributed to her menstrual cycle, and a new sexual partner over the past 2 months with inconsistent condom use.",
+      "pmh": "No chronic medical conditions.",
+      "psh": "None.",
+      "meds": "Combined oral contraceptive pill daily; ibuprofen 400 mg PRN for joint pain.",
+      "allergies": "NKDA.",
+      "fhx": "Mother: hypothyroidism. Father: hypertension. Sibling(s): noncontributory.",
+      "shx": "Works as a barista. Sexually active with a new male partner over the past 2 months; inconsistent condom use. Denies tobacco use. Drinks alcohol socially. Denies recreational drug use. Vaccinations up to date.",
+      "ros": "General: fever, malaise. Skin: painless bumps on hands/wrist. Genitourinary: mild vaginal discharge, denies dysuria. Musculoskeletal: migratory joint pain and swelling in right wrist, left knee, right ankle. All other systems negative.",
+      "pe": "Vitals — BP 112/68, HR 98, RR 16, SpO2 99%, Temp 100.9F. Scattered pustular skin lesions on dorsal hands/wrist. Mucopurulent, friable cervical discharge on speculum exam. Tenosynovitis of the right wrist, left knee effusion, right ankle swelling. Remainder of exam unremarkable.",
+      "studies": "Neisseria gonorrhoeae NAAT (endocervical): positive. Chlamydia trachomatis NAAT (endocervical): positive. HIV Ag/Ab: non-reactive. RPR: non-reactive. Blood cultures x2: no growth at 24 hours, pending final. Synovial fluid (left knee), obtained via arthrocentesis: WBC 18,000/µL with 75% PMNs, Gram stain negative, culture pending. ESR 42 mm/hr, CRP 38 mg/L. Rheumatoid factor, ANA, and Lyme antibody all negative. Left knee X-ray: small effusion, no fracture or erosive changes.",
+      "assessment": "1) Disseminated gonococcal infection (arthritis-dermatitis syndrome) 2) Chlamydia trachomatis coinfection",
+      "plan": "Admit for IV ceftriaxone 1 g q24h with step-down to oral therapy to complete a 7-day minimum course; doxycycline 100 mg PO BID x7 days for confirmed chlamydia coinfection; orthopedic arthrocentesis of the left knee; HIV/syphilis screening; partner notification and treatment; NSAIDs for pain; ID/rheumatology consultation if not improving in 48–72 hours."
+    }
+  },
+  {
+    "id": "p25",
+    "last": "Turner",
+    "first": "Ashley",
+    "mrn": "TR-100387",
+    "dob": "1997-03-12",
+    "sex": "F",
+    "room": "OB/GYN Clinic – Exam 2",
+    "admitAt": {
+      "__daysAgoOffset__": 0
+    },
+    "attending": "Dr. Renee Castellano",
+    "team": "Women's Health",
+    "codeStatus": "Full Code",
+    "chiefComplaint": "Redness, pain, and warmth of the left breast with fever and chills for 2 days.",
+    "allergies": [
+      "NKDA"
+    ],
+    "problemList": [
+      "G1P1, 3 weeks postpartum (uncomplicated spontaneous vaginal delivery)",
+      "Exclusively breastfeeding",
+      "Areolar fissure, left nipple"
+    ],
+    "homeMeds": [
+      "Prenatal multivitamin 1 tablet PO daily",
+      "Ibuprofen 400 mg PO PRN pain",
+      "Docusate sodium 100 mg PO BID"
+    ],
+    "vitals": {
+      "temp": 101.4,
+      "hr": 102,
+      "bp": "118/72",
+      "rr": 16,
+      "spo2": 98,
+      "pain": 7
+    },
+    "labProfile": {
+      "wbc": 13.8,
+      "hgb": 11.8,
+      "hct": 35,
+      "plt": 310
+    },
+    "imagingFindings": {
+      "usBreast": {
+        "findings": "Left breast, upper-outer quadrant: skin thickening and heterogeneous hypoechoic subcutaneous tissue without a discrete anechoic fluid collection. No drainable fluid collection identified.",
+        "impression": "Findings consistent with inflammatory changes of lactational mastitis; no discrete abscess identified."
+      }
+    },
+    "seedHP": {
+      "cc": "Redness, pain, and warmth of the left breast with fever and chills for 2 days.",
+      "hpi": "29-year-old G1P1 female, 3 weeks postpartum from an uncomplicated vaginal delivery, presents with 2 days of progressive left breast pain, redness, and warmth in the upper-outer quadrant. Exclusively breastfeeding; several missed/delayed feeds this week led to engorgement that did not fully resolve with nursing. A small areolar fissure developed about a week ago from latch difficulty. Over the last 24 hours she has developed subjective fever, chills, and malaise, with throbbing pain that worsens with nursing on the affected side but improves after the breast is emptied. She has continued to breastfeed on that side and is anxious about infant safety. Denies cough, dysuria, or abdominal pain.",
+      "pmh": "Unremarkable. No diabetes, autoimmune disease, or prior breast disease.",
+      "psh": "None.",
+      "fhx": "Mother — breast cancer at age 62 (postmenopausal), in remission. Father — hypertension.",
+      "shx": "Married, stay-at-home parent (first child). Denies tobacco, alcohol, or recreational drug use. Vaccinations up to date. Reports early nipple soreness/cracking in the first two postpartum weeks while establishing latch.",
+      "ros": "Positive: subjective fever, chills, malaise, fatigue; left breast redness/warmth/tenderness; tender left axillary lump. Negative: cough, dyspnea, chest pain, dysuria, abdominal pain, depressed mood/SI.",
+      "pe": "Temp 101.4°F, HR 102, BP 118/72, RR 16, SpO2 98% RA. Left breast, upper-outer quadrant, with a well-demarcated wedge-shaped area of erythema ~6x4 cm, warm, tender, mild peau d'orange, without fluctuance; firm non-fluctuant area beneath consistent with inflamed lobule. Small superficial areolar fissure, no purulent drainage. Right breast unremarkable. Single tender mobile ~1 cm left axillary lymph node. Remainder of exam unremarkable; uterine fundus not palpable (expected postpartum involution).",
+      "studies": "CBC: WBC 13.8 (H) with 78% segs and 8% bands (left shift), Hgb 11.8 (L, physiologic postpartum), Hct 35 (L), platelets 310. CMP within normal limits. Left breast ultrasound (obtained at 60h for persistent induration): skin thickening and heterogeneous hypoechoic subcutaneous tissue without a discrete anechoic fluid collection — no drainable abscess.",
+      "assessment": "1) Left lactational mastitis, upper-outer quadrant, secondary to milk stasis and an areolar fissure portal of entry, without sonographic evidence of abscess. 2) Areolar skin fissure, left nipple, secondary to latch difficulty. 3) Mild postpartum (physiologic) anemia, incidental, asymptomatic.",
+      "plan": "1) Continue breastfeeding/pumping on the affected side — do not wean. 2) Dicloxacillin 500 mg PO QID x10–14 days (or cephalexin 500 mg PO QID); avoid TMP-SMX given infant age <1 month (kernicterus risk). 3) Ibuprofen PRN pain/inflammation. 4) Warm compress before feeds, cold after; massage toward nipple during feeds. 5) Lactation consultation this week for latch correction and fissure care. 6) Reassess in 48–72h; obtain breast ultrasound if fluctuant mass develops or no improvement — would need I&D if abscess confirmed. 7) If erythema/skin changes persist despite adequate antibiotics, refer for imaging ± biopsy to exclude inflammatory breast carcinoma. 8) Reassure breastfeeding is safe to continue throughout treatment."
+    }
+  },
+  {
+    "id": "p26",
+    "last": "Dawkins",
+    "first": "Rachel",
+    "mrn": "TR-100467",
+    "dob": "1997-02-14",
+    "sex": "F",
+    "room": "Clinic 3",
+    "admitAt": {
+      "__daysAgoOffset__": 0
+    },
+    "attending": "Dr. Priya Nandakumar",
+    "team": "Women's Health",
+    "codeStatus": "Full Code",
+    "chiefComplaint": "Right lower quadrant pelvic pain x1 week, worsening x2 days, with amenorrhea and scant vaginal spotting",
+    "allergies": [
+      "NKDA"
+    ],
+    "problemList": [
+      "Type 2 diabetes mellitus, poorly controlled",
+      "Primary hypothyroidism (Hashimoto thyroiditis)",
+      "Polycystic ovary syndrome (historical)"
+    ],
+    "homeMeds": [
+      "Metformin 1000 mg PO BID (nonadherent)",
+      "Levothyroxine 75 mcg PO daily (nonadherent)",
+      "Multivitamin OTC PRN"
+    ],
+    "vitals": {
+      "temp": 98.4,
+      "hr": 98,
+      "bp": "108/68",
+      "rr": 16,
+      "spo2": 99,
+      "pain": 5
+    },
+    "labProfile": {
+      "glu": 214,
+      "wbc": 8.9,
+      "hgb": 11.2,
+      "hct": 33.8,
+      "plt": 241,
+      "na": 138,
+      "k": 4.2,
+      "cl": 101,
+      "co2": 24,
+      "bun": 14,
+      "cr": 0.8,
+      "tsh": 9.4,
+      "ft4": 0.8,
+      "hba1c": 9.8,
+      "hcgqual": 1,
+      "hcgquant": 1610
+    },
+    "labTextProfile": {
+      "typescreen": "Blood type O positive. Antibody screen: negative."
+    },
+    "priorRecords": {
+      "labs": [
+        {
+          "date": "2026-08-25",
+          "panelId": "hcgQuant",
+          "values": {
+            "hcgquant": 1450
+          },
+          "orderedBy": "Outside records (Day 1 draw)"
+        }
+      ]
+    },
+    "imagingFindings": {
+      "usPelvis": {
+        "findings": "Uterus anteverted, normal size and contour, endometrial stripe 9 mm, no intrauterine gestational sac identified. Right adnexa contains a 2.8 cm complex extraovarian mass with a thick echogenic tubal ring, no visible fetal pole or cardiac activity. Moderate free fluid with low-level internal echoes in the posterior cul-de-sac, concerning for hemoperitoneum; no sonographic evidence of frank tubal rupture. Left ovary and adnexa unremarkable.",
+        "impression": "Findings consistent with right tubal ectopic pregnancy."
+      }
+    },
+    "activeMeds": [
+      {
+        "drug": "Metformin",
+        "dose": "1000 mg",
+        "route": "PO",
+        "frequency": "BID",
+        "indication": "Type 2 diabetes mellitus",
+        "startDate": "2021-06-10"
+      },
+      {
+        "drug": "Levothyroxine",
+        "dose": "75 mcg",
+        "route": "PO",
+        "frequency": "Daily",
+        "indication": "Primary hypothyroidism",
+        "startDate": "2019-09-02"
+      }
+    ],
+    "seedHP": {
+      "cc": "Right lower quadrant pelvic pain x1 week, worsening x2 days, with amenorrhea and scant vaginal spotting",
+      "hpi": "29-year-old woman with poorly controlled type 2 diabetes and undertreated hypothyroidism presents to the outpatient women's health clinic with one week of dull, intermittent right lower quadrant pelvic pain that has become sharper and more constant over the past two days. Last menstrual period was approximately 7 weeks ago, lighter and shorter than usual. Reports 3 days of scant dark brown vaginal spotting, not enough to require a pad. Denies heavy vaginal bleeding, syncope, or dizziness. Intermittent nausea without vomiting. Has not taken a home pregnancy test. Reports mild right shoulder discomfort since yesterday, attributed by the patient to sleeping awkwardly. Denies fever, dysuria, urinary frequency, vaginal discharge, or diarrhea. Admits inconsistent metformin and levothyroxine adherence over the past 2-3 months due to an insurance change and difficulty affording refills. Reports fatigue and unintentional 4-lb weight gain over 2 months.",
+      "pmh": "Type 2 diabetes mellitus (diagnosed age 24, currently poorly controlled per patient report). Primary hypothyroidism (diagnosed age 22, Hashimoto thyroiditis by prior antibody testing). Polycystic ovary syndrome, historical diagnosis in adolescence, not currently followed. Chlamydial cervicitis/salpingitis treated at age 23.",
+      "psh": "None.",
+      "meds": "Metformin 1000 mg PO BID (nonadherent); levothyroxine 75 mcg PO daily (nonadherent); OTC multivitamin taken inconsistently.",
+      "allergies": "NKDA.",
+      "fhx": "Mother — type 2 diabetes mellitus, hypothyroidism. Father — hypertension, coronary artery disease diagnosed age 58. One sister, healthy.",
+      "shx": "Works full-time as a restaurant server. Cohabitating with a male partner of 3 years; sexually active, inconsistent condom use, no other contraception. Denies tobacco use. Alcohol socially, 2-3 drinks per week, last drink 2 weeks ago. Denies recreational drug use. Vaccinations up to date.",
+      "ros": "Positive for fatigue, cold intolerance, unintentional weight gain, intermittent polyuria/polydipsia, nausea, right lower quadrant pain, 7-week amenorrhea, scant vaginal spotting, mild right shoulder discomfort. Negative for fever, syncope, heavy vaginal bleeding, dysuria, vaginal discharge, diarrhea.",
+      "pe": "BP 108/68, HR 98, RR 16, SpO2 99% RA, T 98.4F. Alert, mildly uncomfortable, non-toxic appearing. Mild non-tender diffuse thyroid enlargement on palpation, no discrete nodules. Abdomen soft with mild right lower quadrant tenderness, no rebound or guarding. Pelvic exam: scant dark blood at the cervical os, cervix closed; mild right adnexal tenderness and mild right-sided cervical motion tenderness without a clearly palpable mass; uterus normal size and non-tender. No tenderness or restricted range of motion of the right shoulder on exam (referred pain, not musculoskeletal in origin).",
+      "studies": "Urine/serum qualitative pregnancy test: positive. Quantitative serum beta-hCG: Day 1 1,450 mIU/mL; Day 3 (48-hour recheck) 1,610 mIU/mL (+11%, a suboptimal rise; an expected rise in a viable intrauterine pregnancy is at least 35% over 48 hours). Transvaginal pelvic ultrasound: uterus anteverted, normal size and contour, endometrial stripe 9 mm, no intrauterine gestational sac identified. Right adnexa contains a 2.8 cm complex extraovarian mass with a thick echogenic tubal ring, no visible fetal pole or cardiac activity. Moderate free fluid with low-level internal echoes in the posterior cul-de-sac, concerning for hemoperitoneum; no sonographic evidence of frank tubal rupture. Left ovary and adnexa unremarkable. Impression: findings consistent with right tubal ectopic pregnancy. HbA1c 9.8%. TSH 9.4 (elevated), free T4 0.8 (low-normal), consistent with undertreated hypothyroidism. CBC and CMP otherwise unremarkable aside from hyperglycemia. Blood type O positive, antibody screen negative.",
+      "assessment": "1) Ectopic pregnancy, unruptured, right tubal, hemodynamically stable. 2) Type 2 diabetes mellitus, poorly controlled, with medication nonadherence. 3) Hypothyroidism, undertreated, likely secondary to medication nonadherence.",
+      "plan": "1) Confirm hemodynamic stability with repeat vitals and orthostatics; obtain type and screen; administer Rh(D) immune globulin if Rh-negative. 2) Evaluate eligibility for medical management with methotrexate (hemodynamically stable, beta-hCG generally <5,000 mIU/mL, no fetal cardiac activity, no renal/hepatic contraindications); confirm renal function given comorbid diabetes prior to dosing. 3) Arrange serial beta-hCG per methotrexate protocol or surgical referral (salpingostomy/salpingectomy) if criteria for medical management are not met or the patient prefers surgery. 4) Provide explicit return precautions for rupture symptoms: worsening or severe abdominal/pelvic pain, dizziness or syncope, heavy vaginal bleeding, or worsening shoulder pain. 5) Diabetes: reinforce metformin adherence, address medication access/cost barriers via social work or pharmacy assistance, counsel on the importance of glycemic control prior to future pregnancy. 6) Thyroid: reinforce levothyroxine adherence, recheck TSH after adherence is reestablished, counsel on the link between undertreated hypothyroidism and subfertility/early pregnancy loss. 7) Coordinate follow-up with primary care or endocrinology for ongoing diabetes and thyroid management."
+    }
+  },
+  {
+    "id": "p27",
+    "last": "Heyward",
+    "first": "Marcus",
+    "mrn": "TR-100479",
+    "dob": "2003-06-14",
+    "sex": "M",
+    "room": "UR-4",
+    "admitAt": {
+      "__daysAgoOffset__": 0
+    },
+    "attending": "Dr. A. Whitfield",
+    "team": "Orthopedics / Urgent Care",
+    "codeStatus": "Full Code",
+    "chiefComplaint": "Right knee pain, swelling, and instability after plant-and-pivot injury during soccer practice.",
+    "allergies": [
+      "NKDA"
+    ],
+    "problemList": [
+      "Acute right ACL tear (suspected complete, midsubstance)",
+      "Acute traumatic hemarthrosis, right knee",
+      "Reactive sinus tachycardia (pain-mediated)"
+    ],
+    "homeMeds": [
+      "Ibuprofen 400 mg PO PRN pain"
+    ],
+    "vitals": {
+      "temp": 98.6,
+      "hr": 96,
+      "bp": "128/78",
+      "rr": 16,
+      "spo2": 99,
+      "pain": 6
+    },
+    "labProfile": {
+      "wbc": 10.2,
+      "hgb": 15.2,
+      "hct": 44,
+      "plt": 278,
+      "na": 139,
+      "k": 4.1,
+      "cl": 102,
+      "co2": 25,
+      "bun": 14,
+      "cr": 0.9,
+      "glu": 92,
+      "ast": 22,
+      "alt": 18,
+      "alkphos": 68,
+      "tbili": 0.8,
+      "albumin": 4.5,
+      "tprotein": 7,
+      "uacolor": 0,
+      "uaclarity": 0,
+      "uasg": 1.018,
+      "uaph": 6,
+      "uaprotein": 0,
+      "uaglucose": 0,
+      "uaketones": 0,
+      "uablood": 0,
+      "ualeukest": 0,
+      "uanitrites": 0,
+      "uawbc": 0,
+      "uarbc": 0,
+      "uacasts": 0,
+      "uabacteria": 0
+    },
+    "imagingFindings": {
+      "xrExtremity": {
+        "findings": "No acute fracture or dislocation. Cortical margins of the distal femur, proximal tibia, and fibular head are intact. A small cortical irregularity consistent with a Segond fracture pattern (avulsion at the lateral tibial rim, approximately 4 mm) is identified — a pathognomonic radiographic sign of ACL disruption. Moderate periarticular soft tissue swelling. Joint space is maintained. No osseous erosion or periosteal reaction.",
+        "impression": "Segond fracture of the lateral tibial rim — pathognomonic for ACL tear. Moderate soft tissue swelling consistent with hemarthrosis. No tibial plateau fracture. MRI right knee strongly recommended."
+      },
+      "ekg": {
+        "findings": "Sinus tachycardia at 96 bpm. Normal axis. Normal PR interval (160 ms). Normal QRS duration. No ST-T wave changes. No prior EKG available for comparison.",
+        "impression": "Sinus tachycardia. No acute ischemic changes. Clinical context: pain-mediated sympathetic activation in setting of acute musculoskeletal injury."
+      }
+    },
+    "priorRecords": {
+      "labs": [
+        {
+          "date": "2026-07-02",
+          "panelId": "cbc",
+          "values": {
+            "wbc": 6.8,
+            "hgb": 15.8,
+            "hct": 46,
+            "plt": 265,
+            "segs": 58,
+            "lymphs": 30,
+            "monos": 5,
+            "eos": 2,
+            "baso": 0.4,
+            "bands": 3
+          },
+          "orderedBy": "Pre-season physical (outside records)"
+        },
+        {
+          "date": "2026-07-02",
+          "panelId": "cmp",
+          "values": {
+            "na": 141,
+            "k": 4,
+            "cl": 103,
+            "co2": 26,
+            "bun": 13,
+            "cr": 0.88,
+            "glu": 88,
+            "ast": 19,
+            "alt": 16,
+            "alkphos": 65,
+            "tbili": 0.7,
+            "albumin": 4.6,
+            "tprotein": 7.1
+          },
+          "orderedBy": "Pre-season physical (outside records)"
+        }
+      ]
+    },
+    "seedHP": {
+      "cc": "Right knee pain, swelling, and instability after plant-and-pivot injury during soccer practice.",
+      "hpi": "Marcus Heyward is a 22-year-old male collegiate soccer midfielder presenting approximately 3 hours after an acute right knee injury sustained during practice. While planting his right foot and pivoting to change direction, he felt and heard an audible 'pop,' immediately fell to the ground, and was unable to bear weight. He reports sharp pain at the time of injury, now described as deep aching pressure with a strong sensation of joint instability ('it went out from under him'). Pain rated 8/10 at time of injury, now 6/10 at rest. No prior knee injuries. The athletic trainer applied ice and compression on the field. He took ibuprofen 400 mg approximately 2 hours ago with minimal relief.",
+      "pmh": "No chronic medical conditions. Healthy collegiate athlete. No prior musculoskeletal injuries.",
+      "psh": "None.",
+      "meds": "Ibuprofen 400 mg orally as needed (taken once 2 hours ago).",
+      "allergies": "NKDA.",
+      "fhx": "Father: Hypertension (lisinopril). Mother: Healthy. Sister: Healthy.",
+      "shx": "Collegiate soccer midfielder. Single, dormitory resident. Occasional social alcohol use (1-2 drinks on weekends). Denies tobacco and recreational drug use. Vaccinations up to date.",
+      "ros": "Positive: right knee pain, swelling, instability, inability to bear weight, anxiety about athletic career. Negative: fever, chills, headache, chest pain, shortness of breath, nausea, vomiting, numbness or tingling in the right foot (beyond pain-limited function), prior joint hyperlaxity.",
+      "pe": "Vitals: BP 128/78 mmHg, HR 96 bpm, RR 16, SpO2 99% RA, Temp 98.6 F, Ht 5'11\", Wt 175 lbs. General: Well-developed young male in mild-moderate distress, splinting right knee at approximately 20 degrees of flexion. Skin: Abrasions over right anterior knee; no lacerations or ecchymosis. CV: RRR, S1/S2, no murmurs; distal pulses 2+ bilateral. Right knee (primary): Marked hemarthrosis with visibly distended joint and tense effusion; ballottement of patella positive; limited ROM (extension to 10 degrees, flexion to 80 degrees). Lachman test POSITIVE (Grade 2; soft endpoint, 5-8 mm translation). Anterior Drawer test POSITIVE. Pivot Shift test POSITIVE. McMurray equivocal (limited by guarding). Valgus/varus stress tests negative. Posterior Drawer negative. Fibular head nontender. Peroneal nerve intact. Neuro: Sensation intact L3-S1 bilateral; motor 5/5 except knee extension 4/5 right (pain-limited).",
+      "studies": "CBC and CMP unremarkable aside from a mild reactive leukocytosis. Urinalysis normal. Right knee radiographs (AP, lateral, tunnel views) with a Segond fracture, pathognomonic for ACL disruption. 12-lead EKG with sinus tachycardia, pain-mediated, no ischemic changes.",
+      "assessment": "1) Acute right ACL tear — complete midsubstance tear strongly suspected based on mechanism (noncontact plant-and-pivot), immediate hemarthrosis, audible pop, and three concordant positive ligamentous tests (Lachman, Anterior Drawer, Pivot Shift). MRI right knee ordered urgently. 2) Acute traumatic hemarthrosis, right knee — tense effusion in setting of ACL injury. RICE protocol initiated; aspiration deferred. 3) Reactive sinus tachycardia — HR 96 bpm, pain-mediated sympathetic response; no primary cardiac etiology.",
+      "plan": "1) MRI right knee without contrast (urgent, 24-48 hours) to confirm ACL tear and exclude meniscal/ligamentous co-injury. 2) Right knee radiographs (AP, lateral, tunnel views) — Segond fracture identified on plain film. 3) RICE protocol: rest, ice, compression, elevation. 4) Knee immobilizer and crutches; strict non-weight-bearing right lower extremity. 5) Ibuprofen 600 mg orally q6-8h with food; acetaminophen 500-1000 mg q6-8h PRN adjunct. 6) Orthopedic surgery referral placed (appointment within 5-7 days with MRI results). 7) Prehabilitation physical therapy referral for pre-operative quad strengthening. 8) Athletic trainer and coaching staff notified; patient removed from all practice and play. 9) Return precautions: worsening swelling, numbness/tingling in right foot, vascular compromise — return to ED immediately."
     }
   }
 ]
