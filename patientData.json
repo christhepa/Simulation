@@ -2014,5 +2014,151 @@
       "assessment": "1) Acute right ACL tear — complete midsubstance tear strongly suspected based on mechanism (noncontact plant-and-pivot), immediate hemarthrosis, audible pop, and three concordant positive ligamentous tests (Lachman, Anterior Drawer, Pivot Shift). MRI right knee ordered urgently. 2) Acute traumatic hemarthrosis, right knee — tense effusion in setting of ACL injury. RICE protocol initiated; aspiration deferred. 3) Reactive sinus tachycardia — HR 96 bpm, pain-mediated sympathetic response; no primary cardiac etiology.",
       "plan": "1) MRI right knee without contrast (urgent, 24-48 hours) to confirm ACL tear and exclude meniscal/ligamentous co-injury. 2) Right knee radiographs (AP, lateral, tunnel views) — Segond fracture identified on plain film. 3) RICE protocol: rest, ice, compression, elevation. 4) Knee immobilizer and crutches; strict non-weight-bearing right lower extremity. 5) Ibuprofen 600 mg orally q6-8h with food; acetaminophen 500-1000 mg q6-8h PRN adjunct. 6) Orthopedic surgery referral placed (appointment within 5-7 days with MRI results). 7) Prehabilitation physical therapy referral for pre-operative quad strengthening. 8) Athletic trainer and coaching staff notified; patient removed from all practice and play. 9) Return precautions: worsening swelling, numbness/tingling in right foot, vascular compromise — return to ED immediately."
     }
+  },
+  {
+    "id": "p28",
+    "last": "Doyle",
+    "first": "Margaret",
+    "mrn": "TR-100485",
+    "dob": "1948-05-09",
+    "sex": "F",
+    "room": "4122",
+    "admitAt": {
+      "__daysAgoOffset__": 0
+    },
+    "attending": "Dr. Marcus Ihejirika",
+    "team": "Medicine A",
+    "codeStatus": "Full Code",
+    "chiefComplaint": "Fall at home; found weak and confused by her daughter",
+    "allergies": [
+      "NKDA"
+    ],
+    "problemList": [
+      "Hypertension",
+      "Osteoarthritis",
+      "Bilateral knee replacements",
+      "Hyperlipidemia"
+    ],
+    "homeMeds": [
+      "Hydrochlorothiazide 25 mg PO daily",
+      "Atorvastatin 20 mg PO daily",
+      "Acetaminophen 500 mg PO PRN for joint pain",
+      "Vitamin D3 1000 IU PO daily"
+    ],
+    "vitals": {
+      "temp": 98.2,
+      "hr": 98,
+      "bp": "108/64",
+      "rr": 16,
+      "spo2": 97,
+      "pain": 2
+    },
+    "labProfile": {
+      "na": 122,
+      "k": 3.2,
+      "cl": 88,
+      "co2": 30,
+      "bun": 34,
+      "cr": 1.3,
+      "glu": 92,
+      "ast": 24,
+      "alt": 19,
+      "alkphos": 68,
+      "tbili": 0.6,
+      "albumin": 3.1,
+      "tprotein": 5.8,
+      "wbc": 6.8,
+      "rbc": 3.9,
+      "hgb": 11.6,
+      "hct": 36,
+      "mcv": 88,
+      "mch": 29.0,
+      "mchc": 33,
+      "rdw": 13.2,
+      "plt": 210,
+      "segs": 58,
+      "bands": 3,
+      "eos": 2,
+      "baso": 0.3,
+      "lymphs": 29,
+      "monos": 5,
+      "uasg": 1.028,
+      "uaph": 5.5,
+      "uaprotein": 0,
+      "uaglucose": 0,
+      "uaketones": 0,
+      "uablood": 0,
+      "ualeukest": 0,
+      "uanitrites": 0,
+      "uawbc": 2,
+      "uarbc": 2,
+      "uacasts": 0,
+      "uabacteria": 0,
+      "urna": 42,
+      "urosm": 410,
+      "tsh": 2.8,
+      "ft4": 1.2
+    },
+    "imagingFindings": {
+      "cxr": {
+        "findings": "Lungs are clear bilaterally without focal consolidation, effusion, or pneumothorax. Cardiomediastinal silhouette is normal in size and contour. Mild degenerative changes of the thoracic spine.",
+        "impression": "No acute cardiopulmonary process."
+      },
+      "ekg": {
+        "findings": "Sinus rhythm at 75 bpm. Normal intervals. No acute ST-segment changes.",
+        "impression": "Normal sinus rhythm; no acute changes."
+      },
+      "ctHead": {
+        "findings": "No acute intracranial hemorrhage, mass effect, or midline shift. No acute infarct. Age-appropriate cerebral volume loss.",
+        "impression": "No acute intracranial abnormality."
+      }
+    },
+    "priorRecords": {
+      "labs": [
+        {
+          "date": "2025-12-27",
+          "panelId": "bmp",
+          "values": {
+            "na": 138,
+            "k": 4.0,
+            "cl": 101,
+            "co2": 25,
+            "bun": 15,
+            "cr": 0.8,
+            "glu": 94
+          },
+          "orderedBy": "Primary care — outside records"
+        },
+        {
+          "date": "2026-05-27",
+          "panelId": "bmp",
+          "values": {
+            "na": 136,
+            "k": 3.9,
+            "cl": 100,
+            "co2": 25,
+            "bun": 16,
+            "cr": 0.9,
+            "glu": 96
+          },
+          "orderedBy": "Primary care — outside records"
+        }
+      ]
+    },
+    "seedHP": {
+      "cc": "Fall at home; found weak and confused by her daughter.",
+      "hpi": "Margaret Doyle is a 78-year-old woman brought to the emergency department by her daughter after a fall at home this morning. The patient's husband of 52 years died approximately 3 months ago, and she has been living alone since. Her daughter, who checks in weekly, reports approximately 3 weeks of progressive fatigue, generalized weakness, and poor appetite, stating that her mother has been surviving mostly on tea and toast with minimal other food or fluid intake. The daughter also notes an estimated 9-lb unintentional weight loss over this period and several episodes over the past week of the patient seeming \"foggy\" or slow to answer questions. This morning the patient was found on the kitchen floor after apparently losing her balance while standing from a seated position and falling; there was no witnessed loss of consciousness, seizure activity, or head strike. The patient herself describes about 2 weeks of worsening dizziness, particularly on standing, generalized weakness, and endorses feeling \"not herself\" since her husband's death. She denies chest pain, palpitations, fever, vomiting, diarrhea, or urinary symptoms, and denies any suicidal ideation.",
+      "pmh": "Hypertension. Osteoarthritis. Bilateral knee replacements. Hyperlipidemia.",
+      "psh": "Right total knee arthroplasty. Remote appendectomy.",
+      "meds": "Hydrochlorothiazide 25 mg PO daily; atorvastatin 20 mg PO daily; acetaminophen 500 mg PO PRN for joint pain; vitamin D3 1000 IU PO daily.",
+      "allergies": "NKDA.",
+      "fhx": "Mother — hypertension, died age 84 of natural causes. Father — coronary artery disease, myocardial infarction at age 68. One younger brother, living, with hypertension.",
+      "shx": "Retired schoolteacher. Widowed 3 months ago after a 52-year marriage. Never smoker. Occasional glass of wine in the past; none since her husband's death. Denies recreational drug use. Lives alone in a single-story home; previously independent with all ADLs/IADLs. Vaccinations up to date.",
+      "ros": "General: Positive for fatigue, generalized weakness, and an estimated 9-lb unintentional weight loss over the past 3 weeks. Denies fever or chills. Skin: Denies rash, itching, or easy bruising aside from the abrasion sustained in this morning's fall. HEENT: Denies headache, vision changes, hearing changes, or sore throat. Endorses a dry mouth. Respiratory: Denies cough, shortness of breath, or wheezing. Cardiovascular: Denies chest pain or palpitations. Endorses lightheadedness with standing. Gastrointestinal: Endorses poor appetite and decreased oral intake for several weeks. Denies nausea, vomiting, diarrhea, constipation, or abdominal pain. Genitourinary: Denies dysuria, urinary frequency, or hematuria. Reports decreased urine output over the past several days. Musculoskeletal: Endorses chronic bilateral knee discomfort at baseline, unchanged. Denies new joint swelling or focal pain aside from the left forearm abrasion. Neurological: Endorses generalized weakness and several days of intermittent mild confusion/slowed thinking per her daughter. Denies focal weakness, numbness, seizure activity, or loss of consciousness with the fall. Psychiatric: Endorses low mood, tearfulness, poor sleep, and decreased interest in previously enjoyed activities since her husband's death. Denies suicidal or homicidal ideation. Endocrine: Denies heat or cold intolerance, excessive thirst, or polyuria. Hematologic/Lymphatic: Denies easy bruising, bleeding, or lymph node swelling.",
+      "pe": "BP 108/64 mmHg supine, 88/54 mmHg standing. HR 98 bpm supine, 122 bpm standing. RR 16, SpO2 97% RA, Temp 98.2°F. Height 64 in, Weight 118 lb (down from 127 lb). General: Thin, frail-appearing woman in no acute distress; appears fatigued. Skin: Dry with decreased turgor over the forearms; a 2-cm ecchymotic abrasion over the left forearm without active bleeding. HEENT: Dry oral mucous membranes; sunken appearance to the eyes; oropharynx clear without erythema or exudate; no scalp hematoma or facial trauma. Respiratory: Clear to auscultation bilaterally, no wheezes, rales, or rhonchi; no increased work of breathing. Cardiovascular: Tachycardic, regular rhythm, normal S1/S2, no murmurs, rubs, or gallops; no jugular venous distension; capillary refill 3 seconds. Gastrointestinal: Abdomen soft, nontender, nondistended, normoactive bowel sounds; no organomegaly. Genitourinary: Deferred; no gross hematuria or discharge reported. Musculoskeletal: Mild bilateral knee crepitus without effusion or erythema, consistent with known osteoarthritis. Abrasion over the left forearm as above; full range of motion elsewhere; no deformity or focal tenderness; no evidence of hip or long-bone fracture. Neurological: Alert; oriented to person and place, mildly slow and inconsistent orientation to exact date. Cranial nerves II–XII grossly intact. Strength 4/5 in bilateral upper and lower extremities, symmetric, likely reflecting generalized weakness/deconditioning. Sensation grossly intact. No focal deficits. Psychiatric: Affect flat and tearful when discussing her husband; cooperative and appropriate; thought process linear. Endocrine: No thyromegaly or nodules palpated. Hematologic/Lymphatic: No lymphadenopathy; no petechiae beyond the fall-related abrasion.",
+      "studies": "CMP, CBC with differential, urinalysis, urine sodium/osmolality, TSH/free T4, CT head, chest X-ray, and 12-lead EKG have resulted — order and review each from Orders & Results for the exact values. Notable for severe hyponatremia and hypokalemia, an elevated BUN:creatinine ratio, and low albumin/total protein consistent with malnutrition.",
+      "assessment": "1) Hypovolemic hyponatremia, severe (Na 122 mEq/L), secondary to hydrochlorothiazide use with contributory low dietary solute and fluid intake (\"tea and toast\" pattern). 2) Acute kidney injury, stage 1, prerenal, secondary to volume depletion. 3) Major depressive disorder / complicated grief, with associated self-neglect and unintentional weight loss. 4) Mechanical fall, multifactorial (orthostatic hypotension, generalized weakness).",
+      "plan": "1) Hyponatremia: Discontinue hydrochlorothiazide. Monitor urine output hourly; if output exceeds 200 mL/hr or urine becomes abruptly dilute, hold normal saline and initiate desmopressin (DDAVP) to prevent rapid overcorrection. Admit for cautious correction with isotonic (0.9%) normal saline at a conservative rate; avoid free water. Serial BMP every 2–4 hours initially; limit sodium correction to no more than 6–8 mEq/L in the first 24 hours given multiple risk factors for osmotic demyelination syndrome (malnutrition, hypokalemia, presumed chronicity >48 hours). Correct potassium cautiously, with awareness that potassium repletion will also raise serum sodium. Nephrology/endocrinology consultation if correction is difficult to control or overcorrection occurs. 2) Acute kidney injury: Hold nephrotoxic agents; monitor renal function with volume repletion; expect improvement toward baseline as intravascular volume is restored. 3) Nutrition/self-neglect: Nutrition consult; oral nutritional supplementation; sodium- and protein-appropriate diet as tolerated once electrolytes are stabilizing. 4) Fall/safety: Fall precautions; physical therapy/occupational therapy evaluation; home safety assessment prior to discharge. 5) Psychosocial: Administer PHQ-9; social work consultation for grief support and evaluation of home support needs; consider outpatient counseling/bereavement resources; reassess safety (patient currently denies SI/HI). 6) Medication reconciliation: Consider an alternative antihypertensive agent to replace hydrochlorothiazide once stable (e.g., a non-thiazide option), reassessing blood pressure control at follow-up. 7) Case management: Evaluate for home health services, community nutrition support (e.g., Meals on Wheels), and caregiver/family involvement planning prior to discharge."
+    }
   }
 ]
