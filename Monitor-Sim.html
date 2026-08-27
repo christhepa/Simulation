@@ -454,6 +454,7 @@
 <body>
 <div class="wrap">
   <div class="device">
+    <div class="device-brandbar"><b>Charleston Southern University PA Program</b></div>
     <div class="zoll-unit">
       <div class="zoll-main">
         <div class="screen-col">
@@ -514,6 +515,7 @@
       </div>
 
       <div class="zoll-base">
+        <div class="zoll-wordmark">MonitorSim</div>
       </div>
     </div>
   </div>
@@ -1526,6 +1528,7 @@
     panelToggleBtn.setAttribute('aria-expanded', String(!collapsed));
   }
   panelToggleBtn.addEventListener('click', ()=> setPanelCollapsed(!panelCollapsed));
+  setPanelCollapsed(true); // collapsed by default; instructor expands via the toggle
 
   function updateClock(){
     const now = new Date();
