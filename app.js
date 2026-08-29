@@ -788,27 +788,16 @@
   --------------------------------------------------------------- */
   function daysAgo(n){ return Date.now() - n*86400000; }
   /* ---------------------------------------------------------------
-     PATIENT DATA LOADING
-     The built-in roster used to be a giant literal assigned directly
-     to PATIENTS here. It now lives in patientData.json so non-JS
-     users (and version control) can read/edit it on its own. Because
-     JSON can't hold a function call, each patient's admitAt —
-     originally daysAgo(N) — is stored as {"__daysAgoOffset__": N}
-     and resolved back into a real timestamp by resolvePatientDates()
-     below, exactly reproducing the original "N days before whenever
-     the page happens to load" behavior (never a frozen calendar date).
-
-     PATIENTS_FALLBACK is the exact original array literal, byte-for-byte,
-     kept here so the simulator still works if this file is opened
-     directly as file:// with no local server — browsers block fetch()
-     of local JSON files under file://, so patientData.json would
-     otherwise silently fail to load. If you edit the patient roster,
-     keep patientData.json and PATIENTS_FALLBACK in sync; only
-     patientData.json needs the {"__daysAgoOffset__": N} form —
-     PATIENTS_FALLBACK uses real daysAgo(N) calls since it's plain JS. */
-  let PATIENTS = [];
-
-  const PATIENTS_FALLBACK = [
+     PATIENT DATA
+     PATIENTS_DATA is the single source of truth for the built-in
+     patient roster — one literal, edited in this one file only.
+     admitAt uses real daysAgo(N) calls so "N days ago" is always
+     relative to whenever the page happens to load, never a frozen
+     calendar date. There is no separate JSON file and no fetch —
+     everything the simulator needs is already in memory the moment
+     this script runs, so it works identically whether the page is
+     opened via GitHub Pages or straight off disk as file://. */
+  const PATIENTS_DATA = [
   { id:'p01', last:'Whitfield', first:'Eleanor', mrn:'TR-100234', dob:'1948-03-22', sex:'F', room:'4102',
     admitAt:daysAgo(2), attending:'Dr. Patricia Alvarez', team:'Medicine A', codeStatus:'Full Code',
     chiefComplaint:'Worsening shortness of breath and leg swelling x5 days',
@@ -1534,6 +1523,8 @@
       hpi: "29-year-old G1P1 female, 3 weeks postpartum from an uncomplicated vaginal delivery, presents with 2 days of progressive left breast pain, redness, and warmth in the upper-outer quadrant. Exclusively breastfeeding; several missed/delayed feeds this week led to engorgement that did not fully resolve with nursing. A small areolar fissure developed about a week ago from latch difficulty. Over the last 24 hours she has developed subjective fever, chills, and malaise, with throbbing pain that worsens with nursing on the affected side but improves after the breast is emptied. She has continued to breastfeed on that side and is anxious about infant safety. Denies cough, dysuria, or abdominal pain.",
       pmh: "Unremarkable. No diabetes, autoimmune disease, or prior breast disease.",
       psh: "None.",
+      meds: "Prenatal multivitamin 1 tablet daily; ibuprofen 400 mg PRN pain; docusate sodium 100 mg BID.",
+      allergies: "NKDA.",
       fhx: "Mother — breast cancer at age 62 (postmenopausal), in remission. Father — hypertension.",
       shx: "Married, stay-at-home parent (first child). Denies tobacco, alcohol, or recreational drug use. Vaccinations up to date. Reports early nipple soreness/cracking in the first two postpartum weeks while establishing latch.",
       ros: "Positive: subjective fever, chills, malaise, fatigue; left breast redness/warmth/tenderness; tender left axillary lump. Negative: cough, dyspnea, chest pain, dysuria, abdominal pain, depressed mood/SI.",
@@ -1786,35 +1777,7 @@
   }
 ];
 
-  /* Walks a freshly-loaded (fetched) patient array and turns every
-     {"__daysAgoOffset__": N} marker back into a real timestamp via
-     the same daysAgo() used everywhere else. No-op on data that
-     already has a plain numeric admitAt (e.g. PATIENTS_FALLBACK). */
-  function resolvePatientDates(patients){
-    patients.forEach(function(p){
-      if (p.admitAt && typeof p.admitAt === 'object' && p.admitAt.__daysAgoOffset__ !== undefined){
-        p.admitAt = daysAgo(p.admitAt.__daysAgoOffset__);
-      }
-    });
-    return patients;
-  }
-
-  /* Fetches patientData.json; falls back to the embedded copy above
-     if fetch fails (no server / file:// / network hiccup) or the
-     response isn't OK. Either way, resolves to a ready-to-use array. */
-  function loadPatientData(){
-    return fetch('patientData.json')
-      .then(function(res){
-        if (!res.ok) throw new Error('patientData.json responded with ' + res.status);
-        return res.json();
-      })
-      .then(function(data){ return resolvePatientDates(data); })
-      .catch(function(err){
-        console.warn('Falling back to embedded patient data (patientData.json could not be loaded — this is expected when opening this file directly as file:// without a local server):', err.message);
-        return PATIENTS_FALLBACK;
-      });
-  }
-
+  let PATIENTS = PATIENTS_DATA;
 
   /* Quick lookup — includes both the built-in roster and any
      instructor/student-authored custom patients (see STATE.customPatients
@@ -2147,69 +2110,6 @@
   const patientTableBody = document.getElementById('patientTableBody');
   const patientCountEl = document.getElementById('patientCount');
   const searchInput = document.getElementById('searchInput');
-  const patientTableHead = document.querySelector('table.ptable thead');
-
-  /* Column sort state. key: one of room/name/age/chief/attending/code, or null
-     for unsorted (falls back to natural/default order). dir: 1 asc, -1 desc. */
-  const SORT_STATE = { key: null, dir: 1 };
-
-  /* Comparable value extractors per sort key. Room and MRN-like strings often
-     mix digits and letters (e.g., "410A"), so room sorts numerically on the
-     leading digits with a string fallback for ties/non-numeric rooms. */
-  function sortValue(p, key){
-    switch(key){
-      case 'room': {
-        /* Purely numeric rooms (e.g., "4102", "4108B") sort as numbers.
-           Non-numeric locations ("Clinic 3", "UR-4", blank/em-dash) are not
-           real room numbers and must not interleave with inpatient rooms
-           just because they contain a digit -- they sort alphabetically,
-           after all numeric rooms, regardless of asc/desc direction. */
-        const raw = String(p.room||'').trim();
-        const isNumeric = /^\d+/.test(raw);
-        if (isNumeric){
-          return [0, parseInt(raw, 10)];
-        }
-        return [1, raw.toLowerCase()];
-      }
-      case 'name':
-        return (p.last+' '+p.first).toLowerCase();
-      case 'age':
-        return calcAge(p.dob);
-      case 'chief':
-        return (p.chiefComplaint||'').toLowerCase();
-      case 'attending':
-        return (p.attending||'').toLowerCase();
-      case 'code':
-        return (p.codeStatus||'').toLowerCase();
-      default:
-        return 0;
-    }
-  }
-
-  function applySortIndicators(){
-    if (!patientTableHead) return;
-    Array.prototype.forEach.call(patientTableHead.querySelectorAll('th.sortable'), function(th){
-      const ind = th.querySelector('.sort-ind');
-      const isActive = th.getAttribute('data-sort-key') === SORT_STATE.key;
-      th.classList.toggle('sort-active', isActive);
-      if (ind) ind.textContent = isActive ? (SORT_STATE.dir === 1 ? '▲' : '▼') : '';
-    });
-  }
-
-  if (patientTableHead){
-    patientTableHead.addEventListener('click', function(e){
-      const th = e.target.closest('th.sortable');
-      if (!th) return;
-      const key = th.getAttribute('data-sort-key');
-      if (SORT_STATE.key === key){
-        SORT_STATE.dir = -SORT_STATE.dir;
-      } else {
-        SORT_STATE.key = key;
-        SORT_STATE.dir = 1;
-      }
-      renderPatientList();
-    });
-  }
 
   /* Returns count of resulted, current-encounter lab orders that have never
      been expanded (viewed). Historical/prior labs are not counted -- they are
@@ -2231,31 +2131,6 @@
       const hay = (p.first+' '+p.last+' '+p.room+' '+p.chiefComplaint+' '+(p.problemList||[]).join(' ')).toLowerCase();
       return hay.indexOf(q)>-1;
     });
-    if (SORT_STATE.key){
-      /* Compares scalars normally. For tuple values (currently: room ->
-         [group, value]), the group index is direction-locked (numeric rooms
-         always precede named locations, asc or desc) while only the value
-         within a group flips with SORT_STATE.dir. */
-      function cmp(va, vb){
-        if (Array.isArray(va) && Array.isArray(vb)){
-          if (va[0] !== vb[0]) return va[0] < vb[0] ? -1 : 1;
-          if (va[1] < vb[1]) return -1 * SORT_STATE.dir;
-          if (va[1] > vb[1]) return  1 * SORT_STATE.dir;
-          return 0;
-        }
-        if (va < vb) return -1 * SORT_STATE.dir;
-        if (va > vb) return  1 * SORT_STATE.dir;
-        return 0;
-      }
-      rows.sort(function(a, b){
-        const c = cmp(sortValue(a, SORT_STATE.key), sortValue(b, SORT_STATE.key));
-        if (c !== 0) return c;
-        /* Stable tie-break: last name, then first, keeps repeat sorts predictable. */
-        const na = (a.last+' '+a.first).toLowerCase(), nb = (b.last+' '+b.first).toLowerCase();
-        return na < nb ? -1 : (na > nb ? 1 : 0);
-      });
-    }
-    applySortIndicators();
     patientCountEl.textContent = '('+rows.length+' of '+all.length+')';
     patientTableBody.innerHTML = rows.map(function(p){
       const age = calcAge(p.dob);
@@ -4526,21 +4401,15 @@
     if (openList) openList.classList.remove('open');
   });
 
-  /* Original bootstrap was three synchronous calls (initState(),
-     renderPatientList(), setInterval(tickOrders,...)) run the instant
-     PATIENTS was available, since it used to be a literal assigned at
-     parse time. Loading it is now async, so the same three calls are
-     wrapped in startApp() and only run once PATIENTS is actually
-     populated — identical behavior, just deferred until data is ready. */
+  /* PATIENTS_DATA is a plain in-memory literal (no fetch involved),
+     so startup is fully synchronous — no network round trip, no
+     file:// restrictions, nothing to wait on. */
   function startApp(){
     initState();
     renderPatientList();
     setInterval(tickOrders, 1000);
   }
 
-  loadPatientData().then(function(patients){
-    PATIENTS = patients;
-    startApp();
-  });
+  startApp();
 
 })();
