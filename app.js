@@ -1784,134 +1784,158 @@
       plan: "1) MRI right knee without contrast (urgent, 24-48 hours) to confirm ACL tear and exclude meniscal/ligamentous co-injury. 2) Right knee radiographs (AP, lateral, tunnel views) — Segond fracture identified on plain film. 3) RICE protocol: rest, ice, compression, elevation. 4) Knee immobilizer and crutches; strict non-weight-bearing right lower extremity. 5) Ibuprofen 600 mg orally q6-8h with food; acetaminophen 500-1000 mg q6-8h PRN adjunct. 6) Orthopedic surgery referral placed (appointment within 5-7 days with MRI results). 7) Prehabilitation physical therapy referral for pre-operative quad strengthening. 8) Athletic trainer and coaching staff notified; patient removed from all practice and play. 9) Return precautions: worsening swelling, numbness/tingling in right foot, vascular compromise — return to ED immediately."
     }
   },
-    {
-      id: "p29",
-      last: "Reyes",
-      first: "Danielle",
-      mrn: "TR-100493",
-      dob: "1992-02-20",
-      sex: "F",
-      room: "ED-7",
-      admitAt: daysAgo(0),
-      attending: "Dr. Sarah Okafor",
-      team: "Emergency Medicine",
-      codeStatus: "Full Code",
-      chiefComplaint: "Witnessed convulsion this morning, in the setting of three days of vomiting and inability to eat, drink, or continue drinking alcohol",
-      allergies: [
-        "NKDA"
-      ],
-      problemList: [
-        "First-time generalized tonic-clonic seizure, provoked, secondary to alcohol withdrawal",
-        "Alcoholic ketoacidosis",
-        "Alcohol use disorder, severe",
-        "Acute kidney injury, prerenal, KDIGO Stage 1"
-      ],
-      homeMeds: [
-        "Ibuprofen 200-400 mg PO PRN headache (OTC, occasional)"
-      ],
-      vitals: {
-        temp: 37.1,
-        hr: 118,
-        bp: "102/64",
-        rr: 26,
-        spo2: 97,
-        pain: 6
-      },
-      labProfile: {
-        wbc: 13.8,
-        rbc: 3.15,
-        hgb: 10.8,
-        hct: 32,
-        mcv: 102,
-        mch: 34.3,
-        mchc: 33.8,
-        rdw: 15.8,
-        plt: 195,
-        segs: 66,
-        bands: 2,
-        eos: 1,
-        baso: 0.3,
-        lymphs: 24,
-        monos: 6.7,
-        na: 131,
-        k: 3.3,
-        cl: 88,
-        co2: 11,
-        bun: 32,
-        cr: 1.4,
-        glu: 78,
-        ast: 145,
-        alt: 58,
-        alkphos: 110,
-        tbili: 2.6,
-        albumin: 2.9,
-        tprotein: 6.1,
-        ph: 7.26,
-        pco2: 24,
-        po2: 98,
-        hco3: 11,
-        uacolor: 2,
-        uaclarity: 0,
-        uasg: 1.028,
-        uaph: 5.5,
-        uaprotein: 0,
-        uaglucose: 0,
-        uaketones: 4,
-        uablood: 0,
-        ualeukest: 0,
-        uanitrites: 0,
-        uawbc: 3,
-        uarbc: 1,
-        uacasts: 0,
-        uabacteria: 0,
-        hcgqual: 0
-      },
-      imagingFindings: {
-        ekg: {
-          findings: "Sinus tachycardia, rate 118 bpm. Normal axis. Normal intervals (QTc 412 ms). No acute ST-T wave changes.",
-          impression: "Sinus tachycardia; no evidence of acute ischemia or clinically significant conduction abnormality."
+  {
+    id: "p28",
+    last: "Torres",
+    first: "Michael",
+    mrn: "MR-100728",
+    dob: "1981-09-01",
+    sex: "M",
+    room: "ED-6",
+    admitAt: daysAgo(0),
+    attending: "Dr. S. Patel",
+    team: "Emergency Medicine",
+    codeStatus: "Full Code",
+    chiefComplaint: "Right-sided flank pain",
+    allergies: [
+      "NKDA"
+    ],
+    problemList: [
+      "Acute right ureteral nephrolithiasis (6 mm stone)",
+      "Moderate hydronephrosis",
+      "Hypertension (chronic, elevated)",
+      "Acute dehydration with prerenal azotemia"
+    ],
+    homeMeds: [
+      "Lisinopril 10 mg PO daily",
+      "Allopurinol 300 mg PO daily",
+      "Ibuprofen 400 mg PO PRN"
+    ],
+    vitals: {
+      temp: 98.6,
+      hr: 102,
+      bp: "142/88",
+      rr: 20,
+      spo2: 98,
+      pain: 8
+    },
+    labProfile: {
+      wbc: 7.2,
+      rbc: 5.0,
+      hgb: 14.5,
+      hct: 43,
+      plt: 218,
+      na: 140,
+      k: 4.3,
+      cl: 103,
+      co2: 24,
+      bun: 22,
+      cr: 1.3,
+      glu: 98,
+      calc: 9.1,
+      ua: 7.5,
+      uacolor: 3,
+      uaclarity: 1,
+      uasg: 1.027,
+      uaph: 6.5,
+      uablood: 3,
+      uarbc: "TNTC"
+    },
+    priorRecords: {
+      labs: [
+        {
+          date: "2026-01-15",
+          panelId: "cbc",
+          values: {
+            wbc: 7.2,
+            hgb: 14.5,
+            hct: 43,
+            plt: 218
+          },
+          orderedBy: "Annual physical"
         },
-        ctHead: {
-          findings: "No acute intracranial hemorrhage, mass effect, or midline shift. Gray-white differentiation preserved. Ventricles and sulci normal for age.",
-          impression: "No acute intracranial abnormality."
+        {
+          date: "2026-01-15",
+          panelId: "cmp",
+          values: {
+            na: 140,
+            k: 4.3,
+            cl: 103,
+            co2: 24,
+            bun: 16,
+            cr: 0.9,
+            glu: 98,
+            calc: 9.1,
+            ua: 7.5
+          },
+          orderedBy: "Annual physical"
+        }
+      ],
+      notes: [
+        {
+          date: "2026-01-15",
+          provider: "Dr. Chen",
+          title: "Annual Physical Exam",
+          summary: "45-year-old male landscaper in for routine annual exam. Well-controlled hypertension on lisinopril. Recently started allopurinol for gout management (6 months). Good health maintenance. Vitals stable. Exam unremarkable. Advised on hydration importance given outdoor work."
+        },
+        {
+          date: "2026-03-10",
+          provider: "Dr. Patel",
+          title: "Acute Gout Flare - Office Visit",
+          summary: "Presented with acute gout flare affecting right great toe joint. Prescribed indomethacin 50 mg TID for 7 days. Pain resolved after 5 days per patient report."
+        }
+      ]
+    },
+    seedHP: {
+      cc: "Right-sided flank pain",
+      hpi: "45-year-old male presents to ED with acute onset right-sided flank pain that began 4 hours ago while working in yard. Pain is colicky in nature, radiating from right flank to right lower abdomen and groin. Pain severity 8/10, sharp, occurring in waves, associated with nausea without vomiting. Reports dysuria with bright red hematuria on initiation of micturition. Took two doses of ibuprofen without relief. Denies fever, recent trauma, or bowel changes. Mild generalized fatigue over past week attributed to work. Fluid intake minimal over 2-3 days (1-2 L water daily due to outdoor work).",
+      pmh: "Hypertension (diagnosed 2015, well-controlled on lisinopril); Gout (diagnosed 2018, managed with allopurinol started 6 months ago)",
+      psh: "Appendectomy at age 22, no complications",
+      meds: "Lisinopril 10 mg PO daily, Allopurinol 300 mg PO daily, Ibuprofen 400 mg PO PRN",
+      allergies: "NKDA",
+      fhx: "Father: multiple episodes of nephrolithiasis (medically managed), hypertension; Mother: hypertension, type 2 diabetes; Brother: gout; Sister: unremarkable",
+      shx: "Landscaper, married, denies tobacco. 2-3 beers weekly. Denies recreational drug use. Vaccinations current.",
+      ros: "Positive: right flank pain (colicky, 8/10), right CVA tenderness, dysuria, hematuria, nausea, fatigue. Negative: fever, vomiting, recent trauma, bowel changes.",
+      pe: "General: Alert, oriented x3, uncomfortable, restless, frequently shifting position. Skin: Warm, dry, no rashes or diaphoresis. HEENT: Normocephalic, atraumatic, conjunctivae clear, pupils ERRRL. Respiratory: Clear to auscultation bilaterally. Cardiovascular: Regular rate and rhythm, no murmurs. Abdomen: Soft, non-distended, active bowel sounds all quadrants, no rebound or guarding; notable right CVA tenderness with percussion. GU: External genitalia normal, no penile discharge. Musculoskeletal: Full ROM when not limited by pain. Neuro: Grossly intact, CN II-XII intact, motor and sensory intact.",
+      studies: "UA with microscopy: hematuria (TNTC), no pyuria, specific gravity 1.027 (concentrated), pH 6.5 (acidic). CBC: WBC 7.2 (normal), Hemoglobin 14.5 (normal). CMP: BUN 22 (elevated, prerenal pattern), Creatinine 1.3 (elevated from baseline 0.9), Sodium 140 (normal), Potassium 4.3 (normal), other electrolytes normal. Glucose 98 (normal). Uric acid 7.5 (mildly elevated, patient on allopurinol).",
+      assessment: "1. Acute right ureteral nephrolithiasis (6 mm radiolucent stone, likely uric acid composition) with moderate hydronephrosis and proximal ureteral dilation — confirmed by imaging\n2. Hypertension, currently elevated (BP 142/88)\n3. Acute dehydration with prerenal azotemia (BUN 22, Creatinine 1.3)",
+      plan: "PAIN MANAGEMENT: IV ketorolac 30 mg or IV morphine 4-6 mg PRN for pain (NSAIDs preferred first-line). HYDRATION: Initiate IV normal saline at 200 mL/hr; goal urine output 1-2 mL/kg/hr. DIAGNOSTIC: Non-contrast CT abdomen/pelvis to confirm stone size, location, degree of hydronephrosis. LABORATORY: Urinalysis with microscopy and culture (completed); CMP and CBC (completed); consider 24-hour urine collection for metabolic workup (electrolytes, calcium, phosphate, citrate, uric acid) to guide preventive therapy. MEDICATIONS: Continue lisinopril. Cornerstone of medical stone therapy: urinary alkalinization with potassium citrate (titrate to pH 6.5-7.0 for uric acid stone dissolution; maintain 6.0-6.5 for prevention). For 6 mm ureteral stone with controlled pain and no infection: supportive care with consideration of alpha-blocker (tamsulosin 0.4 mg PO daily) to promote stone passage. EDUCATION: Counsel on expectant management and spontaneous passage potential; aggressive hydration target 2-3 L daily; strain urine to collect passed stone for composition analysis; dietary modification (↓ sodium, limit purine-rich foods, limit high-oxalate foods). FOLLOW-UP: 4-6 week observation window for uncomplicated stones ≤10 mm; repeat labs at 6 weeks (BUN, Creatinine, electrolytes); 24-hour urine metabolic panel at 6 weeks; primary care visit within 1 week to review imaging and confirm passage; urology referral if symptoms worsen, recurrent stones, or obstruction without passage in 2-4 weeks."
+    },
+    stages: [
+      {
+        name: "Baseline",
+        description: "Initial ED presentation with acute symptoms",
+        duration_hours: 0,
+        valueOverrides: {}
+      },
+      {
+        name: "Post-Imaging",
+        description: "After non-contrast CT KUB confirms diagnosis",
+        duration_hours: 2,
+        valueOverrides: {
+          assessment: "1. Confirmed: Acute right ureteral nephrolithiasis (6 mm radiolucent stone, likely uric acid composition) with moderate hydronephrosis and proximal ureteral dilation\n2. Hypertension, elevated (BP 142/88)\n3. Acute dehydration with prerenal azotemia (BUN 22, Creatinine 1.3)"
         }
       },
-      priorRecords: {
-        labs: [
-          {
-            date: "2026-01-24",
-            panelId: "cbc",
-            values: {
-              mcv: 98
-            },
-            orderedBy: "Outside Urgent Care"
-          },
-          {
-            date: "2026-01-24",
-            panelId: "cmp",
-            values: {
-              ast: 54
-            },
-            orderedBy: "Outside Urgent Care"
-          }
-        ]
+      {
+        name: "Post-Pain-Control",
+        description: "After IV analgesia and hydration initiated",
+        duration_hours: 4,
+        valueOverrides: {
+          pain_level: "Pain improved to 6/10 with IV ketorolac",
+          status: "More comfortable, able to rest; HR 98 (down from 102), BP 138/84 (improving with hydration)"
+        }
       },
-      seedHP: {
-        cc: "Witnessed convulsion this morning, in the setting of three days of vomiting and inability to eat, drink, or continue drinking alcohol.",
-        hpi: "Danielle Reyes is a 34-year-old woman with a history of alcohol use disorder (reports drinking approximately one pint of vodka, roughly 10-12 standard drinks, daily for the past three years) who is brought in by her sister after a witnessed generalized tonic-clonic seizure this morning, lasting about two minutes with a brief postictal confused period. This is her first-ever witnessed seizure. Her sister reports three days of vomiting and inability to tolerate food, fluids, or alcohol after a family gathering, with progressively worsening weakness, diffuse abdominal pain, and rapid, labored breathing over the past 24 hours. No fever, diarrhea, head trauma, prior seizures, or illicit drug use reported.",
-        pmh: "Alcohol use disorder, not previously formally diagnosed or treated. No known seizure disorder, diabetes, or diagnosed liver disease.",
-        psh: "None.",
-        meds: "None taken regularly. Occasional OTC ibuprofen for headache.",
-        allergies: "NKDA",
-        fhx: "Mother: hypertension. Father: deceased at 58 of complications of cirrhosis, history of alcohol use disorder. Sister: no significant history.",
-        shx: "Works as a restaurant server; single, lives with her sister. Drinks approximately one pint of vodka daily for 3 years. Smokes ~1/2 pack/day. Denies illicit drug use. Sexually active with one partner, inconsistent condom use.",
-        ros: "Positive for fatigue, weakness, 3 days of vomiting/poor intake, rapid breathing, diffuse abdominal pain, one witnessed generalized convulsion with postictal confusion, and scleral icterus noted by family. Negative for fever, diarrhea, chest pain, focal neurologic deficits, and suicidal ideation.",
-        pe: "BP 102/64, HR 118, RR 26 (deep/Kussmaul pattern), SpO2 97% RA, T 37.1C. Thin, ill-appearing, tachypneic, oriented but slow to respond, mildly diaphoretic. Scleral icterus, dry mucous membranes, healing tongue laceration, fruity breath odor. Decreased skin turgor, healing bruises on bilateral shins. Tachycardic, regular rhythm. Abdomen diffusely tender, mild hepatomegaly, hypoactive bowel sounds. Mild hand tremor. Neuro exam nonfocal, at baseline mentation on reassessment.",
-        studies: "CBC, CMP, and ABG notable for a markedly elevated anion gap metabolic acidosis (see Orders & Results for exact values), mild macrocytic anemia, leukocytosis, transaminitis with an AST:ALT ratio favoring alcohol-associated injury, and hyperbilirubinemia. Urinalysis positive for large ketones with no glucosuria. Urine hCG negative. 12-lead EKG shows sinus tachycardia with normal intervals. CT head without contrast is unremarkable. EEG (documented in case narrative only; not a discrete EMR-Sim study) shows diffuse slowing without epileptiform discharges. Urine toxicology, blood alcohol level, and salicylate/acetaminophen levels are documented in the case narrative only (not discretely orderable in EMR-Sim) and are unremarkable/undetectable.",
-        assessment: "1) First-time generalized tonic-clonic seizure, provoked, secondary to alcohol withdrawal. 2) Alcoholic ketoacidosis. 3) Alcohol use disorder, severe. 4) Acute kidney injury, prerenal, KDIGO Stage 1, secondary to volume depletion.",
-        plan: "1) Seizure precautions and frequent neuro checks. 2) IV access, continuous monitoring during stabilization. 3) Thiamine before/with any dextrose-containing fluids, then folate and a multivitamin, to prevent Wernicke encephalopathy. 4) Isotonic IV fluids with dextrose once thiamine given; no insulin infusion needed (unlike DKA). 5) Cautious potassium repletion; recheck BMP in 4-6 hours to confirm anion gap closure. 6) Symptom-triggered CIWA-Ar-guided benzodiazepines, reassessed frequently given seizure history; low threshold for scheduled dosing. 7) No maintenance AED indicated (provoked seizure). 8) Driving restriction counseling. 9) Hepatology/IM follow-up for transaminitis and hyperbilirubinemia. 10) Social work/addiction medicine consult. 11) Nutrition consult. 12) Hold NSAIDs/hepatotoxic or nephrotoxic agents."
+      {
+        name: "24h-Follow-up",
+        description: "24-hour post-ED visit assessment",
+        duration_hours: 24,
+        valueOverrides: {
+          clinical_note: "Pain improved to 4/10. No fever. Adequate oral intake resumed. Urine output adequate without gross hematuria on latest void.",
+          plan_update: "Continue conservative management with IV hydration, alpha-blocker therapy (tamsulosin 0.4 mg started), and urinary alkalinization with potassium citrate. Advised to strain urine for stone passage. Urology consultation scheduled if stone does not pass within 2-4 weeks or if symptoms worsen."
+        }
       }
-    }
+    ]
+  }
 ];
 
   /* Walks a freshly-loaded (fetched) patient array and turns every
