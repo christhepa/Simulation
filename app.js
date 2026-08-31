@@ -788,16 +788,27 @@
   --------------------------------------------------------------- */
   function daysAgo(n){ return Date.now() - n*86400000; }
   /* ---------------------------------------------------------------
-     PATIENT DATA
-     PATIENTS_DATA is the single source of truth for the built-in
-     patient roster — one literal, edited in this one file only.
-     admitAt uses real daysAgo(N) calls so "N days ago" is always
-     relative to whenever the page happens to load, never a frozen
-     calendar date. There is no separate JSON file and no fetch —
-     everything the simulator needs is already in memory the moment
-     this script runs, so it works identically whether the page is
-     opened via GitHub Pages or straight off disk as file://. */
-  const PATIENTS_DATA = [
+     PATIENT DATA LOADING
+     The built-in roster used to be a giant literal assigned directly
+     to PATIENTS here. It now lives in patientData.json so non-JS
+     users (and version control) can read/edit it on its own. Because
+     JSON can't hold a function call, each patient's admitAt —
+     originally daysAgo(N) — is stored as {"__daysAgoOffset__": N}
+     and resolved back into a real timestamp by resolvePatientDates()
+     below, exactly reproducing the original "N days before whenever
+     the page happens to load" behavior (never a frozen calendar date).
+
+     PATIENTS_FALLBACK is the exact original array literal, byte-for-byte,
+     kept here so the simulator still works if this file is opened
+     directly as file:// with no local server — browsers block fetch()
+     of local JSON files under file://, so patientData.json would
+     otherwise silently fail to load. If you edit the patient roster,
+     keep patientData.json and PATIENTS_FALLBACK in sync; only
+     patientData.json needs the {"__daysAgoOffset__": N} form —
+     PATIENTS_FALLBACK uses real daysAgo(N) calls since it's plain JS. */
+  let PATIENTS = [];
+
+  const PATIENTS_FALLBACK = [
   { id:'p01', last:'Whitfield', first:'Eleanor', mrn:'TR-100234', dob:'1948-03-22', sex:'F', room:'4102',
     admitAt:daysAgo(2), attending:'Dr. Patricia Alvarez', team:'Medicine A', codeStatus:'Full Code',
     chiefComplaint:'Worsening shortness of breath and leg swelling x5 days',
@@ -1523,8 +1534,6 @@
       hpi: "29-year-old G1P1 female, 3 weeks postpartum from an uncomplicated vaginal delivery, presents with 2 days of progressive left breast pain, redness, and warmth in the upper-outer quadrant. Exclusively breastfeeding; several missed/delayed feeds this week led to engorgement that did not fully resolve with nursing. A small areolar fissure developed about a week ago from latch difficulty. Over the last 24 hours she has developed subjective fever, chills, and malaise, with throbbing pain that worsens with nursing on the affected side but improves after the breast is emptied. She has continued to breastfeed on that side and is anxious about infant safety. Denies cough, dysuria, or abdominal pain.",
       pmh: "Unremarkable. No diabetes, autoimmune disease, or prior breast disease.",
       psh: "None.",
-      meds: "Prenatal multivitamin 1 tablet daily; ibuprofen 400 mg PRN pain; docusate sodium 100 mg BID.",
-      allergies: "NKDA.",
       fhx: "Mother — breast cancer at age 62 (postmenopausal), in remission. Father — hypertension.",
       shx: "Married, stay-at-home parent (first child). Denies tobacco, alcohol, or recreational drug use. Vaccinations up to date. Reports early nipple soreness/cracking in the first two postpartum weeks while establishing latch.",
       ros: "Positive: subjective fever, chills, malaise, fatigue; left breast redness/warmth/tenderness; tender left axillary lump. Negative: cough, dyspnea, chest pain, dysuria, abdominal pain, depressed mood/SI.",
@@ -1774,10 +1783,166 @@
       assessment: "1) Acute right ACL tear — complete midsubstance tear strongly suspected based on mechanism (noncontact plant-and-pivot), immediate hemarthrosis, audible pop, and three concordant positive ligamentous tests (Lachman, Anterior Drawer, Pivot Shift). MRI right knee ordered urgently. 2) Acute traumatic hemarthrosis, right knee — tense effusion in setting of ACL injury. RICE protocol initiated; aspiration deferred. 3) Reactive sinus tachycardia — HR 96 bpm, pain-mediated sympathetic response; no primary cardiac etiology.",
       plan: "1) MRI right knee without contrast (urgent, 24-48 hours) to confirm ACL tear and exclude meniscal/ligamentous co-injury. 2) Right knee radiographs (AP, lateral, tunnel views) — Segond fracture identified on plain film. 3) RICE protocol: rest, ice, compression, elevation. 4) Knee immobilizer and crutches; strict non-weight-bearing right lower extremity. 5) Ibuprofen 600 mg orally q6-8h with food; acetaminophen 500-1000 mg q6-8h PRN adjunct. 6) Orthopedic surgery referral placed (appointment within 5-7 days with MRI results). 7) Prehabilitation physical therapy referral for pre-operative quad strengthening. 8) Athletic trainer and coaching staff notified; patient removed from all practice and play. 9) Return precautions: worsening swelling, numbness/tingling in right foot, vascular compromise — return to ED immediately."
     }
-  }
+  },
+    {
+      id: "p29",
+      last: "Reyes",
+      first: "Danielle",
+      mrn: "TR-100493",
+      dob: "1992-02-20",
+      sex: "F",
+      room: "ED-7",
+      admitAt: daysAgo(0),
+      attending: "Dr. Sarah Okafor",
+      team: "Emergency Medicine",
+      codeStatus: "Full Code",
+      chiefComplaint: "Witnessed convulsion this morning, in the setting of three days of vomiting and inability to eat, drink, or continue drinking alcohol",
+      allergies: [
+        "NKDA"
+      ],
+      problemList: [
+        "First-time generalized tonic-clonic seizure, provoked, secondary to alcohol withdrawal",
+        "Alcoholic ketoacidosis",
+        "Alcohol use disorder, severe",
+        "Acute kidney injury, prerenal, KDIGO Stage 1"
+      ],
+      homeMeds: [
+        "Ibuprofen 200-400 mg PO PRN headache (OTC, occasional)"
+      ],
+      vitals: {
+        temp: 37.1,
+        hr: 118,
+        bp: "102/64",
+        rr: 26,
+        spo2: 97,
+        pain: 6
+      },
+      labProfile: {
+        wbc: 13.8,
+        rbc: 3.15,
+        hgb: 10.8,
+        hct: 32,
+        mcv: 102,
+        mch: 34.3,
+        mchc: 33.8,
+        rdw: 15.8,
+        plt: 195,
+        segs: 66,
+        bands: 2,
+        eos: 1,
+        baso: 0.3,
+        lymphs: 24,
+        monos: 6.7,
+        na: 131,
+        k: 3.3,
+        cl: 88,
+        co2: 11,
+        bun: 32,
+        cr: 1.4,
+        glu: 78,
+        ast: 145,
+        alt: 58,
+        alkphos: 110,
+        tbili: 2.6,
+        albumin: 2.9,
+        tprotein: 6.1,
+        ph: 7.26,
+        pco2: 24,
+        po2: 98,
+        hco3: 11,
+        uacolor: 2,
+        uaclarity: 0,
+        uasg: 1.028,
+        uaph: 5.5,
+        uaprotein: 0,
+        uaglucose: 0,
+        uaketones: 4,
+        uablood: 0,
+        ualeukest: 0,
+        uanitrites: 0,
+        uawbc: 3,
+        uarbc: 1,
+        uacasts: 0,
+        uabacteria: 0,
+        hcgqual: 0
+      },
+      imagingFindings: {
+        ekg: {
+          findings: "Sinus tachycardia, rate 118 bpm. Normal axis. Normal intervals (QTc 412 ms). No acute ST-T wave changes.",
+          impression: "Sinus tachycardia; no evidence of acute ischemia or clinically significant conduction abnormality."
+        },
+        ctHead: {
+          findings: "No acute intracranial hemorrhage, mass effect, or midline shift. Gray-white differentiation preserved. Ventricles and sulci normal for age.",
+          impression: "No acute intracranial abnormality."
+        }
+      },
+      priorRecords: {
+        labs: [
+          {
+            date: "2026-01-24",
+            panelId: "cbc",
+            values: {
+              mcv: 98
+            },
+            orderedBy: "Outside Urgent Care"
+          },
+          {
+            date: "2026-01-24",
+            panelId: "cmp",
+            values: {
+              ast: 54
+            },
+            orderedBy: "Outside Urgent Care"
+          }
+        ]
+      },
+      seedHP: {
+        cc: "Witnessed convulsion this morning, in the setting of three days of vomiting and inability to eat, drink, or continue drinking alcohol.",
+        hpi: "Danielle Reyes is a 34-year-old woman with a history of alcohol use disorder (reports drinking approximately one pint of vodka, roughly 10-12 standard drinks, daily for the past three years) who is brought in by her sister after a witnessed generalized tonic-clonic seizure this morning, lasting about two minutes with a brief postictal confused period. This is her first-ever witnessed seizure. Her sister reports three days of vomiting and inability to tolerate food, fluids, or alcohol after a family gathering, with progressively worsening weakness, diffuse abdominal pain, and rapid, labored breathing over the past 24 hours. No fever, diarrhea, head trauma, prior seizures, or illicit drug use reported.",
+        pmh: "Alcohol use disorder, not previously formally diagnosed or treated. No known seizure disorder, diabetes, or diagnosed liver disease.",
+        psh: "None.",
+        meds: "None taken regularly. Occasional OTC ibuprofen for headache.",
+        allergies: "NKDA",
+        fhx: "Mother: hypertension. Father: deceased at 58 of complications of cirrhosis, history of alcohol use disorder. Sister: no significant history.",
+        shx: "Works as a restaurant server; single, lives with her sister. Drinks approximately one pint of vodka daily for 3 years. Smokes ~1/2 pack/day. Denies illicit drug use. Sexually active with one partner, inconsistent condom use.",
+        ros: "Positive for fatigue, weakness, 3 days of vomiting/poor intake, rapid breathing, diffuse abdominal pain, one witnessed generalized convulsion with postictal confusion, and scleral icterus noted by family. Negative for fever, diarrhea, chest pain, focal neurologic deficits, and suicidal ideation.",
+        pe: "BP 102/64, HR 118, RR 26 (deep/Kussmaul pattern), SpO2 97% RA, T 37.1C. Thin, ill-appearing, tachypneic, oriented but slow to respond, mildly diaphoretic. Scleral icterus, dry mucous membranes, healing tongue laceration, fruity breath odor. Decreased skin turgor, healing bruises on bilateral shins. Tachycardic, regular rhythm. Abdomen diffusely tender, mild hepatomegaly, hypoactive bowel sounds. Mild hand tremor. Neuro exam nonfocal, at baseline mentation on reassessment.",
+        studies: "CBC, CMP, and ABG notable for a markedly elevated anion gap metabolic acidosis (see Orders & Results for exact values), mild macrocytic anemia, leukocytosis, transaminitis with an AST:ALT ratio favoring alcohol-associated injury, and hyperbilirubinemia. Urinalysis positive for large ketones with no glucosuria. Urine hCG negative. 12-lead EKG shows sinus tachycardia with normal intervals. CT head without contrast is unremarkable. EEG (documented in case narrative only; not a discrete EMR-Sim study) shows diffuse slowing without epileptiform discharges. Urine toxicology, blood alcohol level, and salicylate/acetaminophen levels are documented in the case narrative only (not discretely orderable in EMR-Sim) and are unremarkable/undetectable.",
+        assessment: "1) First-time generalized tonic-clonic seizure, provoked, secondary to alcohol withdrawal. 2) Alcoholic ketoacidosis. 3) Alcohol use disorder, severe. 4) Acute kidney injury, prerenal, KDIGO Stage 1, secondary to volume depletion.",
+        plan: "1) Seizure precautions and frequent neuro checks. 2) IV access, continuous monitoring during stabilization. 3) Thiamine before/with any dextrose-containing fluids, then folate and a multivitamin, to prevent Wernicke encephalopathy. 4) Isotonic IV fluids with dextrose once thiamine given; no insulin infusion needed (unlike DKA). 5) Cautious potassium repletion; recheck BMP in 4-6 hours to confirm anion gap closure. 6) Symptom-triggered CIWA-Ar-guided benzodiazepines, reassessed frequently given seizure history; low threshold for scheduled dosing. 7) No maintenance AED indicated (provoked seizure). 8) Driving restriction counseling. 9) Hepatology/IM follow-up for transaminitis and hyperbilirubinemia. 10) Social work/addiction medicine consult. 11) Nutrition consult. 12) Hold NSAIDs/hepatotoxic or nephrotoxic agents."
+      }
+    }
 ];
 
-  let PATIENTS = PATIENTS_DATA;
+  /* Walks a freshly-loaded (fetched) patient array and turns every
+     {"__daysAgoOffset__": N} marker back into a real timestamp via
+     the same daysAgo() used everywhere else. No-op on data that
+     already has a plain numeric admitAt (e.g. PATIENTS_FALLBACK). */
+  function resolvePatientDates(patients){
+    patients.forEach(function(p){
+      if (p.admitAt && typeof p.admitAt === 'object' && p.admitAt.__daysAgoOffset__ !== undefined){
+        p.admitAt = daysAgo(p.admitAt.__daysAgoOffset__);
+      }
+    });
+    return patients;
+  }
+
+  /* Fetches patientData.json; falls back to the embedded copy above
+     if fetch fails (no server / file:// / network hiccup) or the
+     response isn't OK. Either way, resolves to a ready-to-use array. */
+  function loadPatientData(){
+    return fetch('patientData.json')
+      .then(function(res){
+        if (!res.ok) throw new Error('patientData.json responded with ' + res.status);
+        return res.json();
+      })
+      .then(function(data){ return resolvePatientDates(data); })
+      .catch(function(err){
+        console.warn('Falling back to embedded patient data (patientData.json could not be loaded — this is expected when opening this file directly as file:// without a local server):', err.message);
+        return PATIENTS_FALLBACK;
+      });
+  }
+
 
   /* Quick lookup — includes both the built-in roster and any
      instructor/student-authored custom patients (see STATE.customPatients
@@ -2110,6 +2275,69 @@
   const patientTableBody = document.getElementById('patientTableBody');
   const patientCountEl = document.getElementById('patientCount');
   const searchInput = document.getElementById('searchInput');
+  const patientTableHead = document.querySelector('table.ptable thead');
+
+  /* Column sort state. key: one of room/name/age/chief/attending/code, or null
+     for unsorted (falls back to natural/default order). dir: 1 asc, -1 desc. */
+  const SORT_STATE = { key: null, dir: 1 };
+
+  /* Comparable value extractors per sort key. Room and MRN-like strings often
+     mix digits and letters (e.g., "410A"), so room sorts numerically on the
+     leading digits with a string fallback for ties/non-numeric rooms. */
+  function sortValue(p, key){
+    switch(key){
+      case 'room': {
+        /* Purely numeric rooms (e.g., "4102", "4108B") sort as numbers.
+           Non-numeric locations ("Clinic 3", "UR-4", blank/em-dash) are not
+           real room numbers and must not interleave with inpatient rooms
+           just because they contain a digit -- they sort alphabetically,
+           after all numeric rooms, regardless of asc/desc direction. */
+        const raw = String(p.room||'').trim();
+        const isNumeric = /^\d+/.test(raw);
+        if (isNumeric){
+          return [0, parseInt(raw, 10)];
+        }
+        return [1, raw.toLowerCase()];
+      }
+      case 'name':
+        return (p.last+' '+p.first).toLowerCase();
+      case 'age':
+        return calcAge(p.dob);
+      case 'chief':
+        return (p.chiefComplaint||'').toLowerCase();
+      case 'attending':
+        return (p.attending||'').toLowerCase();
+      case 'code':
+        return (p.codeStatus||'').toLowerCase();
+      default:
+        return 0;
+    }
+  }
+
+  function applySortIndicators(){
+    if (!patientTableHead) return;
+    Array.prototype.forEach.call(patientTableHead.querySelectorAll('th.sortable'), function(th){
+      const ind = th.querySelector('.sort-ind');
+      const isActive = th.getAttribute('data-sort-key') === SORT_STATE.key;
+      th.classList.toggle('sort-active', isActive);
+      if (ind) ind.textContent = isActive ? (SORT_STATE.dir === 1 ? '▲' : '▼') : '';
+    });
+  }
+
+  if (patientTableHead){
+    patientTableHead.addEventListener('click', function(e){
+      const th = e.target.closest('th.sortable');
+      if (!th) return;
+      const key = th.getAttribute('data-sort-key');
+      if (SORT_STATE.key === key){
+        SORT_STATE.dir = -SORT_STATE.dir;
+      } else {
+        SORT_STATE.key = key;
+        SORT_STATE.dir = 1;
+      }
+      renderPatientList();
+    });
+  }
 
   /* Returns count of resulted, current-encounter lab orders that have never
      been expanded (viewed). Historical/prior labs are not counted -- they are
@@ -2131,6 +2359,31 @@
       const hay = (p.first+' '+p.last+' '+p.room+' '+p.chiefComplaint+' '+(p.problemList||[]).join(' ')).toLowerCase();
       return hay.indexOf(q)>-1;
     });
+    if (SORT_STATE.key){
+      /* Compares scalars normally. For tuple values (currently: room ->
+         [group, value]), the group index is direction-locked (numeric rooms
+         always precede named locations, asc or desc) while only the value
+         within a group flips with SORT_STATE.dir. */
+      function cmp(va, vb){
+        if (Array.isArray(va) && Array.isArray(vb)){
+          if (va[0] !== vb[0]) return va[0] < vb[0] ? -1 : 1;
+          if (va[1] < vb[1]) return -1 * SORT_STATE.dir;
+          if (va[1] > vb[1]) return  1 * SORT_STATE.dir;
+          return 0;
+        }
+        if (va < vb) return -1 * SORT_STATE.dir;
+        if (va > vb) return  1 * SORT_STATE.dir;
+        return 0;
+      }
+      rows.sort(function(a, b){
+        const c = cmp(sortValue(a, SORT_STATE.key), sortValue(b, SORT_STATE.key));
+        if (c !== 0) return c;
+        /* Stable tie-break: last name, then first, keeps repeat sorts predictable. */
+        const na = (a.last+' '+a.first).toLowerCase(), nb = (b.last+' '+b.first).toLowerCase();
+        return na < nb ? -1 : (na > nb ? 1 : 0);
+      });
+    }
+    applySortIndicators();
     patientCountEl.textContent = '('+rows.length+' of '+all.length+')';
     patientTableBody.innerHTML = rows.map(function(p){
       const age = calcAge(p.dob);
@@ -4401,15 +4654,21 @@
     if (openList) openList.classList.remove('open');
   });
 
-  /* PATIENTS_DATA is a plain in-memory literal (no fetch involved),
-     so startup is fully synchronous — no network round trip, no
-     file:// restrictions, nothing to wait on. */
+  /* Original bootstrap was three synchronous calls (initState(),
+     renderPatientList(), setInterval(tickOrders,...)) run the instant
+     PATIENTS was available, since it used to be a literal assigned at
+     parse time. Loading it is now async, so the same three calls are
+     wrapped in startApp() and only run once PATIENTS is actually
+     populated — identical behavior, just deferred until data is ready. */
   function startApp(){
     initState();
     renderPatientList();
     setInterval(tickOrders, 1000);
   }
 
-  startApp();
+  loadPatientData().then(function(patients){
+    PATIENTS = patients;
+    startApp();
+  });
 
 })();
