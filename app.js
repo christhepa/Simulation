@@ -2419,7 +2419,7 @@
         : '<span class="pchip code-dnr">'+escapeHtml(p.codeStatus)+'</span>';
       const customChip = p.custom ? '<span class="pchip" style="margin-left:5px;">Custom</span>' : '';
       const oc = unreadLabCount(p.id);
-      return '<tr data-pid="'+p.id+'">'+
+      return '<tr data-pid="'+p.id+'" tabindex="0" role="link" aria-label="Open chart for '+escapeHtml(p.first)+' '+escapeHtml(p.last)+'">'+
         '<td>'+escapeHtml(p.room)+'</td>'+
         '<td><div class="pname">'+escapeHtml(p.last)+', '+escapeHtml(p.first)+customChip+'</div><div class="pmrn">'+escapeHtml(p.mrn)+'</div></td>'+
         '<td>'+age+' / '+p.sex+'</td>'+
@@ -2428,14 +2428,19 @@
         '<td>'+codeChip+'</td>'+
         '<td>'+allergyChip+'</td>'+
         '<td>'+(oc? '<span class="badge-count">'+oc+'</span>' : '<span class="pmrn">—</span>')+'</td>'+
-        '<td><button class="openbtn" type="button">Open Chart</button>'+
-          (p.custom ? '<button class="backbtn" data-del-pid="'+p.id+'" type="button" style="padding:6px 9px;font-size:11px;margin-left:6px;">Remove</button>' : '')+
+        '<td class="pact">'+
+          (p.custom ? '<button class="backbtn" data-del-pid="'+p.id+'" type="button" style="padding:6px 9px;font-size:11px;">Remove</button>' : '')+
         '</td>'+
         '</tr>';
     }).join('') || '<tr><td colspan="9"><div class="empty-state">No patients match your search.</div></td></tr>';
 
     Array.prototype.forEach.call(patientTableBody.querySelectorAll('tr[data-pid]'), function(tr){
       tr.addEventListener('click', function(){ openChart(tr.getAttribute('data-pid')); });
+      /* Keyboard access: row is focusable, Enter/Space opens the chart (ignore keys pressed on the Remove button). */
+      tr.addEventListener('keydown', function(e){
+        if (e.target !== tr) return;
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openChart(tr.getAttribute('data-pid')); }
+      });
     });
     Array.prototype.forEach.call(patientTableBody.querySelectorAll('[data-del-pid]'), function(btn){
       btn.addEventListener('click', function(e){
