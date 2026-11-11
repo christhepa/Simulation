@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EKG Rhythm Trainer</title>
+<style>
+:root{
+  --ink:#1d2329;--muted:#5d6670;--line:#dfe3e8;--bg:#f5f6f8;--card:#fff;
+  --accent:#0b6e79;--accent-soft:#e5f2f3;--ok:#1e7a3a;--ok-bg:#e7f5eb;--bad:#b3261e;--bad-bg:#fbeaea;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+button,select,input{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:10px 18px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.01em}
+header h1 span{color:var(--accent)}
+.spacer{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.seg button{border:0;background:none;padding:6px 14px;cursor:pointer;min-width:64px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--accent);color:#fff}
+.seg-label{font-size:12px;color:var(--muted);margin-right:6px}
+main{max-width:1320px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.hidden{display:none!important}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer}
+.btn:hover{border-color:#b9c0c8}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.toggle.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.btn:disabled{opacity:.45;cursor:default}
+select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff}
+label.inline{display:inline-flex;align-items:center;gap:6px;font-size:14px}
+
+/* Study layout */
+.study{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;align-items:start}
+.rlist{padding:8px 0;max-height:calc(100vh - 110px);overflow:auto;position:sticky;top:70px}
+.rlist h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:12px 14px 4px}
+.rlist button{display:block;width:100%;text-align:left;border:0;background:none;padding:5px 14px;cursor:pointer;font-size:14px;border-left:3px solid transparent}
+.rlist button:hover{background:#f2f4f6}
+.rlist button.on{background:var(--accent-soft);border-left-color:var(--accent);color:var(--accent);font-weight:600}
+.rselect{display:none;width:100%;margin-bottom:10px}
+.title-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.title-row h2{margin:0;font-size:21px}
+.chip{font-size:12px;padding:2px 8px;border-radius:10px;background:#eef0f3;color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.toolbar .grp{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.toolbar input[type=range]{width:150px;accent-color:var(--accent)}
+.rate-val{font-variant-numeric:tabular-nums;min-width:62px;font-size:14px}
+.legend{font-size:12px;color:var(--muted);margin-top:6px}
+.crit{width:100%;border-collapse:collapse;margin-top:14px;table-layout:fixed}
+.crit th,.crit td{text-align:left;vertical-align:top;padding:8px 10px;border-top:1px solid var(--line);font-size:14px}
+.crit th{width:150px;color:var(--muted);font-weight:600}
+.crit tr.key td,.crit tr.key th{background:#fafbfc}
+
+/* Strip view */
+.sv-scroll{display:inline-block;max-width:100%;vertical-align:top;overflow-x:auto;overflow-y:hidden;border:1px solid #e3b8b8;border-radius:4px;background:#fff7f7;line-height:0}
+.sv-canvas{display:block}
+.sv-caption{font-size:13px;font-weight:600;color:#4a4f55;margin-top:6px;min-height:19px}
+.sv-readout{font-size:13px;color:var(--accent);min-height:20px;margin-top:6px;font-variant-numeric:tabular-nums}
+
+/* Quiz */
+.quiz-setup{max-width:760px;margin:0 auto}
+.quiz-setup h2{margin:0 0 4px;font-size:20px}
+.form-grid{display:grid;grid-template-columns:170px 1fr;gap:12px 16px;align-items:center;margin-top:16px}
+.form-grid .lbl{font-weight:600;font-size:14px}
+.cats{display:flex;flex-wrap:wrap;gap:8px 18px}
+.radio-row{display:flex;flex-wrap:wrap;gap:8px 18px}
+.qhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.qhead .prog{font-weight:700}
+.qhead .score{color:var(--muted)}
+.timer{font-variant-numeric:tabular-nums;font-weight:700;padding:2px 10px;border-radius:12px;background:#eef0f3}
+.timer.low{background:var(--bad-bg);color:var(--bad)}
+.answers{margin-top:14px}
+.mc{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.mc button{text-align:left;border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px 12px;cursor:pointer;font-size:14.5px}
+.mc button:hover{border-color:#b9c0c8}
+.mc button.sel{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.mc button.right{border-color:var(--ok);background:var(--ok-bg)}
+.mc button.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.sys{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px 12px;align-items:center;max-width:880px}
+.sys .lbl{font-weight:600;font-size:14px}
+.sys select{width:100%}
+.actions{display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap}
+.fb{margin-top:16px;border-radius:10px;padding:14px 16px;border:1px solid var(--line)}
+.fb.ok{background:var(--ok-bg);border-color:#b6dec2}
+.fb.bad{background:var(--bad-bg);border-color:#efc2bf}
+.fb h3{margin:0 0 6px;font-size:16px}
+.steps{width:100%;border-collapse:collapse;margin:8px 0;background:#fff;border-radius:6px;overflow:hidden;table-layout:fixed}
+.steps th,.steps td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:top}
+.steps th{background:#f4f5f7;font-weight:600}
+.steps col.c1{width:120px}.steps col.c4{width:44px}
+.mark-ok{color:var(--ok);font-weight:700}.mark-bad{color:var(--bad);font-weight:700}
+.sum-top{display:flex;gap:24px;flex-wrap:wrap;align-items:center}
+.big{font-size:34px;font-weight:800}
+.stepacc{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.stepacc span{background:#f1f3f5;border-radius:8px;padding:4px 10px;font-size:13px}
+.review-list{width:100%;border-collapse:collapse;margin-top:14px;table-layout:fixed}
+.review-list th,.review-list td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);font-size:14px}
+.review-list col.n{width:44px}.review-list col.m{width:44px}.review-list col.b{width:96px}
+#reviewPane{scroll-margin-top:72px}
+footer{max-width:1320px;margin:8px auto 24px;padding:0 16px;font-size:12px;color:var(--muted)}
+
+@media (max-width:900px){
+  .study{grid-template-columns:minmax(0,1fr)}
+  .rlist{display:none}
+  .rselect{display:block}
+  .form-grid{grid-template-columns:1fr}
+  .sys{grid-template-columns:1fr}
+  header{gap:10px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>EKG <span>Rhythm Trainer</span></h1>
+  <div class="seg" id="tabSeg"><button data-tab="study" class="on">Study</button><button data-tab="quiz">Quiz</button></div>
+  <div class="spacer"></div>
+  <span class="seg-label">Display</span>
+  <div class="seg" id="modeSeg"><button data-mode="static" class="on">Strip</button><button data-mode="live">Live</button></div>
+</header>
+
+<main>
+  <!-- STUDY -->
+  <section id="studyTab" class="study">
+    <nav class="card rlist" id="rlist" aria-label="Rhythm bank"></nav>
+    <div class="card">
+      <select class="rselect" id="rselect" aria-label="Choose rhythm"></select>
+      <div class="title-row"><h2 id="sTitle"></h2><span class="chip" id="sGroup"></span></div>
+      <div class="toolbar">
+        <button class="btn primary" id="sNew" title="Generate a new variation of this rhythm">New variation</button>
+        <span class="grp" id="sRateGrp"><span id="sRateLbl">Rate</span><input type="range" id="sRate"><span class="rate-val" id="sRateVal"></span></span>
+        <span class="grp">Artifact
+          <select id="sArt"><option value="none">None</option><option value="tremor">Muscle tremor</option><option value="ac">60-cycle interference</option><option value="wander">Wandering baseline</option><option value="loose">Loose lead / motion</option><option value="mixed">Mixed</option></select>
+          <select id="sSev"><option value="mild">Mild</option><option value="moderate" selected>Moderate</option><option value="severe">Severe</option></select>
+        </span>
+        <button class="btn toggle" id="sLabels">Labels</button>
+        <button class="btn toggle" id="sCal">Calipers</button>
+        <button class="btn toggle hidden" id="sFreeze">Freeze</button>
+      </div>
+      <div id="sView"></div>
+      <div class="legend">Lead II · 25 mm/s · 10 mm/mV · 1 small box = 0.04 s / 0.1 mV · 1 large box = 0.20 s / 0.5 mV · tick marks at top = 1 s (tall tick every 3 s) · strip = 6 s</div>
+      <table class="crit" id="sCrit"></table>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quizTab" class="hidden">
+    <div class="card quiz-setup" id="qSetup">
+      <h2>Quiz setup</h2>
+      <div style="color:var(--muted);font-size:14px">Every question is a newly generated strip, so no two quizzes are alike.</div>
+      <div class="form-grid">
+        <div class="lbl">Quiz type</div>
+        <div class="radio-row">
+          <label class="inline"><input type="radio" name="qtype" value="quick" checked> Quick — name the rhythm</label>
+          <label class="inline"><input type="radio" name="qtype" value="sys"> Systematic — step-by-step</label>
+        </div>
+        <div class="lbl">Questions</div>
+        <div><select id="qN"><option>5</option><option selected>10</option><option>15</option><option>20</option><option>30</option><option>50</option></select></div>
+        <div class="lbl">Time per question</div>
+        <div><select id="qTime"><option value="0" selected>Off</option><option value="15">15 s</option><option value="30">30 s</option><option value="45">45 s</option><option value="60">60 s</option><option value="90">90 s</option></select></div>
+        <div class="lbl">Feedback</div>
+        <div class="radio-row">
+          <label class="inline"><input type="radio" name="qfb" value="now" checked> After each question</label>
+          <label class="inline"><input type="radio" name="qfb" value="end"> At the end</label>
+        </div>
+        <div class="lbl">Artifact</div>
+        <div><select id="qArt"><option value="0">None</option><option value="0.3" selected>Occasional</option><option value="0.7">Frequent</option></select></div>
+        <div class="lbl">Rhythm categories</div>
+        <div class="cats" id="qCats"></div>
+      </div>
+      <div class="actions"><button class="btn primary" id="qStart">Start quiz</button><span id="qSetupMsg" style="color:var(--bad);font-size:14px"></span></div>
+    </div>
+
+    <div class="card hidden" id="qRun">
+      <div class="qhead">
+        <span class="prog" id="qProg"></span>
+        <span class="score" id="qScore"></span>
+        <span class="timer hidden" id="qTimer"></span>
+        <div class="spacer"></div>
+        <button class="btn toggle" id="qCal">Calipers</button>
+        <button class="btn toggle hidden" id="qFreeze">Freeze</button>
+        <button class="btn toggle hidden" id="qLabels">Labels</button>
+        <button class="btn" id="qQuit">End quiz</button>
+      </div>
+      <div id="qView"></div>
+      <div class="answers" id="qAnswers"></div>
+      <div class="actions">
+        <button class="btn primary" id="qSubmit">Submit</button>
+        <button class="btn primary hidden" id="qNext">Next</button>
+      </div>
+      <div id="qFeedback"></div>
+    </div>
+
+    <div class="card hidden" id="qSummary">
+      <div class="sum-top">
+        <div><div style="color:var(--muted);font-size:13px">Interpretation score</div><div class="big" id="sumScore"></div></div>
+        <div id="sumDetail" style="flex:1;min-width:240px"></div>
+        <div class="actions" style="margin-top:0"><button class="btn primary" id="qRetake">Retake (same settings)</button><button class="btn" id="qNewSetup">New setup</button></div>
+      </div>
+      <div id="reviewPane" class="hidden" style="margin-top:16px">
+        <div class="title-row"><h2 id="rvTitle" style="font-size:18px"></h2><span class="chip" id="rvGroup"></span><div class="spacer"></div><button class="btn toggle" id="rvCal">Calipers</button><button class="btn toggle on" id="rvLabels">Labels</button></div>
+        <div id="rvView"></div>
+        <div id="rvSteps"></div>
+        <table class="crit" id="rvCrit"></table>
+      </div>
+      <table class="review-list" id="reviewList"></table>
+    </div>
+  </section>
+</main>
+<footer>Educational simulation for rhythm-recognition practice. Waveforms are computer-generated from physiologic timing rules, not patient recordings, and are not intended for clinical decision-making.</footer>
+
+<script>
+'use strict';
+/* =====================================================================
+   CONSTANTS — paper geometry (all drawing is done in millimetres)
+   ===================================================================== */
+const DT = 0.001;            // sample interval (s)
+const MM_PER_S = 25;         // paper speed
+const MM_PER_MV = 10;        // gain
+const STRIP_S = 6;           // strip length (s)
+const STRIP_MM = STRIP_S * MM_PER_S;  // 150 mm
+const MARGIN_MM = 10;        // left margin holding the 1 mV calibration pulse
+const H_MM = 48;             // strip height
+const BASE_MM = 22;          // isoelectric line position from top
+const LIVE_S = 300;          // length of generated live sequence (s)
+
+/* =====================================================================
+   RANDOM + NOISE
+   ===================================================================== */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function makeRng(seed){
+  const f = mulberry32(seed>>>0);
+  return {
+    next:f,
+    u:(a,b)=>a+(b-a)*f(),
+    i:(a,b)=>Math.floor(a+(b-a+1)*f()),
+    pick:arr=>arr[Math.floor(f()*arr.length)],
+    chance:p=>f()<p
+  };
+}
+function newSeed(){return Math.floor(Math.random()*2147483647)+1;}
+// Smooth random signal in [-1,1] with cosine interpolation between nodes
+function makeNoise(rng, spacing, t0, t1){
+  const n = Math.ceil((t1-t0)/spacing)+3, v = new Float32Array(n);
+  for(let i=0;i<n;i++) v[i]=rng.u(-1,1);
+  return t=>{
+    const x=(t-t0)/spacing; let i=Math.floor(x);
+    if(i<0) i=0; if(i>n-2) i=n-2;
+    const f=x-i, w=(1-Math.cos(Math.PI*f))/2;
+    return v[i]*(1-w)+v[i+1]*w;
+  };
+}
+
+/* =====================================================================
+   WAVE MORPHOLOGIES  (components = [offset s, sigma s, amplitude mV])
+   ===================================================================== */
+function morphNormal(r, sc){
+  const w=r.u(0.9,1.12), q=r.chance(0.6)?-r.u(0.04,0.12)*sc:0, R=r.u(0.85,1.35)*sc, S=-r.u(0.08,0.3)*sc;
+  return {id:'N', c:[[-0.026*w,0.0075*w,q],[0,0.0105*w,R],[0.024*w,0.008*w,S]], on:-0.042*w, off:0.04*w, T:{type:'qt', s:r.u(0.04,0.05)}};
+}
+function morphWide(r, sc, o={}){
+  const sg = o.sign!=null ? o.sign : (r.chance(0.6)?1:-1);
+  const w = o.w || r.u(0.14,0.19), k = w/0.16, A = r.u(1.0,1.55)*sc*(o.amp||1);
+  return {id:o.id||'W', c:[[-0.03*k,0.012*k,sg*A*r.u(0,0.18)],[0,0.022*k,sg*A],[0.048*k,0.022*k,-sg*A*r.u(0.25,0.55)]],
+    on:-0.062*k, off:0.098*k, T:{type:'fixed', off:0.098*k+0.17, s:0.065, a:-sg*r.u(0.3,0.5)*sc*(o.amp||1)}};
+}
+function morphAberrant(r, sc){
+  const R=r.u(0.8,1.2)*sc;
+  return {id:'A', c:[[-0.025,0.007,-0.06*sc],[0,0.011,R],[0.04,0.02,-0.38*R]], on:-0.04, off:0.098, T:{type:'qt', s:0.05, a:r.u(-0.1,0.12)}};
+}
+function morphPacedV(r, sc){
+  const A=r.u(1.0,1.5)*sc;
+  return {id:'PV', paced:true, c:[[0.022,0.009,0.12*sc],[0.075,0.03,-A],[0.14,0.025,0.15*A]], on:0.008, off:0.17, T:{type:'fixed', off:0.37, s:0.07, a:r.u(0.3,0.45)*sc}};
+}
+function pShapeNormal(a, r){
+  return r.chance(0.3) ? {c:[[-0.012,0.018,a*0.72],[0.014,0.017,a*0.66]], txt:'P'} : {c:[[0,0.022,a]], txt:'P'};
+}
+const ECTOPIC_P = [
+  a=>({c:[[0,0.016,a*1.15]], txt:'P′'}),                              // narrow, peaked
+  a=>({c:[[-0.016,0.015,a*0.7],[0.022,0.015,-a*0.55]], txt:'P′'}),     // biphasic
+  a=>({c:[[0,0.02,-a*0.75]], txt:'P′'}),                              // inverted
+  a=>({c:[[0,0.026,a*0.45]], txt:'P′'}),                              // low, flat
+  a=>({c:[[-0.02,0.013,a*0.8],[0.02,0.013,a*0.8]], txt:'P′'})          // notched
+];
+function pEctopic(r, a){ return r.pick(ECTOPIC_P)(a||r.u(0.11,0.17)); }
+function pDistinct(r, n){ // n distinct ectopic shapes
+  const idx=[0,1,2,3,4]; for(let i=idx.length-1;i>0;i--){const j=Math.floor(r.next()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]];}
+  return idx.slice(0,n).map(k=>ECTOPIC_P[k](r.u(0.11,0.17)));
+}
+function pRetro(a){ return {c:[[0,0.018,-a]], txt:'P′'}; }
+
+/* =====================================================================
+   STRIP BUILDER
+   ===================================================================== */
+class Strip{
+  constructor(rng, t0, t1){
+    this.rng=rng; this.t0=t0; this.t1=t1;
+    this.ev=[]; this.cont=[]; this.beats=[]; this.ps=[]; this.spikes=[]; this.notes=[]; this.fLabels=[];
+    this.caption=''; this.ans={}; this.rateOverride=null; this.qrsOverride=null;
+    this.sc=rng.u(0.8,1.25); this.pAmp=rng.u(0.1,0.2); this.tAmp=rng.u(0.2,0.38); this.spikeAmp=rng.u(0.8,1.6);
+    this.qrsN=morphNormal(rng,this.sc); this.pN=pShapeNormal(this.pAmp,rng);
+  }
+  comps(t, list){ for(const k of list) if(k[2]!==0) this.ev.push({c:t+k[0], s:k[1], a:k[2]}); }
+  P(t, shape, o={}){
+    shape = shape || this.pN; this.comps(t, shape.c);
+    const p={t, lab:o.lab!==false, txt:shape.txt||'P'}; this.ps.push(p); return p;
+  }
+  QRS(t, m, o={}){
+    m = m || this.qrsN; this.comps(t, m.c);
+    const b={t, on:t+m.on, off:t+m.off, dur:m.off-m.on, paced:!!m.paced, label:o.label||'', morphId:m.id};
+    if(o.pOn!=null) b.pr = b.on - o.pOn;
+    if(o.T!==false && m.T){
+      const rr=o.rr||1, s=m.T.s, a=(m.T.a!=null?m.T.a:this.tAmp);
+      let pk;
+      if(m.T.type==='qt'){ const qt=Math.min(0.46,Math.max(0.28,0.39*Math.sqrt(rr))); pk=t+m.on+qt-2*s; }
+      else { pk=t+Math.min(m.T.off, Math.max(m.off+0.07, rr*0.6)); }
+      this.ev.push({c:pk, s, a}); this.ev.push({c:pk-0.07, s:s*1.3, a:a*0.3});
+      b.tPeak=pk;
+    }
+    this.beats.push(b); return b;
+  }
+  // P wave at pt followed by a QRS with P-onset→QRS-onset interval = pr
+  conduct(pt, pr, m, o={}){
+    m = m || this.qrsN;
+    this.P(pt, o.pShape, {lab:o.pLab});
+    return this.QRS(pt-0.05+pr-m.on, m, {rr:o.rr, pOn:pt-0.05, label:o.label});
+  }
+  spike(t, ch){ this.ev.push({c:t, s:0.0011, a:this.spikeAmp}); this.spikes.push({t, ch}); }
+  note(t, txt){ this.notes.push({t, txt}); }
+}
+
+function render(S, D){
+  const n=Math.round(D/DT)+1, b=new Float32Array(n);
+  for(const e of S.ev){
+    const lo=e.c-4*e.s, hi=e.c+4*e.s; if(hi<0||lo>D) continue;
+    const i0=Math.max(0,Math.ceil(lo/DT)), i1=Math.min(n-1,Math.floor(hi/DT)), inv=1/(2*e.s*e.s);
+    for(let i=i0;i<=i1;i++){ const x=i*DT-e.c; b[i]+=e.a*Math.exp(-x*x*inv); }
+  }
+  for(const f of S.cont) for(let i=0;i<n;i++) b[i]+=f(i*DT);
+  return b;
+}
+
+/* =====================================================================
+   RHYTHM GENERATOR HELPERS
+   ===================================================================== */
+function sinusRun(S, rate, o={}){
+  const r=S.rng, RR=60/rate, pr=o.pr||r.u(0.13,0.19);
+  let t=S.t0+r.u(0,RR), prev=RR;
+  while(t<S.t1){
+    S.conduct(t, pr, o.morph, {rr:prev});
+    const rr = o.rrFn ? o.rrFn(t,RR) : RR*(1+r.u(-0.012,0.012));
+    t+=rr; prev=rr;
+  }
+  return pr;
+}
+// Sinus rhythm with an intermittent event every gmin..gmax beats; the first event lands early in the visible strip.
+function sinusEctopy(S, rate, gmin, gmax, handler, o={}){
+  const r=S.rng, RR=60/rate, pr=o.pr||r.u(0.13,0.19);
+  let tP=S.t0+r.u(0,RR);
+  let next=Math.max(1, Math.round((r.u(0.7,2.4)-(tP+pr))/RR));
+  let last=null; const c={RR, pr};
+  while(tP<S.t1){
+    if(next<=0 && last){
+      c.tP=tP; c.last=last;
+      const res=handler(S,c); tP=res.nextP; if(res.last) last=res.last;
+      next=r.i(gmin,gmax); continue;
+    }
+    last=S.conduct(tP, pr, o.morph, {rr:RR}); tP+=RR*(1+r.u(-0.01,0.01)); next--;
+  }
+  return pr;
+}
+function dissocP(S, arate, amp){
+  const r=S.rng, PP=60/arate, shape=amp?{c:[[0,0.022,amp]],txt:'P'}:S.pN;
+  let t=S.t0+r.u(0,PP);
+  while(t<S.t1){ S.P(t, shape); t+=PP*(1+r.u(-0.008,0.008)); }
+}
+function fibWaves(S, coarse){
+  const r=S.rng, A=coarse?r.u(0.13,0.22):r.u(0.045,0.075);
+  const n1=makeNoise(r,r.u(0.032,0.045),S.t0,S.t1), n2=makeNoise(r,0.085,S.t0,S.t1), e=makeNoise(r,0.8,S.t0,S.t1);
+  S.cont.push(t=>A*(0.75*n1(t)+0.4*n2(t))*(0.75+0.25*e(t)));
+}
+function afib(S, rate){
+  const r=S.rng, mean=60/rate, coarse=r.chance(0.5);
+  fibWaves(S, coarse);
+  let t=S.t0+r.u(0,mean), prev=mean, lastRR=0;
+  while(t<S.t1){
+    S.QRS(t, S.qrsN, {rr:prev});
+    let rr=mean*r.u(0.58,1.42);
+    if(Math.abs(rr-lastRR)<0.06) rr+=mean*0.18*(r.chance(0.5)?1:-1);   // avoid accidental regularity
+    rr=Math.max(rr,0.3); lastRR=rr; t+=rr; prev=rr;
+  }
+  S.caption='Fibrillatory (f) waves — no discrete P waves'; S.noT=true;
+}
+function flutter(S, vrate, mode){
+  const r=S.rng, N=(mode==='var')?3:mode;
+  const ar=Math.min(350,Math.max(240,vrate*N)), FF=60/ar, A=r.u(0.22,0.36), base=S.t0+r.u(0,FF);
+  S.cont.push(t=>{ let x=((t-base)/FF)%1; if(x<0)x+=1; const v=x<0.68?-x/0.68:-(1-x)/0.32; return A*(v+0.5); });
+  const d=r.u(0.2,0.27); let ft=base, prev=N*FF;
+  while(ft<S.t1){
+    S.QRS(ft+d, S.qrsN, {rr:prev});
+    const step = mode==='var' ? r.pick([2,2,3,4,4]) : N;
+    prev=step*FF; ft+=prev;
+  }
+  for(let j=0;;j++){ const tt=base+(j+0.68)*FF; if(tt>S.t1) break; S.fLabels.push(tt); }
+  S.caption='Flutter (F) waves ≈ '+Math.round(ar)+'/min'; S.noT=true;
+}
+function junctionalRun(S, rate){
+  const r=S.rng, RR=60/rate, v=r.pick(['none','before','after']), pR=pRetro(r.u(0.07,0.12));
+  let t=S.t0+r.u(0,RR);
+  while(t<S.t1){
+    if(v==='before') S.conduct(t+S.qrsN.on+0.05-0.08, 0.08, null, {rr:RR, pShape:pR});
+    else { S.QRS(t, S.qrsN, {rr:RR}); if(v==='after') S.P(t+0.1, pR); }
+    t+=RR*(1+r.u(-0.01,0.01));
+  }
+  S.ans.pr = v==='before' ? ['short','na'] : ['na'];
+}
+function ventRun(S, rate, m, jitter){
+  const r=S.rng, RR=60/rate; let t=S.t0+r.u(0,RR);
+  while(t<S.t1){ S.QRS(t, m, {rr:RR}); t+=RR*(1+r.u(-jitter,jitter)); }
+}
+function vfib(S, A){
+  const r=S.rng, n1=makeNoise(r,r.u(0.07,0.1),S.t0,S.t1), n2=makeNoise(r,0.045,S.t0,S.t1), e=makeNoise(r,r.u(0.8,1.5),S.t0,S.t1);
+  S.cont.push(t=>A*(0.85*n1(t)+0.35*n2(t))*(0.65+0.35*e(t)));
+  S.caption='Chaotic waveform — no identifiable P, QRS, or T';
+}
+function prAns(pr){ return pr>0.205 ? ['long'] : ['normal']; }
+// Underlying atrial activity for ventricular-paced rhythms
+function pacedUnderlying(S){
+  const v=S.rng.pick(['none','none','dissoc','af']);
+  if(v==='dissoc'){ dissocP(S, S.rng.u(65,95)); S.ans.p=['more','normal']; S.ans.pr=['dissoc','na']; }
+  else if(v==='af'){ fibWaves(S,false); S.ans.p=['fib','absent']; }
+}
+// Bursts of muscle noise used for oversensing
+function noiseBurst(S, a, b, amp){
+  const n=makeNoise(S.rng,0.006,a,b);
+  S.cont.push(t=>(t>=a&&t<=b)?amp*n(t)*Math.sin(Math.PI*(t-a)/(b-a)):0);
+}
+
+/* =====================================================================
+   RHYTHM BANK
+   ans: acceptable systematic answers (reg / p / pr). Rate band and QRS
+   width are computed from the generated strip itself.
+   ===================================================================== */
+const PVC_LABEL='PVC';
+const RH_LIST = [
+/* ---------- SINUS ---------- */
+{id:'nsr', g:'Sinus', name:'Normal sinus rhythm', rate:[60,100],
+ gen:(S,rt)=>{ sinusRun(S,rt); },
+ ans:{reg:['reg'],p:['normal'],pr:['normal']},
+ crit:{rate:'60–100/min',rhythm:'Regular',p:'Upright, uniform; one before every QRS',pr:'0.12–0.20 s, constant',qrs:'< 0.12 s',key:'Every interval normal; every P wave conducts'}},
+{id:'sbrady', g:'Sinus', name:'Sinus bradycardia', rate:[35,59],
+ gen:(S,rt)=>{ sinusRun(S,rt); },
+ ans:{reg:['reg'],p:['normal'],pr:['normal']},
+ crit:{rate:'< 60/min',rhythm:'Regular',p:'Upright, uniform; one before every QRS',pr:'0.12–0.20 s, constant',qrs:'< 0.12 s',key:'Normal sinus mechanism at a rate below 60'}},
+{id:'stach', g:'Sinus', name:'Sinus tachycardia', rate:[101,160],
+ gen:(S,rt)=>{ sinusRun(S,rt,{pr:S.rng.u(0.12,0.16)}); },
+ ans:{reg:['reg'],p:['normal'],pr:['normal']},
+ crit:{rate:'101–160/min',rhythm:'Regular',p:'Upright, uniform; may merge with the preceding T wave at faster rates',pr:'0.12–0.20 s (often near the short end)',qrs:'< 0.12 s',key:'Sinus P waves still identifiable before each QRS'}},
+{id:'sarr', g:'Sinus', name:'Sinus arrhythmia', rate:[55,95],
+ gen:(S,rt)=>{ const A=S.rng.u(0.18,0.28),Tr=S.rng.u(3,5),ph=S.rng.u(0,6.28); sinusRun(S,rt,{rrFn:(t,RR)=>RR*(1+A*Math.sin(2*Math.PI*t/Tr+ph))}); S.caption='R–R gradually shortens and lengthens (phasic)'; },
+ ans:{reg:['irr','pat'],p:['normal'],pr:['normal']},
+ crit:{rate:'Usually 60–100/min',rhythm:'Irregular in a gradual, cyclic (phasic) pattern',p:'Upright, identical shape throughout',pr:'0.12–0.20 s, constant',qrs:'< 0.12 s',key:'Rate gradually speeds up and slows down; P-wave shape never changes'}},
+{id:'sarrest', g:'Sinus', name:'Sinus pause / sinus arrest', rate:[60,95],
+ gen:(S,rt)=>{ sinusEctopy(S,rt,4,7,(S,c)=>{ let m=S.rng.u(2.25,2.7); if(c.RR*m<1.7) m+=1; const prevP=c.tP-c.RR; S.note(c.last.t+c.RR*m/2,'pause'); return {nextP:prevP+c.RR*m}; }); S.caption='Pause is NOT a multiple of the P–P interval'; },
+ ans:{reg:['int'],p:['normal'],pr:['normal']},
+ crit:{rate:'Underlying sinus rate',rhythm:'Regular, interrupted by a pause',p:'Normal; absent during the pause',pr:'0.12–0.20 s, constant',qrs:'< 0.12 s',key:'Sinus node fails to fire; the pause is not an exact multiple of the P–P interval'}},
+{id:'saexit', g:'Sinus', name:'Sinoatrial (SA) exit block', rate:[60,95],
+ gen:(S,rt)=>{ sinusEctopy(S,rt,4,7,(S,c)=>{ S.note(c.last.t+c.RR,'dropped P–QRS–T'); return {nextP:c.tP+c.RR}; }); S.caption='Pause = exactly 2 × the P–P interval'; },
+ ans:{reg:['int'],p:['normal'],pr:['normal']},
+ crit:{rate:'Underlying sinus rate',rhythm:'Regular, interrupted by a pause',p:'Normal; an entire P–QRS–T is missing',pr:'0.12–0.20 s, constant',qrs:'< 0.12 s',key:'Pause is an exact multiple of the P–P interval (sinus fires, impulse is blocked)'}},
+
+/* ---------- ATRIAL ---------- */
+{id:'pac', g:'Atrial', name:'Sinus rhythm with PACs', rate:[60,100],
+ gen:(S,rt)=>{ const pE=pEctopic(S.rng); sinusEctopy(S,rt,3,6,(S,c)=>{ const r=S.rng; let pp=c.last.tPeak+r.u(0.04,0.16); pp=Math.min(pp,c.tP-0.2); pp=Math.max(pp,c.last.t+0.25); const b=S.conduct(pp,r.u(0.12,0.18),null,{rr:pp-c.last.t+0.1,pShape:pE,label:'PAC'}); return {nextP:pp+c.RR*r.u(1.0,1.06),last:b}; }); },
+ ans:{reg:['int'],p:['premature'],pr:['normal']},
+ crit:{rate:'Underlying rate (usually 60–100)',rhythm:'Regular, interrupted by early beats',p:'Premature P′ with a different shape (may distort the preceding T)',pr:'Normal; the PAC’s PR may differ slightly',qrs:'< 0.12 s',key:'Early P′–QRS followed by a non-compensatory pause'}},
+{id:'pacb', g:'Atrial', name:'Blocked (non-conducted) PAC', rate:[60,95],
+ gen:(S,rt)=>{ const pE=pEctopic(S.rng); sinusEctopy(S,rt,3,6,(S,c)=>{ const r=S.rng; const pp=c.last.tPeak+r.u(-0.02,0.05); S.P(pp,pE); S.note(pp,'non-conducted'); return {nextP:pp+c.RR*r.u(1.05,1.12)}; }); S.caption='Look at the T wave before each pause'; },
+ ans:{reg:['int'],p:['premature','more'],pr:['normal']},
+ crit:{rate:'Underlying sinus rate',rhythm:'Regular, interrupted by a pause',p:'Premature P′ buried in/deforming the preceding T wave, not followed by a QRS',pr:'Normal for conducted beats',qrs:'< 0.12 s',key:'Most common cause of an unexpected pause — compare the T waves'}},
+{id:'paca', g:'Atrial', name:'PAC with aberrant conduction', rate:[60,100],
+ gen:(S,rt)=>{ const pE=pEctopic(S.rng), mA=morphAberrant(S.rng,S.sc); sinusEctopy(S,rt,3,6,(S,c)=>{ const r=S.rng; let pp=c.last.tPeak+r.u(0.02,0.1); pp=Math.min(pp,c.tP-0.18); const b=S.conduct(pp,r.u(0.12,0.18),mA,{rr:0.6,pShape:pE,label:'Aberrant PAC'}); return {nextP:pp+c.RR*r.u(1.0,1.06),last:b}; }); },
+ ans:{reg:['int'],p:['premature'],pr:['normal']},
+ crit:{rate:'Underlying sinus rate',rhythm:'Regular, interrupted by early beats',p:'Premature P′ precedes the early beat',pr:'Normal or slightly prolonged for the PAC',qrs:'Early beat is wide (aberrant); others narrow',key:'A premature P′ before a wide beat distinguishes it from a PVC'}},
+{id:'wap', g:'Atrial', name:'Wandering atrial pacemaker', rate:[60,100],
+ gen:(S,rt)=>{ const r=S.rng,RR=60/rt,shapes=[S.pN,...pDistinct(r,3)],prs=shapes.map((_,i)=>i===0?r.u(0.15,0.19):r.u(0.12,0.16)); let t=S.t0+r.u(0,RR),idx=0,cnt=r.i(1,2),prev=RR; while(t<S.t1){ S.conduct(t,prs[idx],null,{rr:prev,pShape:shapes[idx]}); const rr=RR*r.u(0.9,1.12); t+=rr; prev=rr; if(--cnt<=0){idx=(idx+1)%shapes.length;cnt=r.i(1,2);} } },
+ ans:{reg:['irr','int'],p:['multi'],pr:['variable','normal']},
+ crit:{rate:'< 100/min',rhythm:'Slightly irregular',p:'At least 3 different P-wave shapes',pr:'Varies with the P-wave site',qrs:'< 0.12 s',key:'Same picture as MAT, but rate under 100'}},
+{id:'mat', g:'Atrial', name:'Multifocal atrial tachycardia', rate:[105,150],
+ gen:(S,rt)=>{ const r=S.rng,RR=60/rt,shapes=[S.pN,...pDistinct(r,3)]; let t=S.t0+r.u(0,RR),prev=RR,last=-1; while(t<S.t1){ let k; do{k=r.i(0,shapes.length-1);}while(k===last); last=k; S.conduct(t,r.u(0.1,0.21),null,{rr:prev,pShape:shapes[k]}); const rr=RR*r.u(0.75,1.25); t+=rr; prev=rr; } },
+ ans:{reg:['irr'],p:['multi'],pr:['variable']},
+ crit:{rate:'> 100/min',rhythm:'Irregularly irregular',p:'At least 3 different P-wave shapes',pr:'Varies',qrs:'< 0.12 s',key:'Distinct P waves (≥3 shapes) separate MAT from atrial fibrillation'}},
+{id:'atach', g:'Atrial', name:'Atrial tachycardia', rate:[140,220],
+ gen:(S,rt)=>{ const pE=pEctopic(S.rng,S.rng.u(0.12,0.17)); const r=S.rng,RR=60/rt,pr=r.u(0.12,0.16); let t=S.t0+r.u(0,RR); while(t<S.t1){ S.conduct(t,pr,null,{rr:RR,pShape:pE}); t+=RR*(1+r.u(-0.006,0.006)); } },
+ ans:{reg:['reg'],p:['abnormal'],pr:['normal','short']},
+ crit:{rate:'Usually 150–250/min',rhythm:'Regular',p:'Uniform but abnormal (ectopic) P′ — may sit on the preceding T',pr:'Normal or short',qrs:'< 0.12 s',key:'Ectopic P′ visible before each QRS'}},
+{id:'svt', g:'Atrial', name:'Supraventricular tachycardia (SVT)', rate:[150,240],
+ gen:(S,rt)=>{ const r=S.rng,RR=60/rt,retro=r.chance(0.3); let t=S.t0+r.u(0,RR); while(t<S.t1){ S.QRS(t,S.qrsN,{rr:RR}); if(retro) S.P(t+0.075,pRetro(0.06)); t+=RR; } S.caption='No visible P waves before the QRS'; },
+ ans:{reg:['reg'],p:['absent'],pr:['na']},
+ crit:{rate:'150–250/min',rhythm:'Regular (very)',p:'Not visible — hidden in the QRS or just after it',pr:'Not measurable',qrs:'< 0.12 s',key:'Regular narrow-complex tachycardia with no visible P waves'}},
+{id:'afc', g:'Atrial', name:'Atrial fibrillation (controlled rate)', rate:[60,100],
+ gen:(S,rt)=>afib(S,rt),
+ ans:{reg:['irr'],p:['fib'],pr:['na']},
+ crit:{rate:'Ventricular 60–100/min',rhythm:'Irregularly irregular',p:'None — fibrillatory baseline (coarse or fine f waves)',pr:'None',qrs:'< 0.12 s',key:'Irregularly irregular with no discernible P waves'}},
+{id:'afr', g:'Atrial', name:'Atrial fibrillation with RVR', rate:[110,170],
+ gen:(S,rt)=>afib(S,rt),
+ ans:{reg:['irr'],p:['fib'],pr:['na']},
+ crit:{rate:'Ventricular > 100/min',rhythm:'Irregularly irregular',p:'None — fibrillatory baseline',pr:'None',qrs:'< 0.12 s',key:'Rapid ventricular response; irregularity persists even at fast rates'}},
+{id:'afs', g:'Atrial', name:'Atrial fibrillation (slow ventricular response)', rate:[38,58],
+ gen:(S,rt)=>afib(S,rt),
+ ans:{reg:['irr'],p:['fib'],pr:['na']},
+ crit:{rate:'Ventricular < 60/min',rhythm:'Irregularly irregular',p:'None — fibrillatory baseline',pr:'None',qrs:'< 0.12 s',key:'Long, unequal R–R intervals over a fibrillatory baseline'}},
+{id:'afl2', g:'Atrial', name:'Atrial flutter with 2:1 block', rate:[125,170],
+ gen:(S,rt)=>flutter(S,rt,2),
+ ans:{reg:['reg'],p:['flutter','more'],pr:['na']},
+ crit:{rate:'Atrial 250–350; ventricular ≈ 150/min',rhythm:'Regular',p:'Sawtooth F waves; every other one hides in the QRS or T',pr:'Not measured',qrs:'< 0.12 s',key:'Regular narrow tachycardia near 150 — look for hidden F waves'}},
+{id:'afl3', g:'Atrial', name:'Atrial flutter with 3:1 block', rate:[85,115],
+ gen:(S,rt)=>flutter(S,rt,3),
+ ans:{reg:['reg'],p:['flutter','more'],pr:['na']},
+ crit:{rate:'Atrial 250–350; ventricular ≈ 100/min',rhythm:'Regular',p:'Sawtooth F waves, 3 per QRS',pr:'Not measured',qrs:'< 0.12 s',key:'Three F waves for every QRS'}},
+{id:'afl4', g:'Atrial', name:'Atrial flutter with 4:1 block', rate:[63,87],
+ gen:(S,rt)=>flutter(S,rt,4),
+ ans:{reg:['reg'],p:['flutter','more'],pr:['na']},
+ crit:{rate:'Atrial 250–350; ventricular ≈ 75/min',rhythm:'Regular',p:'Sawtooth F waves, 4 per QRS',pr:'Not measured',qrs:'< 0.12 s',key:'Classic sawtooth baseline between QRS complexes'}},
+{id:'aflv', g:'Atrial', name:'Atrial flutter with variable block', rate:[75,125],
+ gen:(S,rt)=>flutter(S,rt,'var'),
+ ans:{reg:['irr','pat'],p:['flutter','more'],pr:['na']},
+ crit:{rate:'Atrial 250–350; ventricular varies',rhythm:'Irregular (R–R are multiples of the F–F interval)',p:'Sawtooth F waves',pr:'Not measured',qrs:'< 0.12 s',key:'Irregular rhythm with flutter waves — not atrial fibrillation'}},
+
+/* ---------- JUNCTIONAL ---------- */
+{id:'pjc', g:'Junctional', name:'Sinus rhythm with PJCs', rate:[60,100],
+ gen:(S,rt)=>{ const v=S.rng.pick(['none','before','after']), pR=pRetro(S.rng.u(0.07,0.11)); sinusEctopy(S,rt,3,6,(S,c)=>{ const r=S.rng, q=c.last.t+c.RR*r.u(0.5,0.62); let b; if(v==='before') b=S.conduct(q+S.qrsN.on+0.05-0.08,0.08,null,{rr:0.7,pShape:pR,label:'PJC'}); else { b=S.QRS(q,S.qrsN,{rr:0.7,label:'PJC'}); if(v==='after') S.P(q+0.1,pR); } return {nextP:q-c.pr+c.RR*r.u(1.02,1.1),last:b}; }); },
+ ans:{reg:['int'],p:['normal','absent'],pr:['normal']},
+ crit:{rate:'Underlying rate',rhythm:'Regular, interrupted by early beats',p:'Early beat has no P, an inverted P′ just before (PR < 0.12 s), or P′ just after the QRS',pr:'Normal for sinus beats',qrs:'< 0.12 s',key:'Early narrow beat without a normal upright P wave'}},
+{id:'jesc', g:'Junctional', name:'Junctional escape rhythm', rate:[40,60],
+ gen:(S,rt)=>junctionalRun(S,rt),
+ ans:{reg:['reg'],p:['absent'],pr:['na']},
+ crit:{rate:'40–60/min',rhythm:'Regular',p:'Absent, or inverted just before / after the QRS',pr:'< 0.12 s if a P′ precedes the QRS',qrs:'< 0.12 s',key:'Narrow, regular, 40–60, without upright P waves'}},
+{id:'ajr', g:'Junctional', name:'Accelerated junctional rhythm', rate:[61,100],
+ gen:(S,rt)=>junctionalRun(S,rt),
+ ans:{reg:['reg'],p:['absent'],pr:['na']},
+ crit:{rate:'61–100/min',rhythm:'Regular',p:'Absent, or inverted just before / after the QRS',pr:'< 0.12 s if a P′ precedes the QRS',qrs:'< 0.12 s',key:'Junctional mechanism faster than the intrinsic 40–60'}},
+{id:'jtach', g:'Junctional', name:'Junctional tachycardia', rate:[101,160],
+ gen:(S,rt)=>junctionalRun(S,rt),
+ ans:{reg:['reg'],p:['absent'],pr:['na']},
+ crit:{rate:'> 100/min',rhythm:'Regular',p:'Absent, or inverted just before / after the QRS',pr:'< 0.12 s if a P′ precedes the QRS',qrs:'< 0.12 s',key:'Narrow tachycardia with inverted or absent P waves'}},
+
+/* ---------- VENTRICULAR ---------- */
+{id:'pvc', g:'Ventricular', name:'Sinus rhythm with unifocal PVCs', rate:[60,100],
+ gen:(S,rt)=>{ const mV=morphWide(S.rng,S.sc,{id:'V1'}); sinusEctopy(S,rt,3,7,(S,c)=>{ const q=c.last.t+c.RR*S.rng.u(0.5,0.68); const b=S.QRS(q,mV,{rr:c.RR,label:PVC_LABEL}); S.P(c.tP,null,{lab:false}); return {nextP:c.tP+c.RR,last:b}; }); },
+ ans:{reg:['int'],p:['normal'],pr:['normal']},
+ crit:{rate:'Underlying rate',rhythm:'Regular, interrupted by early beats',p:'None before the PVC (sinus P is hidden)',pr:'Normal for sinus beats',qrs:'PVC ≥ 0.12 s, bizarre, T opposite the QRS',key:'All PVCs look alike; full compensatory pause'}},
+{id:'pvcm', g:'Ventricular', name:'Sinus rhythm with multifocal PVCs', rate:[60,100],
+ gen:(S,rt)=>{ const ms=[morphWide(S.rng,S.sc,{id:'V1',sign:1}),morphWide(S.rng,S.sc,{id:'V2',sign:-1,w:S.rng.u(0.15,0.2)})]; let k=0; sinusEctopy(S,rt,2,4,(S,c)=>{ const q=c.last.t+c.RR*S.rng.u(0.5,0.68); const b=S.QRS(q,ms[k],{rr:c.RR,label:PVC_LABEL}); k=1-k; S.P(c.tP,null,{lab:false}); return {nextP:c.tP+c.RR,last:b}; }); },
+ ans:{reg:['int'],p:['normal'],pr:['normal']},
+ crit:{rate:'Underlying rate',rhythm:'Regular, interrupted by early beats',p:'None before the PVCs',pr:'Normal for sinus beats',qrs:'PVCs wide, with 2 or more different shapes',key:'Different PVC morphologies = different ventricular foci'}},
+{id:'ront', g:'Ventricular', name:'R-on-T PVC', rate:[60,100],
+ gen:(S,rt)=>{ const mV=morphWide(S.rng,S.sc,{id:'V1'}); sinusEctopy(S,rt,4,7,(S,c)=>{ const q=c.last.tPeak+S.rng.u(-0.01,0.025); const b=S.QRS(q,mV,{rr:c.RR,label:'R-on-T'}); S.P(c.tP,null,{lab:false}); return {nextP:c.tP+c.RR,last:b}; }); },
+ ans:{reg:['int'],p:['normal'],pr:['normal']},
+ crit:{rate:'Underlying rate',rhythm:'Regular, interrupted by an early beat',p:'None before the PVC',pr:'Normal for sinus beats',qrs:'PVC wide and bizarre',key:'PVC lands on the peak/downslope of the preceding T wave (vulnerable period)'}},
+{id:'coup', g:'Ventricular', name:'PVC couplet', rate:[60,100],
+ gen:(S,rt)=>{ const mV=morphWide(S.rng,S.sc,{id:'V1'}); sinusEctopy(S,rt,4,7,(S,c)=>{ const r=S.rng,q1=c.last.t+c.RR*r.u(0.5,0.65),q2=q1+r.u(0.36,0.46); S.QRS(q1,mV,{rr:0.45,label:PVC_LABEL}); const b=S.QRS(q2,mV,{rr:0.45,label:PVC_LABEL}); let p=c.tP; while(p<q2+0.25){S.P(p,null,{lab:false}); p+=c.RR;} return {nextP:p,last:b}; }); },
+ ans:{reg:['int'],p:['normal'],pr:['normal']},
+ crit:{rate:'Underlying rate',rhythm:'Regular, interrupted by paired early beats',p:'None before the PVCs',pr:'Normal for sinus beats',qrs:'Two consecutive wide PVCs',key:'Two PVCs in a row'}},
+{id:'trip', g:'Ventricular', name:'PVC triplet (run of NSVT)', rate:[60,100],
+ gen:(S,rt)=>{ const mV=morphWide(S.rng,S.sc,{id:'V1'}); sinusEctopy(S,rt,4,7,(S,c)=>{ const r=S.rng,iv=r.u(0.3,0.4),q1=c.last.t+c.RR*r.u(0.5,0.65); let b; for(let i=0;i<3;i++) b=S.QRS(q1+i*iv,mV,{rr:iv,label:PVC_LABEL}); let p=c.tP; while(p<q1+2*iv+0.25){S.P(p,null,{lab:false}); p+=c.RR;} return {nextP:p,last:b}; }); },
+ ans:{reg:['int'],p:['normal'],pr:['normal']},
+ crit:{rate:'Underlying rate; run is > 100/min',rhythm:'Regular, interrupted by a run of early beats',p:'None before the PVCs',pr:'Normal for sinus beats',qrs:'Three consecutive wide PVCs',key:'Three or more PVCs in a row = a run of (nonsustained) VT'}},
+{id:'bigem', g:'Ventricular', name:'Ventricular bigeminy', rate:[60,95],
+ gen:(S,rt)=>{ const mV=morphWide(S.rng,S.sc,{id:'V1'}); sinusEctopy(S,rt,1,1,(S,c)=>{ const q=c.last.t+c.RR*S.rng.u(0.52,0.66); const b=S.QRS(q,mV,{rr:c.RR,label:PVC_LABEL}); S.P(c.tP,null,{lab:false}); return {nextP:c.tP+c.RR,last:b}; }); },
+ ans:{reg:['pat','int'],p:['normal'],pr:['normal']},
+ crit:{rate:'Underlying rate',rhythm:'Regularly irregular (repeating pairs)',p:'Normal for sinus beats',pr:'Normal for sinus beats',qrs:'Every other beat is a wide PVC',key:'Sinus, PVC, sinus, PVC…'}},
+{id:'trigem', g:'Ventricular', name:'Ventricular trigeminy', rate:[60,100],
+ gen:(S,rt)=>{ const mV=morphWide(S.rng,S.sc,{id:'V1'}); sinusEctopy(S,rt,2,2,(S,c)=>{ const q=c.last.t+c.RR*S.rng.u(0.52,0.66); const b=S.QRS(q,mV,{rr:c.RR,label:PVC_LABEL}); S.P(c.tP,null,{lab:false}); return {nextP:c.tP+c.RR,last:b}; }); },
+ ans:{reg:['pat','int'],p:['normal'],pr:['normal']},
+ crit:{rate:'Underlying rate',rhythm:'Regularly irregular (repeating groups of 3)',p:'Normal for sinus beats',pr:'Normal for sinus beats',qrs:'Every third beat is a wide PVC',key:'Sinus, sinus, PVC…'}},
+{id:'quadri', g:'Ventricular', name:'Ventricular quadrigeminy', rate:[60,100],
+ gen:(S,rt)=>{ const mV=morphWide(S.rng,S.sc,{id:'V1'}); sinusEctopy(S,rt,3,3,(S,c)=>{ const q=c.last.t+c.RR*S.rng.u(0.52,0.66); const b=S.QRS(q,mV,{rr:c.RR,label:PVC_LABEL}); S.P(c.tP,null,{lab:false}); return {nextP:c.tP+c.RR,last:b}; }); },
+ ans:{reg:['pat','int'],p:['normal'],pr:['normal']},
+ crit:{rate:'Underlying rate',rhythm:'Regularly irregular (repeating groups of 4)',p:'Normal for sinus beats',pr:'Normal for sinus beats',qrs:'Every fourth beat is a wide PVC',key:'Sinus, sinus, sinus, PVC…'}},
+{id:'idio', g:'Ventricular', name:'Idioventricular rhythm', rate:[20,40],
+ gen:(S,rt)=>{ ventRun(S,rt,morphWide(S.rng,S.sc,{w:S.rng.u(0.16,0.22),id:'E'}),0.025); },
+ ans:{reg:['reg'],p:['absent','na'],pr:['na']},
+ crit:{rate:'20–40/min',rhythm:'Regular (may be slightly irregular)',p:'Absent',pr:'None',qrs:'≥ 0.12 s, bizarre; T opposite the QRS',key:'Slow, wide ventricular escape rhythm'}},
+{id:'aivr', g:'Ventricular', name:'Accelerated idioventricular rhythm (AIVR)', rate:[41,100],
+ gen:(S,rt)=>{ ventRun(S,rt,morphWide(S.rng,S.sc,{w:S.rng.u(0.15,0.2),id:'E'}),0.015); if(S.rng.chance(0.4)){ dissocP(S,Math.max(40,rt*S.rng.u(0.7,0.9)),S.pAmp*0.8); S.ans.p=['absent','normal','na']; S.ans.pr=['dissoc','na']; } },
+ ans:{reg:['reg'],p:['absent','na'],pr:['na']},
+ crit:{rate:'41–100/min',rhythm:'Regular',p:'Usually absent; may be dissociated',pr:'None',qrs:'≥ 0.12 s, bizarre',key:'Wide, regular — faster than idioventricular, slower than VT'}},
+{id:'vt', g:'Ventricular', name:'Monomorphic ventricular tachycardia', rate:[140,220],
+ gen:(S,rt)=>{ ventRun(S,rt,morphWide(S.rng,S.sc,{w:S.rng.u(0.14,0.18),id:'E'}),0.008); if(S.rng.chance(0.4)){ dissocP(S,S.rng.u(65,90),S.pAmp*0.8); S.ans.p=['absent','na','normal']; S.ans.pr=['na','dissoc']; } },
+ ans:{reg:['reg'],p:['absent','na'],pr:['na']},
+ crit:{rate:'> 100/min (usually 140–250)',rhythm:'Regular',p:'Usually not seen; if seen, dissociated from the QRS',pr:'None',qrs:'≥ 0.12 s, uniform shape',key:'Regular wide-complex tachycardia — VT until proven otherwise'}},
+{id:'tdp', g:'Ventricular', name:'Polymorphic VT (torsades de pointes)', rate:[190,260],
+ gen:(S,rt)=>{ const r=S.rng,f=rt/60,P=r.u(1.6,2.6),A=r.u(0.9,1.3),ph=r.u(0,6.28),ph2=r.u(0,6.28); S.cont.push(t=>{ const env=Math.sin(Math.PI*t/P+ph); const w=Math.sin(2*Math.PI*f*t+ph2+0.25*Math.sin(t*1.3)); const sh=Math.sign(w)*Math.pow(Math.abs(w),0.6); return A*(0.88*env+0.12*Math.sin(0.7*t))*sh; }); S.rateOverride=rt; S.qrsOverride=['wide','none']; S.caption='QRS amplitude and polarity twist around the baseline'; },
+ ans:{reg:['irr','none'],p:['na','absent'],pr:['na']},
+ crit:{rate:'200–250/min',rhythm:'Irregular',p:'None',pr:'None',qrs:'Wide; amplitude and polarity vary in a spindle pattern',key:'QRS complexes “twist” around the isoelectric line'}},
+{id:'vfc', g:'Ventricular', name:'Ventricular fibrillation (coarse)', rate:null,
+ gen:(S)=>vfib(S,S.rng.u(1.4,2.2)),
+ ans:{reg:['none'],p:['na'],pr:['na']},
+ crit:{rate:'Not measurable',rhythm:'Chaotic',p:'None',pr:'None',qrs:'None — irregular, high-amplitude waves',key:'Chaotic, disorganized waveform with larger deflections'}},
+{id:'vff', g:'Ventricular', name:'Ventricular fibrillation (fine)', rate:null,
+ gen:(S)=>vfib(S,S.rng.u(0.25,0.4)),
+ ans:{reg:['none'],p:['na'],pr:['na']},
+ crit:{rate:'Not measurable',rhythm:'Chaotic',p:'None',pr:'None',qrs:'None — low-amplitude chaotic waves',key:'Can mimic asystole — look for any undulating activity'}},
+{id:'asys', g:'Ventricular', name:'Asystole', rate:null,
+ gen:(S)=>{ const r=S.rng,n1=makeNoise(r,1.4,S.t0,S.t1),n2=makeNoise(r,0.02,S.t0,S.t1); S.cont.push(t=>0.03*n1(t)+0.006*n2(t)); if(r.chance(0.3)){ dissocP(S,r.u(30,60)); S.ans.p=['na','more','normal']; } S.caption='No ventricular activity'; },
+ ans:{reg:['none'],p:['na'],pr:['na']},
+ crit:{rate:'None',rhythm:'None',p:'Usually none (P waves alone = ventricular standstill)',pr:'None',qrs:'None',key:'Flat line with no QRS complexes — confirm in more than one lead'}},
+{id:'agonal', g:'Ventricular', name:'Agonal rhythm', rate:[8,20],
+ gen:(S,rt)=>{ const r=S.rng,mean=60/rt; let t=r.u(0.4,2.2); while(t>S.t0) t-=mean*r.u(0.7,1.3); while(t<S.t1){ if(t>S.t0) S.QRS(t,morphWide(r,S.sc,{w:r.u(0.22,0.32),amp:r.u(0.35,0.7),id:'G'}),{rr:3}); t+=mean*r.u(0.7,1.3); } },
+ ans:{reg:['irr','int'],p:['absent','na'],pr:['na']},
+ crit:{rate:'< 20/min',rhythm:'Irregular',p:'None',pr:'None',qrs:'Very wide, bizarre, low amplitude',key:'Occasional wide, bizarre complexes in a dying heart'}},
+
+/* ---------- AV BLOCKS ---------- */
+{id:'avb1', g:'AV Blocks', name:'First-degree AV block', rate:[50,95], rl:'Rate',
+ gen:(S,rt)=>{ sinusRun(S,rt,{pr:S.rng.u(0.22,0.36)}); },
+ ans:{reg:['reg'],p:['normal'],pr:['long']},
+ crit:{rate:'Underlying rate',rhythm:'Regular',p:'Normal; one before every QRS',pr:'> 0.20 s, constant',qrs:'< 0.12 s',key:'Every P conducts, but the PR is prolonged'}},
+{id:'mob1', g:'AV Blocks', name:'Second-degree AV block, type I (Wenckebach)', rate:[60,100], rl:'Atrial rate',
+ gen:(S,rt)=>{ const r=S.rng,PP=60/rt,pr0=r.u(0.16,0.24),inc0=r.u(0.08,0.14); let t=S.t0+r.u(0,PP),n=r.i(3,5),i=0,pr=pr0,inc=inc0; while(t<S.t1){ if(i<n-1){ S.conduct(t,pr,null,{rr:PP}); pr+=inc; inc*=0.55; } else { S.P(t); S.note(t,'non-conducted'); } i++; if(i>=n){ i=0; pr=pr0; inc=inc0; if(r.chance(0.3)) n=r.i(3,5); } t+=PP; } S.caption='PR lengthens progressively until a P wave is not conducted'; },
+ ans:{reg:['pat','irr'],p:['more'],pr:['lengthen']},
+ crit:{rate:'Atrial > ventricular',rhythm:'Regularly irregular (group beating)',p:'Regular; some P waves not followed by a QRS',pr:'Progressively lengthens until a QRS is dropped',qrs:'Usually < 0.12 s',key:'Longer, longer, longer, drop — then the cycle repeats'}},
+{id:'mob2', g:'AV Blocks', name:'Second-degree AV block, type II (Mobitz II)', rate:[60,100], rl:'Atrial rate',
+ gen:(S,rt)=>{ const r=S.rng,PP=60/rt,pr=r.u(0.14,0.26),m=r.chance(0.4)?morphAberrant(r,S.sc):S.qrsN; let t=S.t0+r.u(0,PP),n=r.i(3,5),i=0; while(t<S.t1){ if(i<n-1) S.conduct(t,pr,m,{rr:PP}); else { S.P(t); S.note(t,'non-conducted'); } i++; if(i>=n){ i=0; if(r.chance(0.4)) n=r.i(3,5); } t+=PP; } S.ans.pr=prAns(pr); S.caption='Constant PR, then a sudden non-conducted P'; },
+ ans:{reg:['pat','int'],p:['more'],pr:['normal']},
+ crit:{rate:'Atrial > ventricular',rhythm:'Regular, interrupted by dropped beats',p:'Regular; some P waves not followed by a QRS',pr:'Constant (normal or prolonged) in conducted beats',qrs:'Often ≥ 0.12 s',key:'Dropped beats without any PR lengthening beforehand'}},
+{id:'avb21', g:'AV Blocks', name:'2:1 AV block', rate:[70,110], rl:'Atrial rate',
+ gen:(S,rt)=>{ const r=S.rng,PP=60/rt,pr=r.u(0.14,0.26),m=r.chance(0.3)?morphAberrant(r,S.sc):S.qrsN; let t=S.t0+r.u(0,PP),i=r.i(0,1); while(t<S.t1){ if(i%2===0) S.conduct(t,pr,m,{rr:2*PP}); else S.P(t); i++; t+=PP; } S.ans.pr=prAns(pr); S.caption='Every other P wave is conducted'; },
+ ans:{reg:['reg'],p:['more'],pr:['normal']},
+ crit:{rate:'Ventricular = ½ atrial',rhythm:'Regular',p:'Two P waves for every QRS (one may sit on the T)',pr:'Constant in conducted beats',qrs:'Narrow or wide',key:'Cannot be classified as type I vs type II from this strip alone'}},
+{id:'hgavb', g:'AV Blocks', name:'High-grade (advanced) AV block', rate:[70,110], rl:'Atrial rate',
+ gen:(S,rt)=>{ const r=S.rng,PP=60/rt,pr=r.u(0.14,0.24),N=r.pick([3,4]); let t=S.t0+r.u(0,PP),i=r.i(0,N-1); while(t<S.t1){ if(i%N===0) S.conduct(t,pr,null,{rr:N*PP}); else S.P(t); i++; t+=PP; } S.ans.pr=prAns(pr); S.caption=N+':1 conduction — two or more consecutive P waves blocked'; },
+ ans:{reg:['reg','pat','int'],p:['more'],pr:['normal']},
+ crit:{rate:'Ventricular slow (often < 40)',rhythm:'Regular or patterned',p:'Regular; ≥ 2 consecutive P waves not conducted',pr:'Constant in conducted beats',qrs:'Narrow or wide',key:'3:1 or higher conduction ratio with a fixed PR'}},
+{id:'chbj', g:'AV Blocks', name:'Third-degree AV block (junctional escape)', dx:'chb', rate:[40,58], rl:'Ventricular rate',
+ gen:(S,rt)=>{ ventRun(S,rt,S.qrsN,0.01); dissocP(S,S.rng.u(Math.max(68,rt*1.5),100)); S.caption='P waves and QRS complexes are independent (AV dissociation)'; },
+ ans:{reg:['reg'],p:['more'],pr:['dissoc']},
+ crit:{rate:'Atrial 60–100; ventricular 40–60',rhythm:'Atrial regular; ventricular regular',p:'Regular, more P waves than QRS complexes',pr:'No relationship — P waves march through',qrs:'< 0.12 s (junctional escape)',key:'Complete AV dissociation with a narrow escape rhythm'}},
+{id:'chbv', g:'AV Blocks', name:'Third-degree AV block (ventricular escape)', dx:'chb', rate:[22,40], rl:'Ventricular rate',
+ gen:(S,rt)=>{ ventRun(S,rt,morphWide(S.rng,S.sc,{w:S.rng.u(0.16,0.2),id:'E'}),0.01); dissocP(S,S.rng.u(60,95)); S.caption='P waves and QRS complexes are independent (AV dissociation)'; },
+ ans:{reg:['reg'],p:['more'],pr:['dissoc']},
+ crit:{rate:'Atrial 60–100; ventricular 20–40',rhythm:'Atrial regular; ventricular regular',p:'Regular, more P waves than QRS complexes',pr:'No relationship — P waves march through',qrs:'≥ 0.12 s (ventricular escape)',key:'Complete AV dissociation with a wide, slow escape rhythm'}},
+
+/* ---------- PACED ---------- */
+{id:'pacea', g:'Paced', name:'Atrial paced rhythm', rate:[60,90], rl:'Pacing rate',
+ gen:(S,rt)=>{ const r=S.rng,L=60/rt,pr=r.u(0.16,0.22),pP={c:[[0,0.024,r.u(0.08,0.13)]],txt:'P'}; let t=S.t0+r.u(0,L); while(t<S.t1){ S.spike(t,'A'); S.P(t+0.045,pP); S.QRS(t+pr-S.qrsN.on,S.qrsN,{rr:L,pOn:t}); t+=L; } S.ans.pr=prAns(pr); },
+ ans:{reg:['reg'],p:['paced'],pr:['normal']},
+ crit:{rate:'Programmed rate (often 60–80)',rhythm:'Regular',p:'Pacer spike followed by a P wave',pr:'Normal, constant (spike to QRS)',qrs:'< 0.12 s (normal conduction)',key:'Atrial spike before every P wave, then a normal QRS'}},
+{id:'pacev', g:'Paced', name:'Ventricular paced rhythm', rate:[60,90], rl:'Pacing rate',
+ gen:(S,rt)=>{ const r=S.rng,L=60/rt,mP=morphPacedV(r,S.sc); let t=S.t0+r.u(0,L); while(t<S.t1){ S.spike(t,'V'); S.QRS(t,mP,{rr:L}); t+=L; } pacedUnderlying(S); },
+ ans:{reg:['reg'],p:['absent','na'],pr:['na']},
+ crit:{rate:'Programmed rate',rhythm:'Regular',p:'None related to the QRS',pr:'None',qrs:'Wide, preceded by a pacer spike; T opposite the QRS',key:'Ventricular spike before every wide QRS'}},
+{id:'paceav', g:'Paced', name:'Dual-chamber (AV) paced rhythm', rate:[60,90], rl:'Pacing rate',
+ gen:(S,rt)=>{ const r=S.rng,L=60/rt,avd=r.u(0.14,0.2),mP=morphPacedV(r,S.sc),pP={c:[[0,0.024,r.u(0.08,0.12)]],txt:'P'}; let t=S.t0+r.u(0,L); while(t<S.t1){ S.spike(t,'A'); S.P(t+0.045,pP); S.spike(t+avd,'V'); S.QRS(t+avd,mP,{rr:L,pOn:t}); t+=L; } },
+ ans:{reg:['reg'],p:['paced'],pr:['normal','na']},
+ crit:{rate:'Programmed rate',rhythm:'Regular',p:'Atrial spike followed by a P wave',pr:'Programmed AV interval (spike to spike)',qrs:'Wide, preceded by a ventricular spike',key:'Two spikes per beat: atrial then ventricular'}},
+{id:'fcap', g:'Paced', name:'Pacemaker failure to capture', rate:[60,80], rl:'Pacing rate',
+ gen:(S,rt)=>{ const r=S.rng,L=60/rt,mP=morphPacedV(r,S.sc); let t=S.t0+r.u(0,L); const failAt=r.u(1.0,3.8); let forced=false,lastFail=false; while(t<S.t1){ S.spike(t,'V'); let fail=(!forced&&t>=failAt)||(!lastFail&&r.chance(0.22)); if(!forced&&t>=failAt) forced=true; if(fail){ S.note(t,'no capture'); lastFail=true; } else { S.QRS(t,mP,{rr:L}); lastFail=false; } t+=L; } pacedUnderlying(S); S.caption='Spike not followed by a QRS'; },
+ ans:{reg:['int','irr'],p:['absent','na'],pr:['na']},
+ crit:{rate:'Below the programmed rate',rhythm:'Irregular because of missed beats',p:'Depends on the underlying rhythm',pr:'None',qrs:'Paced beats wide; some spikes have no QRS',key:'Pacer spike appears on time but no depolarization follows'}},
+{id:'fsense', g:'Paced', name:'Pacemaker failure to sense (undersensing)', rate:[58,72], rl:'Pacing rate',
+ gen:(S,rt)=>{ const r=S.rng,L=60/rt,mP=morphPacedV(r,S.sc),srate=r.u(Math.max(76,rt+12),95),PP=60/srate,pr=r.u(0.14,0.18);
+   const items=[]; for(let p=S.t0+r.u(0,PP);p<S.t1;p+=PP*(1+r.u(-0.01,0.01))) items.push({k:'s',p,on:p-0.05+pr}); for(let s=S.t0+r.u(0,L);s<S.t1;s+=L) items.push({k:'v',s,on:s});
+   items.sort((a,b)=>a.on-b.on); let lastV=-9;
+   for(const it of items){ if(it.k==='s'){ if(it.on-lastV>0.3){ S.conduct(it.p,pr,null,{rr:PP}); lastV=it.on; } else S.P(it.p); } else { S.spike(it.s,'V'); if(it.s-lastV>0.32){ S.QRS(it.s,mP,{rr:L}); lastV=it.s; } else S.note(it.s,'not sensed'); } }
+   S.caption='Spikes fire without regard to intrinsic beats'; },
+ ans:{reg:['irr','int'],p:['normal'],pr:['normal','variable']},
+ crit:{rate:'Intrinsic rate plus paced beats',rhythm:'Irregular',p:'Intrinsic P waves present',pr:'Normal for intrinsic beats',qrs:'Mixture of intrinsic (narrow) and paced (wide) beats',key:'Spikes occur too soon after intrinsic beats, often landing in the ST segment or T wave'}},
+{id:'osense', g:'Paced', name:'Pacemaker oversensing', rate:[60,80], rl:'Pacing rate',
+ gen:(S,rt)=>{ const r=S.rng,L=60/rt,mP=morphPacedV(r,S.sc),burst=r.chance(0.6); let t=S.t0+r.u(0,L),skipAt=r.u(0.8,2.6),done=false,cnt=0; while(t<S.t1){ const doSkip=(!done&&t>=skipAt)||(done&&cnt>=r.i(6,9)); if(doSkip){ const k=r.i(1,2),a=t-L+0.25,b=t+(k-1)*L+L*0.9; if(burst) noiseBurst(S,a,b,0.07); S.note(t+(k-1)*L/2,'pause — no spike'); t+=k*L; done=true; cnt=0; continue; } S.spike(t,'V'); S.QRS(t,mP,{rr:L}); cnt++; t+=L; } pacedUnderlying(S); S.caption='Pause longer than the pacing interval with no spike'; },
+ ans:{reg:['int'],p:['absent','na'],pr:['na']},
+ crit:{rate:'Below the programmed rate during pauses',rhythm:'Regular, interrupted by pauses',p:'Depends on the underlying rhythm',pr:'None',qrs:'Paced beats wide',key:'Pacer inhibited by non-cardiac signals (e.g., muscle noise) — pause with no spike'}}
+];
+const RH = {}; RH_LIST.forEach(r=>{ RH[r.id]=r; if(!r.dx) r.dx=r.id; });
+const DX_NAMES = {}; RH_LIST.forEach(r=>{ if(!DX_NAMES[r.dx]) DX_NAMES[r.dx] = (r.dx==='chb') ? 'Third-degree (complete) AV block' : r.name; });
+const GROUPS = ['Sinus','Atrial','Junctional','Ventricular','AV Blocks','Paced'];
+
+// Look-alike rhythms used as quick-quiz distractors
+const CONFUSE = {
+  nsr:['sarr','avb1','stach','sbrady'], sbrady:['jesc','nsr','avb1','afs'], stach:['atach','svt','afl2','nsr'],
+  sarr:['nsr','wap','afc','pac'], sarrest:['saexit','pacb','mob2','sbrady'], saexit:['sarrest','pacb','mob2','avb21'],
+  pac:['pjc','pvc','pacb','sarr'], pacb:['mob2','saexit','sarrest','pac'], paca:['pvc','pac','pjc','pvcm'],
+  wap:['mat','sarr','pac','afc'], mat:['afr','wap','atach','aflv'], atach:['svt','stach','afl2','mat'],
+  svt:['atach','stach','afl2','jtach'], afc:['mat','aflv','sarr','afr'], afr:['mat','svt','aflv','afc'], afs:['afc','sarrest','jesc','aflv'],
+  afl2:['stach','svt','atach','afl4'], afl3:['afl2','afl4','aflv','afc'], afl4:['afl2','afl3','aflv','afc'], aflv:['afc','afl4','mat','afr'],
+  pjc:['pac','pvc','sarrest','paca'], jesc:['sbrady','idio','ajr','chbj'], ajr:['jesc','aivr','nsr','jtach'], jtach:['svt','stach','ajr','atach'],
+  pvc:['pvcm','paca','pjc','bigem'], pvcm:['pvc','coup','trip','paca'], ront:['pvc','tdp','coup','pvcm'], coup:['trip','pvcm','bigem','pvc'],
+  trip:['coup','vt','pvcm','tdp'], bigem:['trigem','quadri','pvc','coup'], trigem:['bigem','quadri','pvc','pvcm'], quadri:['trigem','bigem','pvc','pvcm'],
+  idio:['aivr','jesc','chbv','agonal'], aivr:['idio','vt','ajr','pacev'], vt:['svt','tdp','aivr','vfc'], tdp:['vfc','vt','vff','trip'],
+  vfc:['vff','tdp','vt','asys'], vff:['asys','vfc','agonal','tdp'], asys:['vff','agonal','chbv','vfc'], agonal:['idio','asys','vff','chbv'],
+  avb1:['nsr','mob1','sbrady','pacea'], mob1:['mob2','avb21','pacb','avb1'], mob2:['mob1','avb21','pacb','hgavb'],
+  avb21:['mob2','mob1','hgavb','sbrady'], hgavb:['chbv','avb21','mob2','chbj'], chbj:['hgavb','avb21','jesc','mob2'], chbv:['hgavb','idio','avb21','mob2'],
+  pacea:['nsr','paceav','avb1','pacev'], pacev:['paceav','idio','aivr','fcap'], paceav:['pacev','pacea','fcap','fsense'],
+  fcap:['fsense','osense','pacev','paceav'], fsense:['fcap','osense','pvc','pacev'], osense:['fcap','fsense','sarrest','pacev']
+};
+
+/* =====================================================================
+   ARTIFACT
+   ===================================================================== */
+function applyArtifact(S, type, sev, rng){
+  if(!type || type==='none') return;
+  const m={mild:0.5,moderate:1,severe:1.7}[sev]||1, a=S.t0, b=S.t1, add=f=>S.cont.push(f);
+  const tremor=k=>{ const n=makeNoise(rng,0.007,a,b), e=makeNoise(rng,0.6,a,b); add(t=>0.07*k*m*n(t)*(0.45+0.55*Math.max(0,e(t)+0.4))); };
+  const ac=k=>{ const ph=rng.u(0,6.28); add(t=>0.035*k*m*Math.sin(2*Math.PI*60*t+ph)); };
+  const wander=k=>{ const f=rng.u(0.18,0.35), ph=rng.u(0,6.28), n=makeNoise(rng,1.6,a,b); add(t=>0.32*k*m*(0.75*Math.sin(2*Math.PI*f*t+ph)+0.45*n(t))); };
+  const loose=k=>{
+    const list=[{s:rng.u(0.5,2.8),d:rng.u(0.4,1.1),off:rng.u(-0.4,0.4)}];
+    for(let t=4+rng.u(0,2); t<b; t+=rng.u(2,5)) list.push({s:t,d:rng.u(0.3,1.1),off:rng.u(-0.4,0.4)});
+    const n=makeNoise(rng,0.03,a,b), n2=makeNoise(rng,0.012,a,b);
+    add(t=>{ let lo=0,hi=list.length-1; while(lo<hi){ const mid=(lo+hi+1)>>1; if(list[mid].s<=t) lo=mid; else hi=mid-1; } const B=list[lo]; if(t<B.s||t>B.s+B.d) return 0; const env=Math.sin(Math.PI*(t-B.s)/B.d); return k*m*env*(0.7*n(t)+0.3*n2(t)+B.off); });
+  };
+  if(type==='tremor') tremor(1); else if(type==='ac') ac(1); else if(type==='wander') wander(1); else if(type==='loose') loose(1);
+  else if(type==='mixed'){ tremor(0.7); wander(0.7); }
+}
+
+/* =====================================================================
+   BUILD + ANSWER KEY
+   ===================================================================== */
+function buildStrip(id, seed, rate, art, live){
+  const R=RH[id], rng=makeRng(seed), D=live?LIVE_S:STRIP_S;
+  const S=new Strip(rng, -3, D+1.5);
+  const rt = R.rate ? (rate!=null ? rate : Math.round(rng.u(R.rate[0],R.rate[1]))) : null;
+  S.rate=rt; R.gen(S, rt);
+  if(art && art.type && art.type!=='none') applyArtifact(S, art.type, art.sev, makeRng((seed*7919+13)>>>0));
+  S.ps.sort((x,y)=>x.t-y.t); S.beats.sort((x,y)=>x.t-y.t);
+  S.buf=render(S, D); S.D=D; S.id=id;
+  return S;
+}
+const RATE_BANDS = [
+  {k:'none', label:'No measurable ventricular rate'},
+  {k:'lt60', label:'Less than 60/min', lo:0, hi:59},
+  {k:'n', label:'60–100/min', lo:60, hi:100},
+  {k:'t1', label:'101–150/min', lo:101, hi:150},
+  {k:'t2', label:'More than 150/min', lo:151, hi:9999}
+];
+function computeTruth(S){
+  const R=RH[S.id], bs=S.beats.filter(b=>b.t>=0&&b.t<=STRIP_S);
+  let vals=null;
+  if(S.rateOverride!=null) vals=[S.rateOverride];
+  else if(bs.length>=2){ let sum=0; for(let i=1;i<bs.length;i++) sum+=bs[i].t-bs[i-1].t; vals=[60/(sum/(bs.length-1)), bs.length*10]; }
+  else if(bs.length===1) vals=[10];
+  if(vals && S.rate!=null && R.rl!=='Atrial rate' && S.rateOverride==null) vals.push(S.rate);
+  const rate=new Set();
+  if(!vals) rate.add('none');
+  else for(const v of vals) for(const band of RATE_BANDS) if(band.lo!=null && v>=band.lo-4 && v<=band.hi+4) rate.add(band.k);
+  let qrs;
+  if(S.qrsOverride) qrs=S.qrsOverride;
+  else if(!bs.length) qrs=['none'];
+  else { const set=new Set(bs.map(b=>b.paced?'paced':(b.dur>=0.12?'wide':'narrow'))); qrs = set.size===1 ? [...set] : (set.has('paced')?['mixed','paced']:['mixed']); }
+  const a=Object.assign({}, R.ans, S.ans);
+  return {rate:[...rate], reg:a.reg, p:a.p, pr:a.pr, qrs, measured: vals?Math.round(vals[0]):null};
+}
+
+/* Systematic answer options */
+const OPT = {
+  rate: RATE_BANDS.map(b=>[b.k,b.label]),
+  reg: [['reg','Regular'],['int','Regular, interrupted by early beats or pauses'],['pat','Regularly irregular (repeating pattern / group beating)'],['irr','Irregularly irregular'],['none','No organized rhythm / no QRS complexes']],
+  p: [['normal','Normal sinus P waves, one before each QRS'],['premature','Sinus P waves plus premature P waves of a different shape'],['abnormal','Uniform but abnormal (ectopic) P waves'],['multi','Varying P-wave shapes (3 or more)'],['more','More P waves than QRS complexes'],['flutter','Flutter (sawtooth) waves'],['fib','Fibrillatory baseline, no discrete P waves'],['absent','Absent, hidden, or retrograde (inverted) P waves'],['paced','Paced P waves (preceded by a pacer spike)'],['na','No organized activity to assess']],
+  pr: [['normal','0.12–0.20 s and constant'],['short','Shorter than 0.12 s'],['long','Longer than 0.20 s and constant'],['lengthen','Progressively lengthens until a QRS is dropped'],['variable','Varies without a pattern'],['dissoc','No relationship between P waves and QRS (AV dissociation)'],['na','Not measurable / no P waves']],
+  qrs: [['narrow','Narrow (< 0.12 s)'],['wide','Wide (≥ 0.12 s)'],['mixed','Narrow beats with some wide or paced beats'],['paced','Paced (wide, preceded by a pacer spike)'],['none','No discernible QRS complexes']]
+};
+const STEP_NAMES = {rate:'Rate', reg:'Rhythm', p:'P waves', pr:'PR interval', qrs:'QRS', dx:'Interpretation'};
+function optLabel(step, k){ const o=OPT[step].find(x=>x[0]===k); return o?o[1]:'—'; }
+
+/* =====================================================================
+   STRIP VIEW (ECG paper renderer)
+   ===================================================================== */
+const COL = {bg:'#fff7f7', small:'#f3c4c4', big:'#e08a8a', trace:'#111418', P:'#1f5fbf', QRS:'#b3261e', T:'#2e7d32', spike:'#7b1fa2', note:'#4a4f55', cal:'#00838f'};
+const views=[];
+class StripView{
+  constructor(host){
+    this.host=host;
+    this.scroller=document.createElement('div'); this.scroller.className='sv-scroll';
+    this.canvas=document.createElement('canvas'); this.canvas.className='sv-canvas';
+    this.scroller.appendChild(this.canvas); host.appendChild(this.scroller);
+    this.capEl=document.createElement('div'); this.capEl.className='sv-caption'; host.appendChild(this.capEl);
+    this.readout=document.createElement('div'); this.readout.className='sv-readout'; host.appendChild(this.readout);
+    this.ctx=this.canvas.getContext('2d');
+    this.grid=document.createElement('canvas');
+    this.labels=false; this.calipers=false; this.cal={a:30,b:55}; this.drag=null;
+    this.S=null; this.mode='static'; this.frozen=false; this.frozenT=0; this.liveStart=0; this.ppm=0; this.dpr=0;
+    if(window.ResizeObserver) new ResizeObserver(()=>this.resize()).observe(this.host);
+    window.addEventListener('resize',()=>this.resize());
+    this.canvas.addEventListener('pointerdown',e=>this.pDown(e));
+    this.canvas.addEventListener('pointermove',e=>this.pMove(e));
+    window.addEventListener('pointerup',()=>{this.drag=null;});
+    views.push(this);
+  }
+  visible(){ return this.host.offsetParent!==null; }
+  setStrip(S, mode){ this.S=S; this.mode=mode; this.frozen=false; this.liveStart=performance.now(); this.resize(true); this.draw(); }
+  setLabels(v){ this.labels=v; this.draw(); }
+  setCalipers(v){ this.calipers=v; this.canvas.style.touchAction=v?'none':'auto'; this.canvas.style.cursor=v?'ew-resize':'default'; this.draw(); this.updateReadout(); }
+  setFrozen(v){ if(v){ this.frozenT=this.curT(); this.frozen=true; } else { this.liveStart=performance.now()-this.frozenT*1000; this.frozen=false; } this.draw(); }
+  curT(){ if(this.frozen) return this.frozenT; return ((performance.now()-this.liveStart)/1000) % (this.S?this.S.D:LIVE_S); }
+  resize(force){
+    const w=this.host.clientWidth-2; if(w<=0) return;
+    const ppm=Math.max(4,Math.min(8,Math.floor(w/(STRIP_MM+MARGIN_MM)))), dpr=window.devicePixelRatio||1;
+    if(!force && ppm===this.ppm && dpr===this.dpr) return;
+    this.ppm=ppm; this.dpr=dpr; this.pd=ppm*dpr;
+    const cw=(STRIP_MM+MARGIN_MM)*ppm, ch=H_MM*ppm;
+    this.canvas.style.width=cw+'px'; this.canvas.style.height=ch+'px';
+    this.canvas.width=Math.round(cw*dpr); this.canvas.height=Math.round(ch*dpr);
+    this.drawGrid(); this.draw();
+  }
+  drawGrid(){
+    const g=this.grid, p=this.pd, W=this.canvas.width, H=this.canvas.height; g.width=W; g.height=H;
+    const c=g.getContext('2d'); c.fillStyle=COL.bg; c.fillRect(0,0,W,H);
+    const lineSet=(big)=>{ c.beginPath();
+      for(let i=0;i<=STRIP_MM+MARGIN_MM;i++){ if((i%5===0)!==big) continue; const x=Math.round(i*p)+0.5; c.moveTo(x,0); c.lineTo(x,H); }
+      for(let j=0;j<=H_MM;j++){ if((j%5===0)!==big) continue; const y=Math.round(j*p)+0.5; c.moveTo(0,y); c.lineTo(W,y); }
+      c.stroke(); };
+    c.lineWidth=1; c.strokeStyle=COL.small; lineSet(false);
+    c.lineWidth=Math.max(1,Math.round(this.dpr*1.2)); c.strokeStyle=COL.big; lineSet(true);
+    // 1-second tick marks
+    c.strokeStyle='#8a3b3b'; c.lineWidth=Math.max(1.5,1.5*this.dpr);
+    for(let s=0;s<=STRIP_S;s++){ const x=Math.round((MARGIN_MM+s*MM_PER_S)*p)+0.5; c.beginPath(); c.moveTo(x,0); c.lineTo(x,(s%3===0?4:2.5)*p); c.stroke(); }
+    // 1 mV calibration pulse (10 mm tall, 0.20 s wide)
+    c.strokeStyle=COL.trace; c.lineWidth=1.4*this.dpr; c.beginPath();
+    const y0=BASE_MM*p, y1=(BASE_MM-10)*p;
+    c.moveTo(1*p,y0); c.lineTo(3*p,y0); c.lineTo(3*p,y1); c.lineTo(8*p,y1); c.lineTo(8*p,y0); c.lineTo(9.5*p,y0); c.stroke();
+  }
+  X(t,tA,xmm){ return (MARGIN_MM+xmm+(t-tA)*MM_PER_S)*this.pd; }
+  Y(v){ return (BASE_MM-v*MM_PER_MV)*this.pd; }
+  vAt(t){ const b=this.S.buf, i=Math.round(t/DT); return (i>=0&&i<b.length)?b[i]:0; }
+  vMax(t0,t1){ let m=-1e9; for(let t=t0;t<=t1;t+=DT) m=Math.max(m,this.vAt(t)); return m; }
+  draw(){
+    if(!this.S || !this.pd) return;
+    const c=this.ctx; c.setTransform(1,0,0,1,0,0); c.drawImage(this.grid,0,0);
+    const segs=[];
+    if(this.mode==='static') segs.push([0,STRIP_S,0]);
+    else {
+      const T=this.curT(), pass=Math.floor(T/STRIP_S)*STRIP_S, xs=(T-pass)*MM_PER_S, gap=5;
+      segs.push([pass,T,0]);
+      const startX=xs+gap; if(startX<STRIP_MM) segs.push([pass-STRIP_S+startX/MM_PER_S, pass, startX]);
+    }
+    for(const s of segs) this.trace(s[0],s[1],s[2]);
+    if(this.labels) for(const s of segs) this.drawLabels(s[0],s[1],s[2]);
+    this.capEl.textContent = (this.labels && this.S.caption) ? 'Clue: '+this.S.caption : '';
+    if(this.calipers) this.drawCalipers();
+  }
+  trace(tA,tB,xmm){
+    const c=this.ctx, b=this.S.buf, Hd=this.canvas.height;
+    const i0=Math.max(0,Math.ceil(tA/DT)), i1=Math.min(b.length-1,Math.floor(tB/DT)); if(i1<=i0) return;
+    c.strokeStyle=COL.trace; c.lineWidth=1.35*this.dpr; c.lineJoin='round'; c.beginPath();
+    for(let i=i0;i<=i1;i++){ const x=this.X(i*DT,tA,xmm); let y=this.Y(b[i]); y=Math.max(1,Math.min(Hd-1,y)); if(i===i0) c.moveTo(x,y); else c.lineTo(x,y); }
+    c.stroke();
+  }
+  text(txt,x,y,color,size,align){
+    const c=this.ctx; c.font='600 '+Math.round((size||10)*this.dpr)+'px system-ui,Segoe UI,Arial,sans-serif';
+    c.textAlign=align||'center'; c.textBaseline='alphabetic';
+    c.lineWidth=3*this.dpr; c.strokeStyle='rgba(255,247,247,0.9)'; c.strokeText(txt,x,y);
+    c.fillStyle=color; c.fillText(txt,x,y);
+  }
+  drawLabels(tA,tB,xmm){
+    const S=this.S, p=this.pd, d=this.dpr, inWin=t=>t>=0&&t>=tA+0.02&&t<=tB-0.02, top=11*d;
+    for(const pw of S.ps){ if(!pw.lab||!inWin(pw.t)) continue; const y=Math.max(top,this.Y(this.vMax(pw.t-0.03,pw.t+0.03))-5*d); this.text(pw.txt,this.X(pw.t,tA,xmm),y,COL.P,10); }
+    const seen={};
+    S.beats.forEach((b,i)=>{
+      if(!inWin(b.t)) return;
+      const yq=Math.max(top,this.Y(this.vMax(b.on,b.off))-5*d);
+      this.text(b.label||'QRS',this.X(b.t,tA,xmm),yq,COL.QRS,b.label?10:9);
+      const nb=S.beats[i+1];
+      if(!S.noT && b.tPeak && inWin(b.tPeak) && (!nb || nb.on-b.tPeak>0.13)){ const yt=Math.max(top,this.Y(this.vMax(b.tPeak-0.04,b.tPeak+0.04))-5*d); this.text('T',this.X(b.tPeak,tA,xmm),yt,COL.T,10); }
+      // PR bracket
+      if(b.pr!=null && b.pr>0.04 && inWin(b.on-b.pr)){
+        const x0=this.X(b.on-b.pr,tA,xmm), x1=this.X(b.on,tA,xmm), y=40*p; this.bracket(x0,x1,y,COL.P);
+        this.text('PR '+b.pr.toFixed(2).replace(/^0/,''),(x0+x1)/2,42.8*p,COL.P,9);
+      }
+      // QRS bracket for first beat of each morphology
+      const key=b.morphId+(b.paced?'p':'');
+      if(!seen[key]){ seen[key]=1; const x0=this.X(b.on,tA,xmm), x1=this.X(b.off,tA,xmm), y=44.4*p; this.bracket(x0,x1,y,COL.QRS); this.text('QRS '+b.dur.toFixed(2).replace(/^0/,''),(x0+x1)/2,47.2*p,COL.QRS,9); }
+    });
+    for(const s of S.spikes){ if(!inWin(s.t)) continue; const x=this.X(s.t,tA,xmm), c=this.ctx; c.fillStyle=COL.spike; c.beginPath(); c.moveTo(x-3.5*d,4.2*p); c.lineTo(x+3.5*d,4.2*p); c.lineTo(x,4.2*p+5*d); c.closePath(); c.fill(); }
+    for(const n of S.notes){ if(!inWin(n.t)) continue; this.text(n.txt,this.X(n.t,tA,xmm),7.6*p,COL.note,9); }
+    for(const ft of S.fLabels){ if(!inWin(ft) || S.beats.some(b=>Math.abs(b.t-ft)<0.07)) continue; this.text('F',this.X(ft,tA,xmm),this.Y(this.vAt(ft))+13*d,COL.P,10); }
+  }
+  bracket(x0,x1,y,color){ const c=this.ctx,d=this.dpr; c.strokeStyle=color; c.lineWidth=1.2*d; c.beginPath(); c.moveTo(x0,y-3*d); c.lineTo(x0,y); c.lineTo(x1,y); c.lineTo(x1,y-3*d); c.stroke(); }
+  drawCalipers(){
+    const c=this.ctx,p=this.pd,d=this.dpr,H=this.canvas.height, xa=(MARGIN_MM+this.cal.a)*p, xb=(MARGIN_MM+this.cal.b)*p;
+    c.fillStyle='rgba(0,131,143,0.08)'; c.fillRect(Math.min(xa,xb),0,Math.abs(xb-xa),H);
+    c.strokeStyle=COL.cal; c.lineWidth=1.5*d;
+    for(const x of [xa,xb]){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,H); c.stroke(); c.fillStyle=COL.cal; c.fillRect(x-4*d,0,8*d,10*d); }
+  }
+  updateReadout(){
+    if(!this.calipers){ this.readout.textContent=''; return; }
+    const mm=Math.abs(this.cal.b-this.cal.a), s=mm/MM_PER_S;
+    this.readout.textContent = 'Calipers: '+s.toFixed(2)+' s ('+Math.round(s*1000)+' ms) · '+mm.toFixed(1)+' small boxes'+(s>0.15?' · if R–R, rate ≈ '+Math.round(60/s)+'/min':'')+'  — drag a line to move it, or drag on the strip to measure';
+  }
+  mmFromEvent(e){ const r=this.canvas.getBoundingClientRect(); return Math.max(0,Math.min(STRIP_MM,(e.clientX-r.left)/this.ppm-MARGIN_MM)); }
+  pDown(e){
+    if(!this.calipers) return; e.preventDefault(); const mm=this.mmFromEvent(e), tol=8/this.ppm;
+    if(Math.abs(mm-this.cal.a)<tol) this.drag='a'; else if(Math.abs(mm-this.cal.b)<tol) this.drag='b';
+    else { this.cal.a=mm; this.cal.b=mm; this.drag='b'; }
+    this.draw(); this.updateReadout();
+  }
+  pMove(e){ if(!this.drag) return; this.cal[this.drag]=Math.round(this.mmFromEvent(e)*4)/4; this.draw(); this.updateReadout(); }
+}
+function frame(){ for(const v of views) if(v.S && v.mode==='live' && !v.frozen && v.visible()) v.draw(); requestAnimationFrame(frame); }
+
+/* =====================================================================
+   APP STATE + UI
+   ===================================================================== */
+const $=id=>document.getElementById(id);
+let displayMode='static';
+function esc(s){ return String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+function critHTML(R){
+  const c=R.crit;
+  return '<tr><th>Rate</th><td>'+esc(c.rate)+'</td></tr><tr><th>Rhythm</th><td>'+esc(c.rhythm)+'</td></tr><tr><th>P waves</th><td>'+esc(c.p)+'</td></tr><tr><th>PR interval</th><td>'+esc(c.pr)+'</td></tr><tr><th>QRS</th><td>'+esc(c.qrs)+'</td></tr><tr class="key"><th>Key feature</th><td>'+esc(c.key)+'</td></tr>';
+}
+function artifactFor(prob){ if(Math.random()>=prob) return {type:'none'}; const types=['tremor','ac','wander','loose','mixed']; const x=Math.random(); return {type:types[Math.floor(Math.random()*types.length)], sev:x<0.45?'mild':(x<0.85?'moderate':'severe')}; }
+
+/* ---------- Study ---------- */
+const study={id:'nsr', seed:newSeed(), rate:null, view:null};
+function buildStudyNav(){
+  const nav=$('rlist'), sel=$('rselect'); let html='', shtml='';
+  for(const g of GROUPS){ html+='<h3>'+g+'</h3>'; shtml+='<optgroup label="'+g+'">';
+    for(const r of RH_LIST.filter(x=>x.g===g)){ html+='<button data-id="'+r.id+'">'+esc(r.name)+'</button>'; shtml+='<option value="'+r.id+'">'+esc(r.name)+'</option>'; }
+    shtml+='</optgroup>'; }
+  nav.innerHTML=html; sel.innerHTML=shtml;
+  nav.addEventListener('click',e=>{ const b=e.target.closest('button[data-id]'); if(b) selectRhythm(b.dataset.id); });
+  sel.addEventListener('change',()=>selectRhythm(sel.value));
+}
+function selectRhythm(id){
+  study.id=id; study.seed=newSeed(); const R=RH[id];
+  document.querySelectorAll('#rlist button').forEach(b=>b.classList.toggle('on',b.dataset.id===id)); $('rselect').value=id;
+  $('sTitle').textContent=R.name; $('sGroup').textContent=R.g; $('sCrit').innerHTML=critHTML(R);
+  const rr=$('sRate'), grp=$('sRateGrp');
+  if(R.rate){ grp.classList.remove('hidden'); rr.min=R.rate[0]; rr.max=R.rate[1]; rr.step=1; study.rate=Math.round(R.rate[0]+Math.random()*(R.rate[1]-R.rate[0])); rr.value=study.rate; $('sRateLbl').textContent=R.rl||'Rate'; }
+  else { grp.classList.add('hidden'); study.rate=null; }
+  regenStudy();
+}
+function regenStudy(){
+  const art={type:$('sArt').value, sev:$('sSev').value};
+  $('sRateVal').textContent = study.rate!=null ? study.rate+' /min' : '';
+  const S=buildStrip(study.id, study.seed, study.rate, art, displayMode==='live');
+  study.view.setStrip(S, displayMode);
+  $('sFreeze').classList.toggle('hidden', displayMode!=='live'); $('sFreeze').classList.remove('on');
+}
+function initStudy(){
+  study.view=new StripView($('sView'));
+  buildStudyNav();
+  $('sNew').onclick=()=>{ study.seed=newSeed(); const R=RH[study.id]; if(R.rate){ study.rate=Math.round(R.rate[0]+Math.random()*(R.rate[1]-R.rate[0])); $('sRate').value=study.rate; } regenStudy(); };
+  $('sRate').oninput=()=>{ study.rate=+$('sRate').value; regenStudy(); };
+  $('sArt').onchange=regenStudy; $('sSev').onchange=regenStudy;
+  $('sLabels').onclick=()=>{ const on=!$('sLabels').classList.contains('on'); $('sLabels').classList.toggle('on',on); study.view.setLabels(on); };
+  $('sCal').onclick=()=>{ const on=!$('sCal').classList.contains('on'); $('sCal').classList.toggle('on',on); study.view.setCalipers(on); };
+  $('sFreeze').onclick=()=>{ const on=!$('sFreeze').classList.contains('on'); $('sFreeze').classList.toggle('on',on); $('sFreeze').textContent=on?'Resume':'Freeze'; study.view.setFrozen(on); };
+  selectRhythm('nsr');
+}
+
+/* ---------- Quiz ---------- */
+const quiz={settings:null, qs:[], cur:0, view:null, rview:null, timer:null, deadline:0, answered:false, sel:null};
+function initQuiz(){
+  quiz.view=new StripView($('qView')); quiz.rview=new StripView($('rvView'));
+  $('qCats').innerHTML=GROUPS.map(g=>'<label class="inline"><input type="checkbox" value="'+g+'" checked> '+g+' <span style="color:var(--muted);font-size:12px">('+RH_LIST.filter(r=>r.g===g).length+')</span></label>').join('');
+  $('qStart').onclick=startQuiz;
+  $('qSubmit').onclick=()=>submitAnswer(false);
+  $('qNext').onclick=nextQuestion;
+  $('qQuit').onclick=()=>{ if(confirmQuit()) finishQuiz(); };
+  $('qCal').onclick=()=>{ const on=!$('qCal').classList.contains('on'); $('qCal').classList.toggle('on',on); quiz.view.setCalipers(on); };
+  $('qLabels').onclick=()=>{ const on=!$('qLabels').classList.contains('on'); $('qLabels').classList.toggle('on',on); quiz.view.setLabels(on); };
+  $('qFreeze').onclick=()=>{ const on=!$('qFreeze').classList.contains('on'); $('qFreeze').classList.toggle('on',on); $('qFreeze').textContent=on?'Resume':'Freeze'; quiz.view.setFrozen(on); };
+  $('qRetake').onclick=()=>startQuiz(true);
+  $('qNewSetup').onclick=()=>showQuizPanel('setup');
+  $('rvLabels').onclick=()=>{ const on=!$('rvLabels').classList.contains('on'); $('rvLabels').classList.toggle('on',on); quiz.rview.setLabels(on); };
+  $('rvCal').onclick=()=>{ const on=!$('rvCal').classList.contains('on'); $('rvCal').classList.toggle('on',on); quiz.rview.setCalipers(on); };
+  $('reviewList').addEventListener('click',e=>{ const b=e.target.closest('button[data-q]'); if(b) showReview(+b.dataset.q); });
+}
+function confirmQuit(){ return true; }
+function showQuizPanel(which){ $('qSetup').classList.toggle('hidden',which!=='setup'); $('qRun').classList.toggle('hidden',which!=='run'); $('qSummary').classList.toggle('hidden',which!=='summary'); if(which!=='run') stopTimer(); }
+function readSettings(){
+  return { type:document.querySelector('input[name=qtype]:checked').value, n:+$('qN').value, time:+$('qTime').value,
+    fb:document.querySelector('input[name=qfb]:checked').value, art:+$('qArt').value,
+    cats:[...document.querySelectorAll('#qCats input:checked')].map(x=>x.value) };
+}
+function startQuiz(retake){
+  const st = (retake===true && quiz.settings) ? quiz.settings : readSettings();
+  if(!st.cats.length){ $('qSetupMsg').textContent='Select at least one rhythm category.'; return; }
+  $('qSetupMsg').textContent=''; quiz.settings=st;
+  const pool=RH_LIST.filter(r=>st.cats.includes(r.g)).map(r=>r.id); let bag=[], last=null; quiz.qs=[];
+  for(let i=0;i<st.n;i++){
+    if(!bag.length){ bag=pool.slice(); for(let k=bag.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [bag[k],bag[j]]=[bag[j],bag[k]]; } if(bag.length>1 && bag[bag.length-1]===last){ [bag[0],bag[bag.length-1]]=[bag[bag.length-1],bag[0]]; } }
+    const id=bag.pop(), R=RH[id]; last=id;
+    quiz.qs.push({id, seed:newSeed(), rate:R.rate?Math.round(R.rate[0]+Math.random()*(R.rate[1]-R.rate[0])):null, art:artifactFor(st.art)});
+  }
+  quiz.cur=0; showQuizPanel('run'); showQuestion();
+}
+function distractors(id){
+  const R=RH[id], out=[], seenDx=new Set([R.dx]);
+  const tryAdd=x=>{ const r=RH[x]; if(r && !seenDx.has(r.dx) && out.length<4){ seenDx.add(r.dx); out.push(r.dx); } };
+  (CONFUSE[id]||[]).forEach(tryAdd);
+  RH_LIST.filter(r=>r.g===R.g).sort(()=>Math.random()-0.5).forEach(r=>tryAdd(r.id));
+  RH_LIST.slice().sort(()=>Math.random()-0.5).forEach(r=>tryAdd(r.id));
+  return out;
+}
+function selHTML(step, opts){ return '<select data-step="'+step+'"><option value="">— select —</option>'+opts.map(o=>'<option value="'+o[0]+'">'+esc(o[1])+'</option>').join('')+'</select>'; }
+function dxSelectHTML(){
+  let h='<select data-step="dx"><option value="">— select interpretation —</option>'; const done=new Set();
+  for(const g of GROUPS){ h+='<optgroup label="'+g+'">'; for(const r of RH_LIST.filter(x=>x.g===g)){ if(done.has(r.dx)) continue; done.add(r.dx); h+='<option value="'+r.dx+'">'+esc(DX_NAMES[r.dx])+'</option>'; } h+='</optgroup>'; }
+  return h+'</select>';
+}
+function showQuestion(){
+  const q=quiz.qs[quiz.cur], st=quiz.settings;
+  q.S=buildStrip(q.id,q.seed,q.rate,q.art,displayMode==='live'); q.truth=computeTruth(buildStrip(q.id,q.seed,q.rate,q.art,false));
+  quiz.view.setStrip(q.S, displayMode); quiz.view.setLabels(false);
+  $('qLabels').classList.add('hidden'); $('qLabels').classList.remove('on');
+  $('qFreeze').classList.toggle('hidden',displayMode!=='live'); $('qFreeze').classList.remove('on'); $('qFreeze').textContent='Freeze';
+  $('qProg').textContent='Question '+(quiz.cur+1)+' of '+quiz.qs.length;
+  updateScoreLine();
+  quiz.answered=false; quiz.sel=null; $('qFeedback').innerHTML='';
+  $('qSubmit').classList.remove('hidden'); $('qSubmit').disabled=false; $('qNext').classList.add('hidden');
+  const box=$('qAnswers');
+  if(st.type==='quick'){
+    q.options=[RH[q.id].dx, ...distractors(q.id)].sort(()=>Math.random()-0.5);
+    box.innerHTML='<div class="mc">'+q.options.map(dx=>'<button data-dx="'+dx+'">'+esc(DX_NAMES[dx])+'</button>').join('')+'</div>';
+    box.querySelector('.mc').onclick=e=>{ const b=e.target.closest('button[data-dx]'); if(!b||quiz.answered) return; quiz.sel=b.dataset.dx; box.querySelectorAll('.mc button').forEach(x=>x.classList.toggle('sel',x===b)); };
+  } else {
+    box.innerHTML='<div class="sys">'+
+      '<div class="lbl">1. Rate</div>'+selHTML('rate',OPT.rate)+
+      '<div class="lbl">2. Rhythm</div>'+selHTML('reg',OPT.reg)+
+      '<div class="lbl">3. P waves</div>'+selHTML('p',OPT.p)+
+      '<div class="lbl">4. PR interval</div>'+selHTML('pr',OPT.pr)+
+      '<div class="lbl">5. QRS</div>'+selHTML('qrs',OPT.qrs)+
+      '<div class="lbl">6. Interpretation</div>'+dxSelectHTML()+'</div>';
+  }
+  startTimer();
+}
+function updateScoreLine(){
+  const done=quiz.qs.filter(x=>x.graded), ok=done.filter(x=>x.correct).length;
+  $('qScore').textContent = (quiz.settings.fb==='now' && done.length) ? 'Score: '+ok+' / '+done.length : '';
+}
+function startTimer(){
+  stopTimer(); const t=quiz.settings.time, el=$('qTimer');
+  if(!t){ el.classList.add('hidden'); return; }
+  el.classList.remove('hidden'); quiz.deadline=performance.now()+t*1000;
+  const tick=()=>{ const left=Math.max(0,Math.ceil((quiz.deadline-performance.now())/1000)); el.textContent=left+' s'; el.classList.toggle('low',left<=5); if(left<=0){ stopTimer(); submitAnswer(true); } };
+  tick(); quiz.timer=setInterval(tick,200);
+}
+function stopTimer(){ if(quiz.timer){ clearInterval(quiz.timer); quiz.timer=null; } }
+function submitAnswer(timedOut){
+  if(quiz.answered) return;
+  const q=quiz.qs[quiz.cur], st=quiz.settings, R=RH[q.id];
+  if(!timedOut){
+    if(st.type==='quick' && !quiz.sel){ flash('Select an answer first.'); return; }
+    if(st.type==='sys' && !$('qAnswers').querySelector('select[data-step=dx]').value){ flash('Select an interpretation (step 6) first.'); return; }
+  }
+  stopTimer(); $('qTimer').classList.add('hidden'); quiz.answered=true; q.graded=true; q.timedOut=!!timedOut;
+  if(st.type==='quick'){ q.resp={dx:quiz.sel||''}; }
+  else { q.resp={}; $('qAnswers').querySelectorAll('select').forEach(s=>{ q.resp[s.dataset.step]=s.value; s.disabled=true; }); }
+  q.correct = q.resp.dx===R.dx;
+  if(st.type==='sys'){ q.steps={}; for(const k of ['rate','reg','p','pr','qrs']) q.steps[k]=q.truth[k].includes(q.resp[k]); q.steps.dx=q.correct; }
+  $('qSubmit').classList.add('hidden'); $('qNext').classList.remove('hidden');
+  $('qNext').textContent = quiz.cur===quiz.qs.length-1 ? 'Finish' : 'Next';
+  if(st.fb==='now'){ showFeedback(q); updateScoreLine(); }
+  else { nextQuestion(); }
+}
+function flash(msg){ const f=$('qFeedback'); f.innerHTML='<div style="color:var(--bad);margin-top:10px;font-size:14px">'+esc(msg)+'</div>'; }
+function stepsTable(q){
+  let h='<table class="steps"><colgroup><col class="c1"><col><col><col class="c4"></colgroup><tr><th>Step</th><th>Your answer</th><th>Accepted answer(s)</th><th></th></tr>';
+  for(const k of ['rate','reg','p','pr','qrs']){
+    const ok=q.steps[k]; h+='<tr><td>'+STEP_NAMES[k]+'</td><td>'+esc(q.resp[k]?optLabel(k,q.resp[k]):'—')+'</td><td>'+q.truth[k].map(x=>esc(optLabel(k,x))).join('<br>')+'</td><td class="'+(ok?'mark-ok':'mark-bad')+'">'+(ok?'✓':'✗')+'</td></tr>';
+  }
+  h+='<tr><td>'+STEP_NAMES.dx+'</td><td>'+esc(q.resp.dx?DX_NAMES[q.resp.dx]:'—')+'</td><td>'+esc(DX_NAMES[RH[q.id].dx])+'</td><td class="'+(q.correct?'mark-ok':'mark-bad')+'">'+(q.correct?'✓':'✗')+'</td></tr></table>';
+  return h;
+}
+function showFeedback(q){
+  const R=RH[q.id], st=quiz.settings;
+  if(st.type==='quick') $('qAnswers').querySelectorAll('.mc button').forEach(b=>{ if(b.dataset.dx===R.dx) b.classList.add('right'); else if(b.dataset.dx===q.resp.dx) b.classList.add('wrong'); });
+  let h='<div class="fb '+(q.correct?'ok':'bad')+'"><h3>'+(q.timedOut?'Time expired — ':'')+(q.correct?'Correct':'Not quite')+': '+esc(R.name)+'</h3>';
+  if(q.truth.measured!=null) h+='<div style="font-size:13px;color:var(--muted)">Measured ventricular rate on this strip ≈ '+q.truth.measured+'/min'+(q.art.type!=='none'?' · artifact present: '+artName(q.art)+'':'')+'</div>';
+  else if(q.art.type!=='none') h+='<div style="font-size:13px;color:var(--muted)">Artifact present: '+artName(q.art)+'</div>';
+  if(st.type==='sys') h+=stepsTable(q);
+  h+='<table class="crit">'+critHTML(R)+'</table></div>';
+  $('qFeedback').innerHTML=h;
+  $('qLabels').classList.remove('hidden');
+}
+function artName(a){ return ({tremor:'muscle tremor',ac:'60-cycle interference',wander:'wandering baseline',loose:'loose lead / motion',mixed:'mixed'})[a.type]+' ('+a.sev+')'; }
+function nextQuestion(){ if(quiz.cur<quiz.qs.length-1){ quiz.cur++; showQuestion(); } else finishQuiz(); }
+function finishQuiz(){
+  stopTimer(); showQuizPanel('summary'); $('reviewPane').classList.add('hidden');
+  const st=quiz.settings, graded=quiz.qs.filter(q=>q.graded), ok=graded.filter(q=>q.correct).length, n=graded.length;
+  $('sumScore').textContent = n ? ok+' / '+n+' ('+Math.round(100*ok/n)+'%)' : '—';
+  let d='<div style="font-size:14px">'+(st.type==='quick'?'Quick':'Systematic')+' quiz · '+st.cats.join(', ')+'</div>';
+  if(st.type==='sys' && n){ d+='<div class="stepacc">'; for(const k of ['rate','reg','p','pr','qrs']){ const c=graded.filter(q=>q.steps[k]).length; d+='<span>'+STEP_NAMES[k]+': '+c+'/'+n+'</span>'; } d+='</div>'; }
+  if(n<quiz.qs.length) d+='<div style="font-size:13px;color:var(--muted);margin-top:6px">Ended early: '+n+' of '+quiz.qs.length+' answered.</div>';
+  $('sumDetail').innerHTML=d;
+  let h='<colgroup><col class="n"><col><col><col class="m"><col class="b"></colgroup><tr><th>#</th><th>Your answer</th><th>Correct rhythm</th><th></th><th></th></tr>';
+  graded.forEach(q=>{ const i=quiz.qs.indexOf(q); h+='<tr><td>'+(i+1)+'</td><td>'+esc(q.resp.dx?DX_NAMES[q.resp.dx]:(q.timedOut?'(time expired)':'—'))+'</td><td>'+esc(RH[q.id].name)+'</td><td class="'+(q.correct?'mark-ok':'mark-bad')+'">'+(q.correct?'✓':'✗')+'</td><td><button class="btn" data-q="'+i+'">Review</button></td></tr>'; });
+  $('reviewList').innerHTML=h;
+}
+function showReview(i){
+  const q=quiz.qs[i], R=RH[q.id]; $('reviewPane').classList.remove('hidden');
+  $('rvTitle').textContent='Question '+(i+1)+': '+R.name; $('rvGroup').textContent=R.g;
+  quiz.rview.setStrip(buildStrip(q.id,q.seed,q.rate,q.art,false),'static');
+  quiz.rview.setLabels($('rvLabels').classList.contains('on'));
+  $('rvSteps').innerHTML = quiz.settings.type==='sys' ? stepsTable(q) : '<div style="margin:8px 0;font-size:14px">Your answer: <b>'+esc(q.resp.dx?DX_NAMES[q.resp.dx]:'—')+'</b> '+(q.correct?'<span class="mark-ok">✓</span>':'<span class="mark-bad">✗</span>')+(q.art.type!=='none'?' · artifact: '+artName(q.art):'')+'</div>';
+  $('rvCrit').innerHTML=critHTML(R);
+  $('reviewPane').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ---------- Header controls ---------- */
+function initHeader(){
+  $('tabSeg').onclick=e=>{ const b=e.target.closest('button[data-tab]'); if(!b) return; $('tabSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); $('studyTab').classList.toggle('hidden',b.dataset.tab!=='study'); $('quizTab').classList.toggle('hidden',b.dataset.tab!=='quiz'); views.forEach(v=>v.resize(true)); };
+  $('modeSeg').onclick=e=>{ const b=e.target.closest('button[data-mode]'); if(!b||b.dataset.mode===displayMode) return; displayMode=b.dataset.mode; $('modeSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    regenStudy();
+    if(!$('qRun').classList.contains('hidden')){ const q=quiz.qs[quiz.cur]; q.S=buildStrip(q.id,q.seed,q.rate,q.art,displayMode==='live'); quiz.view.setStrip(q.S,displayMode); $('qFreeze').classList.toggle('hidden',displayMode!=='live'); $('qFreeze').classList.remove('on'); $('qFreeze').textContent='Freeze'; }
+  };
+}
+initHeader(); initStudy(); initQuiz(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>
