@@ -47,14 +47,14 @@
 
         .buttons-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 35px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 28px;
         }
 
         .button-card {
             background: white;
             border-radius: 16px;
-            padding: 40px 30px;
+            padding: 40px 24px;
             box-shadow: 0 12px 40px rgba(0,0,0,0.25);
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -112,10 +112,11 @@
         }
 
         .button-card h2 {
-            font-size: 1.85em;
+            font-size: 1.6em;
             color: #333;
             margin-bottom: 12px;
             font-weight: 700;
+            text-align: center;
         }
 
         .card-monitor:hover h2 {
@@ -128,6 +129,20 @@
 
         .card-emr:hover h2 {
             color: #9c27b0;
+        }
+
+        .card-rhythm:hover h2 {
+            color: #d32f2f;
+        }
+
+        @media (max-width: 1100px) {
+            .buttons-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .button-card h2 {
+                font-size: 1.85em;
+            }
         }
 
         @media (max-width: 768px) {
@@ -147,6 +162,12 @@
             .icon {
                 width: 100px;
                 height: 100px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .buttons-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -247,6 +268,39 @@
                         <text x="155" y="160" font-size="12" fill="white" text-anchor="middle" font-weight="bold">✓</text>
                     </svg>
                     <h2>EMR</h2>
+                </a>
+            </div>
+
+            <!-- EKG Rhythm Trainer -->
+            <div class="button-card card-rhythm">
+                <a href="EKG-Rhythm-Trainer.html">
+                    <svg class="icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="rhythmGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#ffebee;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#ffcdd2;stop-opacity:1" />
+                            </linearGradient>
+                            <pattern id="rhythmSmall" width="8" height="8" patternUnits="userSpaceOnUse">
+                                <path d="M 8 0 L 0 0 0 8" fill="none" stroke="#f3c4c4" stroke-width="0.6"/>
+                            </pattern>
+                            <pattern id="rhythmBig" width="40" height="40" patternUnits="userSpaceOnUse">
+                                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e08a8a" stroke-width="0.9"/>
+                            </pattern>
+                        </defs>
+                        <rect x="20" y="40" width="160" height="120" rx="12" fill="url(#rhythmGrad)" stroke="#e53935" stroke-width="3"/>
+                        <rect x="32" y="48" width="136" height="104" rx="6" fill="#fff7f7" stroke="#e53935" stroke-width="2"/>
+                        <rect x="32" y="48" width="136" height="104" rx="6" fill="url(#rhythmSmall)"/>
+                        <rect x="32" y="48" width="136" height="104" rx="6" fill="url(#rhythmBig)"/>
+                        <text x="38" y="62" font-size="9" fill="#b71c1c" font-weight="bold">II</text>
+                        <g stroke="#00838f" stroke-width="1.5" opacity="0.85">
+                            <line x1="63" y1="56" x2="63" y2="144"/>
+                            <line x1="127" y1="56" x2="127" y2="144"/>
+                            <line x1="63" y1="134" x2="127" y2="134"/>
+                        </g>
+                        <polyline points="36,105 42,105 46,100 50,105 56,105 59,108 63,73 67,117 70,105 78,105 84,98 90,98 96,105 102,105 106,105 110,100 114,105 120,105 123,108 127,73 131,117 134,105 142,105 148,98 154,98 160,105 164,105"
+                                  fill="none" stroke="#222" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h2>EKG Rhythm Trainer</h2>
                 </a>
             </div>
         </div>
