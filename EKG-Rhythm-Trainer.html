@@ -110,9 +110,46 @@ footer{max-width:1320px;margin:8px auto 24px;padding:0 16px;font-size:12px;color
   .sys{grid-template-columns:1fr}
   header{gap:10px}
 }
+
+  /* ---- Access gate (same methodology as EMR-Sim.html) ---- */
+  #rhythmGate{
+    position:fixed;inset:0;z-index:9999;
+    background:linear-gradient(135deg,#003366 0%,#1a4a7a 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;
+    padding:20px;box-sizing:border-box;
+  }
+  #rhythmGate .gate-box{
+    background:#fff;border-radius:16px;padding:40px 36px;
+    box-shadow:0 12px 40px rgba(0,0,0,0.25);
+    max-width:360px;width:100%;text-align:center;box-sizing:border-box;
+  }
+  #rhythmGate h2{margin:0 0 8px;font-size:1.4em;color:#1a2530;font-weight:700;letter-spacing:normal;text-transform:none;}
+  #rhythmGate input[type="password"]{
+    width:100%;padding:10px 12px;font-size:14px;border:1px solid #9fabb5;
+    border-radius:6px;margin:0 0 12px;box-sizing:border-box;background:#fff;color:#1a2530;
+    font-family:inherit;display:block;
+  }
+  #rhythmGate button{
+    width:100%;padding:10px;font-size:14px;font-weight:600;color:#fff;
+    background:#00629b;border:none;border-radius:6px;cursor:pointer;font-family:inherit;display:block;
+  }
+  #rhythmGate button:hover{background:#003865;}
+  #rhythmGate .gate-error{color:#c8102e;font-size:12.5px;margin:10px 0 0;display:none;}
 </style>
 </head>
 <body>
+<div id="rhythmGate">
+  <div class="gate-box">
+    <h2>Enter your password</h2>
+    <input type="password" id="rhythmGatePassword" placeholder="Password" autocomplete="off">
+    <button type="button" id="rhythmGateSubmit">Enter</button>
+    <p class="gate-error" id="rhythmGateError">Incorrect password. Try again.</p>
+  </div>
+</div>
+
+<div id="appMain" style="display:none;">
+
 <header>
   <h1>EKG <span>Rhythm Trainer</span></h1>
   <div class="seg" id="tabSeg"><button data-tab="study" class="on">Study</button><button data-tab="quiz">Quiz</button></div>
@@ -140,7 +177,7 @@ footer{max-width:1320px;margin:8px auto 24px;padding:0 16px;font-size:12px;color
         <button class="btn toggle hidden" id="sFreeze">Freeze</button>
       </div>
       <div id="sView"></div>
-      <div class="legend">Lead II · 25 mm/s · 10 mm/mV · 1 small box = 0.04 s / 0.1 mV · 1 large box = 0.20 s / 0.5 mV · tick marks at top = 1 s (tall tick every 3 s) · strip = 6 s</div>
+      <div class="legend">Lead II · 25 mm/s · 10 mm/mV · 1 small box = 40 ms / 0.1 mV · 1 large box = 200 ms / 0.5 mV · tick marks at top = 1 s (tall tick every 3 s) · strip = 6 s</div>
       <table class="crit" id="sCrit"></table>
     </div>
   </section>
@@ -211,6 +248,8 @@ footer{max-width:1320px;margin:8px auto 24px;padding:0 16px;font-size:12px;color
 </main>
 <footer>Educational simulation for rhythm-recognition practice. Waveforms are computer-generated from physiologic timing rules, not patient recordings, and are not intended for clinical decision-making.</footer>
 
+</div><!-- /appMain -->
+
 <script>
 'use strict';
 /* =====================================================================
@@ -270,10 +309,6 @@ function morphAberrant(r, sc){
   const R=r.u(0.8,1.2)*sc;
   return {id:'A', c:[[-0.025,0.007,-0.06*sc],[0,0.011,R],[0.04,0.02,-0.38*R]], on:-0.04, off:0.098, T:{type:'qt', s:0.05, a:r.u(-0.1,0.12)}};
 }
-function morphPacedV(r, sc){
-  const A=r.u(1.0,1.5)*sc;
-  return {id:'PV', paced:true, c:[[0.022,0.009,0.12*sc],[0.075,0.03,-A],[0.14,0.025,0.15*A]], on:0.008, off:0.17, T:{type:'fixed', off:0.37, s:0.07, a:r.u(0.3,0.45)*sc}};
-}
 function pShapeNormal(a, r){
   return r.chance(0.3) ? {c:[[-0.012,0.018,a*0.72],[0.014,0.017,a*0.66]], txt:'P'} : {c:[[0,0.022,a]], txt:'P'};
 }
@@ -297,9 +332,9 @@ function pRetro(a){ return {c:[[0,0.018,-a]], txt:'P′'}; }
 class Strip{
   constructor(rng, t0, t1){
     this.rng=rng; this.t0=t0; this.t1=t1;
-    this.ev=[]; this.cont=[]; this.beats=[]; this.ps=[]; this.spikes=[]; this.notes=[]; this.fLabels=[];
+    this.ev=[]; this.cont=[]; this.beats=[]; this.ps=[]; this.notes=[]; this.fLabels=[];
     this.caption=''; this.ans={}; this.rateOverride=null; this.qrsOverride=null;
-    this.sc=rng.u(0.8,1.25); this.pAmp=rng.u(0.1,0.2); this.tAmp=rng.u(0.2,0.38); this.spikeAmp=rng.u(0.8,1.6);
+    this.sc=rng.u(0.8,1.25); this.pAmp=rng.u(0.1,0.2); this.tAmp=rng.u(0.2,0.38);
     this.qrsN=morphNormal(rng,this.sc); this.pN=pShapeNormal(this.pAmp,rng);
   }
   comps(t, list){ for(const k of list) if(k[2]!==0) this.ev.push({c:t+k[0], s:k[1], a:k[2]}); }
@@ -309,7 +344,7 @@ class Strip{
   }
   QRS(t, m, o={}){
     m = m || this.qrsN; this.comps(t, m.c);
-    const b={t, on:t+m.on, off:t+m.off, dur:m.off-m.on, paced:!!m.paced, label:o.label||'', morphId:m.id};
+    const b={t, on:t+m.on, off:t+m.off, dur:m.off-m.on, label:o.label||'', morphId:m.id};
     if(o.pOn!=null) b.pr = b.on - o.pOn;
     if(o.T!==false && m.T){
       const rr=o.rr||1, s=m.T.s, a=(m.T.a!=null?m.T.a:this.tAmp);
@@ -327,7 +362,6 @@ class Strip{
     this.P(pt, o.pShape, {lab:o.pLab});
     return this.QRS(pt-0.05+pr-m.on, m, {rr:o.rr, pOn:pt-0.05, label:o.label});
   }
-  spike(t, ch){ this.ev.push({c:t, s:0.0011, a:this.spikeAmp}); this.spikes.push({t, ch}); }
   note(t, txt){ this.notes.push({t, txt}); }
 }
 
@@ -370,6 +404,23 @@ function sinusEctopy(S, rate, gmin, gmax, handler, o={}){
     last=S.conduct(tP, pr, o.morph, {rr:RR}); tP+=RR*(1+r.u(-0.01,0.01)); next--;
   }
   return pr;
+}
+// Strictly repeating PVC pattern (n = beats per group: 2 bigeminy, 3 trigeminy, 4 quadrigeminy).
+// Each group = (n-1) conducted sinus beats + 1 PVC at a fixed coupling interval; the sinus P wave that falls
+// under the PVC is blocked, so every pause after a PVC is fully compensatory. The pattern is already running
+// at the first visible beat, and its phase is chosen so at least two PVCs always appear on the 6-second strip.
+function ectopicPattern(S, rate, n){
+  const r=S.rng, RR=60/rate, G=n*RR, pr=r.u(0.13,0.19), cf=r.u(0.58,0.68), mV=morphWide(r,S.sc,{id:'V1'});
+  const d=(n-2)*RR + (pr-0.05-S.qrsN.on) + cf*RR;      // group start -> PVC
+  const a=r.u(0.5, Math.max(0.6, 5.6-G));              // time of the first visible PVC
+  let T=a-d; while(T>S.t0) T-=G;                        // start the pattern before the strip begins
+  while(T<S.t1){
+    let last=null;
+    for(let i=0;i<n-1;i++) last=S.conduct(T+i*RR+r.u(-0.006,0.006), pr, null, {rr:RR});
+    S.QRS(last.t+cf*RR+r.u(-0.003,0.003), mV, {rr:RR, label:PVC_LABEL});
+    S.P(T+(n-1)*RR, null, {lab:false});                 // blocked sinus P under the PVC
+    T+=G;
+  }
 }
 function dissocP(S, arate, amp){
   const r=S.rng, PP=60/arate, shape=amp?{c:[[0,0.022,amp]],txt:'P'}:S.pN;
@@ -426,17 +477,6 @@ function vfib(S, A){
   S.caption='Chaotic waveform — no identifiable P, QRS, or T';
 }
 function prAns(pr){ return pr>0.205 ? ['long'] : ['normal']; }
-// Underlying atrial activity for ventricular-paced rhythms
-function pacedUnderlying(S){
-  const v=S.rng.pick(['none','none','dissoc','af']);
-  if(v==='dissoc'){ dissocP(S, S.rng.u(65,95)); S.ans.p=['more','normal']; S.ans.pr=['dissoc','na']; }
-  else if(v==='af'){ fibWaves(S,false); S.ans.p=['fib','absent']; }
-}
-// Bursts of muscle noise used for oversensing
-function noiseBurst(S, a, b, amp){
-  const n=makeNoise(S.rng,0.006,a,b);
-  S.cont.push(t=>(t>=a&&t<=b)?amp*n(t)*Math.sin(Math.PI*(t-a)/(b-a)):0);
-}
 
 /* =====================================================================
    RHYTHM BANK
@@ -449,37 +489,29 @@ const RH_LIST = [
 {id:'nsr', g:'Sinus', name:'Normal sinus rhythm', rate:[60,100],
  gen:(S,rt)=>{ sinusRun(S,rt); },
  ans:{reg:['reg'],p:['normal'],pr:['normal']},
- crit:{rate:'60–100/min',rhythm:'Regular',p:'Upright, uniform; one before every QRS',pr:'0.12–0.20 s, constant',qrs:'< 0.12 s',key:'Every interval normal; every P wave conducts'}},
+ crit:{rate:'60–100/min',rhythm:'Regular',p:'Upright, uniform; one before every QRS',pr:'120–200 ms, constant',qrs:'< 120 ms',key:'Every interval normal; every P wave conducts'}},
 {id:'sbrady', g:'Sinus', name:'Sinus bradycardia', rate:[35,59],
  gen:(S,rt)=>{ sinusRun(S,rt); },
  ans:{reg:['reg'],p:['normal'],pr:['normal']},
- crit:{rate:'< 60/min',rhythm:'Regular',p:'Upright, uniform; one before every QRS',pr:'0.12–0.20 s, constant',qrs:'< 0.12 s',key:'Normal sinus mechanism at a rate below 60'}},
+ crit:{rate:'< 60/min',rhythm:'Regular',p:'Upright, uniform; one before every QRS',pr:'120–200 ms, constant',qrs:'< 120 ms',key:'Normal sinus mechanism at a rate below 60'}},
 {id:'stach', g:'Sinus', name:'Sinus tachycardia', rate:[101,160],
  gen:(S,rt)=>{ sinusRun(S,rt,{pr:S.rng.u(0.12,0.16)}); },
  ans:{reg:['reg'],p:['normal'],pr:['normal']},
- crit:{rate:'101–160/min',rhythm:'Regular',p:'Upright, uniform; may merge with the preceding T wave at faster rates',pr:'0.12–0.20 s (often near the short end)',qrs:'< 0.12 s',key:'Sinus P waves still identifiable before each QRS'}},
+ crit:{rate:'101–160/min',rhythm:'Regular',p:'Upright, uniform; may merge with the preceding T wave at faster rates',pr:'120–200 ms (often near the short end)',qrs:'< 120 ms',key:'Sinus P waves still identifiable before each QRS'}},
 {id:'sarr', g:'Sinus', name:'Sinus arrhythmia', rate:[55,95],
  gen:(S,rt)=>{ const A=S.rng.u(0.18,0.28),Tr=S.rng.u(3,5),ph=S.rng.u(0,6.28); sinusRun(S,rt,{rrFn:(t,RR)=>RR*(1+A*Math.sin(2*Math.PI*t/Tr+ph))}); S.caption='R–R gradually shortens and lengthens (phasic)'; },
  ans:{reg:['irr','pat'],p:['normal'],pr:['normal']},
- crit:{rate:'Usually 60–100/min',rhythm:'Irregular in a gradual, cyclic (phasic) pattern',p:'Upright, identical shape throughout',pr:'0.12–0.20 s, constant',qrs:'< 0.12 s',key:'Rate gradually speeds up and slows down; P-wave shape never changes'}},
-{id:'sarrest', g:'Sinus', name:'Sinus pause / sinus arrest', rate:[60,95],
- gen:(S,rt)=>{ sinusEctopy(S,rt,4,7,(S,c)=>{ let m=S.rng.u(2.25,2.7); if(c.RR*m<1.7) m+=1; const prevP=c.tP-c.RR; S.note(c.last.t+c.RR*m/2,'pause'); return {nextP:prevP+c.RR*m}; }); S.caption='Pause is NOT a multiple of the P–P interval'; },
- ans:{reg:['int'],p:['normal'],pr:['normal']},
- crit:{rate:'Underlying sinus rate',rhythm:'Regular, interrupted by a pause',p:'Normal; absent during the pause',pr:'0.12–0.20 s, constant',qrs:'< 0.12 s',key:'Sinus node fails to fire; the pause is not an exact multiple of the P–P interval'}},
-{id:'saexit', g:'Sinus', name:'Sinoatrial (SA) exit block', rate:[60,95],
- gen:(S,rt)=>{ sinusEctopy(S,rt,4,7,(S,c)=>{ S.note(c.last.t+c.RR,'dropped P–QRS–T'); return {nextP:c.tP+c.RR}; }); S.caption='Pause = exactly 2 × the P–P interval'; },
- ans:{reg:['int'],p:['normal'],pr:['normal']},
- crit:{rate:'Underlying sinus rate',rhythm:'Regular, interrupted by a pause',p:'Normal; an entire P–QRS–T is missing',pr:'0.12–0.20 s, constant',qrs:'< 0.12 s',key:'Pause is an exact multiple of the P–P interval (sinus fires, impulse is blocked)'}},
+ crit:{rate:'Usually 60–100/min',rhythm:'Irregular in a gradual, cyclic (phasic) pattern',p:'Upright, identical shape throughout',pr:'120–200 ms, constant',qrs:'< 120 ms',key:'Rate gradually speeds up and slows down; P-wave shape never changes'}},
 
 /* ---------- ATRIAL ---------- */
 {id:'pac', g:'Atrial', name:'Sinus rhythm with PACs', rate:[60,100],
  gen:(S,rt)=>{ const pE=pEctopic(S.rng); sinusEctopy(S,rt,3,6,(S,c)=>{ const r=S.rng; let pp=c.last.tPeak+r.u(0.04,0.16); pp=Math.min(pp,c.tP-0.2); pp=Math.max(pp,c.last.t+0.25); const b=S.conduct(pp,r.u(0.12,0.18),null,{rr:pp-c.last.t+0.1,pShape:pE,label:'PAC'}); return {nextP:pp+c.RR*r.u(1.0,1.06),last:b}; }); },
  ans:{reg:['int'],p:['premature'],pr:['normal']},
- crit:{rate:'Underlying rate (usually 60–100)',rhythm:'Regular, interrupted by early beats',p:'Premature P′ with a different shape (may distort the preceding T)',pr:'Normal; the PAC’s PR may differ slightly',qrs:'< 0.12 s',key:'Early P′–QRS followed by a non-compensatory pause'}},
+ crit:{rate:'Underlying rate (usually 60–100)',rhythm:'Regular, interrupted by early beats',p:'Premature P′ with a different shape (may distort the preceding T)',pr:'Normal; the PAC’s PR may differ slightly',qrs:'< 120 ms',key:'Early P′–QRS followed by a non-compensatory pause'}},
 {id:'pacb', g:'Atrial', name:'Blocked (non-conducted) PAC', rate:[60,95],
  gen:(S,rt)=>{ const pE=pEctopic(S.rng); sinusEctopy(S,rt,3,6,(S,c)=>{ const r=S.rng; const pp=c.last.tPeak+r.u(-0.02,0.05); S.P(pp,pE); S.note(pp,'non-conducted'); return {nextP:pp+c.RR*r.u(1.05,1.12)}; }); S.caption='Look at the T wave before each pause'; },
  ans:{reg:['int'],p:['premature','more'],pr:['normal']},
- crit:{rate:'Underlying sinus rate',rhythm:'Regular, interrupted by a pause',p:'Premature P′ buried in/deforming the preceding T wave, not followed by a QRS',pr:'Normal for conducted beats',qrs:'< 0.12 s',key:'Most common cause of an unexpected pause — compare the T waves'}},
+ crit:{rate:'Underlying sinus rate',rhythm:'Regular, interrupted by a pause',p:'Premature P′ buried in/deforming the preceding T wave, not followed by a QRS',pr:'Normal for conducted beats',qrs:'< 120 ms',key:'Most common cause of an unexpected pause — compare the T waves'}},
 {id:'paca', g:'Atrial', name:'PAC with aberrant conduction', rate:[60,100],
  gen:(S,rt)=>{ const pE=pEctopic(S.rng), mA=morphAberrant(S.rng,S.sc); sinusEctopy(S,rt,3,6,(S,c)=>{ const r=S.rng; let pp=c.last.tPeak+r.u(0.02,0.1); pp=Math.min(pp,c.tP-0.18); const b=S.conduct(pp,r.u(0.12,0.18),mA,{rr:0.6,pShape:pE,label:'Aberrant PAC'}); return {nextP:pp+c.RR*r.u(1.0,1.06),last:b}; }); },
  ans:{reg:['int'],p:['premature'],pr:['normal']},
@@ -487,71 +519,71 @@ const RH_LIST = [
 {id:'wap', g:'Atrial', name:'Wandering atrial pacemaker', rate:[60,100],
  gen:(S,rt)=>{ const r=S.rng,RR=60/rt,shapes=[S.pN,...pDistinct(r,3)],prs=shapes.map((_,i)=>i===0?r.u(0.15,0.19):r.u(0.12,0.16)); let t=S.t0+r.u(0,RR),idx=0,cnt=r.i(1,2),prev=RR; while(t<S.t1){ S.conduct(t,prs[idx],null,{rr:prev,pShape:shapes[idx]}); const rr=RR*r.u(0.9,1.12); t+=rr; prev=rr; if(--cnt<=0){idx=(idx+1)%shapes.length;cnt=r.i(1,2);} } },
  ans:{reg:['irr','int'],p:['multi'],pr:['variable','normal']},
- crit:{rate:'< 100/min',rhythm:'Slightly irregular',p:'At least 3 different P-wave shapes',pr:'Varies with the P-wave site',qrs:'< 0.12 s',key:'Same picture as MAT, but rate under 100'}},
+ crit:{rate:'< 100/min',rhythm:'Slightly irregular',p:'At least 3 different P-wave shapes',pr:'Varies with the P-wave site',qrs:'< 120 ms',key:'Same picture as MAT, but rate under 100'}},
 {id:'mat', g:'Atrial', name:'Multifocal atrial tachycardia', rate:[105,150],
  gen:(S,rt)=>{ const r=S.rng,RR=60/rt,shapes=[S.pN,...pDistinct(r,3)]; let t=S.t0+r.u(0,RR),prev=RR,last=-1; while(t<S.t1){ let k; do{k=r.i(0,shapes.length-1);}while(k===last); last=k; S.conduct(t,r.u(0.1,0.21),null,{rr:prev,pShape:shapes[k]}); const rr=RR*r.u(0.75,1.25); t+=rr; prev=rr; } },
  ans:{reg:['irr'],p:['multi'],pr:['variable']},
- crit:{rate:'> 100/min',rhythm:'Irregularly irregular',p:'At least 3 different P-wave shapes',pr:'Varies',qrs:'< 0.12 s',key:'Distinct P waves (≥3 shapes) separate MAT from atrial fibrillation'}},
+ crit:{rate:'> 100/min',rhythm:'Irregularly irregular',p:'At least 3 different P-wave shapes',pr:'Varies',qrs:'< 120 ms',key:'Distinct P waves (≥3 shapes) separate MAT from atrial fibrillation'}},
 {id:'atach', g:'Atrial', name:'Atrial tachycardia', rate:[140,220],
  gen:(S,rt)=>{ const pE=pEctopic(S.rng,S.rng.u(0.12,0.17)); const r=S.rng,RR=60/rt,pr=r.u(0.12,0.16); let t=S.t0+r.u(0,RR); while(t<S.t1){ S.conduct(t,pr,null,{rr:RR,pShape:pE}); t+=RR*(1+r.u(-0.006,0.006)); } },
  ans:{reg:['reg'],p:['abnormal'],pr:['normal','short']},
- crit:{rate:'Usually 150–250/min',rhythm:'Regular',p:'Uniform but abnormal (ectopic) P′ — may sit on the preceding T',pr:'Normal or short',qrs:'< 0.12 s',key:'Ectopic P′ visible before each QRS'}},
+ crit:{rate:'Usually 150–250/min',rhythm:'Regular',p:'Uniform but abnormal (ectopic) P′ — may sit on the preceding T',pr:'Normal or short',qrs:'< 120 ms',key:'Ectopic P′ visible before each QRS'}},
 {id:'svt', g:'Atrial', name:'Supraventricular tachycardia (SVT)', rate:[150,240],
  gen:(S,rt)=>{ const r=S.rng,RR=60/rt,retro=r.chance(0.3); let t=S.t0+r.u(0,RR); while(t<S.t1){ S.QRS(t,S.qrsN,{rr:RR}); if(retro) S.P(t+0.075,pRetro(0.06)); t+=RR; } S.caption='No visible P waves before the QRS'; },
  ans:{reg:['reg'],p:['absent'],pr:['na']},
- crit:{rate:'150–250/min',rhythm:'Regular (very)',p:'Not visible — hidden in the QRS or just after it',pr:'Not measurable',qrs:'< 0.12 s',key:'Regular narrow-complex tachycardia with no visible P waves'}},
+ crit:{rate:'150–250/min',rhythm:'Regular (very)',p:'Not visible — hidden in the QRS or just after it',pr:'Not measurable',qrs:'< 120 ms',key:'Regular narrow-complex tachycardia with no visible P waves'}},
 {id:'afc', g:'Atrial', name:'Atrial fibrillation (controlled rate)', rate:[60,100],
  gen:(S,rt)=>afib(S,rt),
  ans:{reg:['irr'],p:['fib'],pr:['na']},
- crit:{rate:'Ventricular 60–100/min',rhythm:'Irregularly irregular',p:'None — fibrillatory baseline (coarse or fine f waves)',pr:'None',qrs:'< 0.12 s',key:'Irregularly irregular with no discernible P waves'}},
+ crit:{rate:'Ventricular 60–100/min',rhythm:'Irregularly irregular',p:'None — fibrillatory baseline (coarse or fine f waves)',pr:'None',qrs:'< 120 ms',key:'Irregularly irregular with no discernible P waves'}},
 {id:'afr', g:'Atrial', name:'Atrial fibrillation with RVR', rate:[110,170],
  gen:(S,rt)=>afib(S,rt),
  ans:{reg:['irr'],p:['fib'],pr:['na']},
- crit:{rate:'Ventricular > 100/min',rhythm:'Irregularly irregular',p:'None — fibrillatory baseline',pr:'None',qrs:'< 0.12 s',key:'Rapid ventricular response; irregularity persists even at fast rates'}},
+ crit:{rate:'Ventricular > 100/min',rhythm:'Irregularly irregular',p:'None — fibrillatory baseline',pr:'None',qrs:'< 120 ms',key:'Rapid ventricular response; irregularity persists even at fast rates'}},
 {id:'afs', g:'Atrial', name:'Atrial fibrillation (slow ventricular response)', rate:[38,58],
  gen:(S,rt)=>afib(S,rt),
  ans:{reg:['irr'],p:['fib'],pr:['na']},
- crit:{rate:'Ventricular < 60/min',rhythm:'Irregularly irregular',p:'None — fibrillatory baseline',pr:'None',qrs:'< 0.12 s',key:'Long, unequal R–R intervals over a fibrillatory baseline'}},
+ crit:{rate:'Ventricular < 60/min',rhythm:'Irregularly irregular',p:'None — fibrillatory baseline',pr:'None',qrs:'< 120 ms',key:'Long, unequal R–R intervals over a fibrillatory baseline'}},
 {id:'afl2', g:'Atrial', name:'Atrial flutter with 2:1 block', rate:[125,170],
  gen:(S,rt)=>flutter(S,rt,2),
  ans:{reg:['reg'],p:['flutter','more'],pr:['na']},
- crit:{rate:'Atrial 250–350; ventricular ≈ 150/min',rhythm:'Regular',p:'Sawtooth F waves; every other one hides in the QRS or T',pr:'Not measured',qrs:'< 0.12 s',key:'Regular narrow tachycardia near 150 — look for hidden F waves'}},
+ crit:{rate:'Atrial 250–350; ventricular ≈ 150/min',rhythm:'Regular',p:'Sawtooth F waves; every other one hides in the QRS or T',pr:'Not measured',qrs:'< 120 ms',key:'Regular narrow tachycardia near 150 — look for hidden F waves'}},
 {id:'afl3', g:'Atrial', name:'Atrial flutter with 3:1 block', rate:[85,115],
  gen:(S,rt)=>flutter(S,rt,3),
  ans:{reg:['reg'],p:['flutter','more'],pr:['na']},
- crit:{rate:'Atrial 250–350; ventricular ≈ 100/min',rhythm:'Regular',p:'Sawtooth F waves, 3 per QRS',pr:'Not measured',qrs:'< 0.12 s',key:'Three F waves for every QRS'}},
+ crit:{rate:'Atrial 250–350; ventricular ≈ 100/min',rhythm:'Regular',p:'Sawtooth F waves, 3 per QRS',pr:'Not measured',qrs:'< 120 ms',key:'Three F waves for every QRS'}},
 {id:'afl4', g:'Atrial', name:'Atrial flutter with 4:1 block', rate:[63,87],
  gen:(S,rt)=>flutter(S,rt,4),
  ans:{reg:['reg'],p:['flutter','more'],pr:['na']},
- crit:{rate:'Atrial 250–350; ventricular ≈ 75/min',rhythm:'Regular',p:'Sawtooth F waves, 4 per QRS',pr:'Not measured',qrs:'< 0.12 s',key:'Classic sawtooth baseline between QRS complexes'}},
+ crit:{rate:'Atrial 250–350; ventricular ≈ 75/min',rhythm:'Regular',p:'Sawtooth F waves, 4 per QRS',pr:'Not measured',qrs:'< 120 ms',key:'Classic sawtooth baseline between QRS complexes'}},
 {id:'aflv', g:'Atrial', name:'Atrial flutter with variable block', rate:[75,125],
  gen:(S,rt)=>flutter(S,rt,'var'),
  ans:{reg:['irr','pat'],p:['flutter','more'],pr:['na']},
- crit:{rate:'Atrial 250–350; ventricular varies',rhythm:'Irregular (R–R are multiples of the F–F interval)',p:'Sawtooth F waves',pr:'Not measured',qrs:'< 0.12 s',key:'Irregular rhythm with flutter waves — not atrial fibrillation'}},
+ crit:{rate:'Atrial 250–350; ventricular varies',rhythm:'Irregular (R–R are multiples of the F–F interval)',p:'Sawtooth F waves',pr:'Not measured',qrs:'< 120 ms',key:'Irregular rhythm with flutter waves — not atrial fibrillation'}},
 
 /* ---------- JUNCTIONAL ---------- */
 {id:'pjc', g:'Junctional', name:'Sinus rhythm with PJCs', rate:[60,100],
  gen:(S,rt)=>{ const v=S.rng.pick(['none','before','after']), pR=pRetro(S.rng.u(0.07,0.11)); sinusEctopy(S,rt,3,6,(S,c)=>{ const r=S.rng, q=c.last.t+c.RR*r.u(0.5,0.62); let b; if(v==='before') b=S.conduct(q+S.qrsN.on+0.05-0.08,0.08,null,{rr:0.7,pShape:pR,label:'PJC'}); else { b=S.QRS(q,S.qrsN,{rr:0.7,label:'PJC'}); if(v==='after') S.P(q+0.1,pR); } return {nextP:q-c.pr+c.RR*r.u(1.02,1.1),last:b}; }); },
  ans:{reg:['int'],p:['normal','absent'],pr:['normal']},
- crit:{rate:'Underlying rate',rhythm:'Regular, interrupted by early beats',p:'Early beat has no P, an inverted P′ just before (PR < 0.12 s), or P′ just after the QRS',pr:'Normal for sinus beats',qrs:'< 0.12 s',key:'Early narrow beat without a normal upright P wave'}},
+ crit:{rate:'Underlying rate',rhythm:'Regular, interrupted by early beats',p:'Early beat has no P, an inverted P′ just before (PR < 120 ms), or P′ just after the QRS',pr:'Normal for sinus beats',qrs:'< 120 ms',key:'Early narrow beat without a normal upright P wave'}},
 {id:'jesc', g:'Junctional', name:'Junctional escape rhythm', rate:[40,60],
  gen:(S,rt)=>junctionalRun(S,rt),
  ans:{reg:['reg'],p:['absent'],pr:['na']},
- crit:{rate:'40–60/min',rhythm:'Regular',p:'Absent, or inverted just before / after the QRS',pr:'< 0.12 s if a P′ precedes the QRS',qrs:'< 0.12 s',key:'Narrow, regular, 40–60, without upright P waves'}},
+ crit:{rate:'40–60/min',rhythm:'Regular',p:'Absent, or inverted just before / after the QRS',pr:'< 120 ms if a P′ precedes the QRS',qrs:'< 120 ms',key:'Narrow, regular, 40–60, without upright P waves'}},
 {id:'ajr', g:'Junctional', name:'Accelerated junctional rhythm', rate:[61,100],
  gen:(S,rt)=>junctionalRun(S,rt),
  ans:{reg:['reg'],p:['absent'],pr:['na']},
- crit:{rate:'61–100/min',rhythm:'Regular',p:'Absent, or inverted just before / after the QRS',pr:'< 0.12 s if a P′ precedes the QRS',qrs:'< 0.12 s',key:'Junctional mechanism faster than the intrinsic 40–60'}},
+ crit:{rate:'61–100/min',rhythm:'Regular',p:'Absent, or inverted just before / after the QRS',pr:'< 120 ms if a P′ precedes the QRS',qrs:'< 120 ms',key:'Junctional mechanism faster than the intrinsic 40–60'}},
 {id:'jtach', g:'Junctional', name:'Junctional tachycardia', rate:[101,160],
  gen:(S,rt)=>junctionalRun(S,rt),
  ans:{reg:['reg'],p:['absent'],pr:['na']},
- crit:{rate:'> 100/min',rhythm:'Regular',p:'Absent, or inverted just before / after the QRS',pr:'< 0.12 s if a P′ precedes the QRS',qrs:'< 0.12 s',key:'Narrow tachycardia with inverted or absent P waves'}},
+ crit:{rate:'> 100/min',rhythm:'Regular',p:'Absent, or inverted just before / after the QRS',pr:'< 120 ms if a P′ precedes the QRS',qrs:'< 120 ms',key:'Narrow tachycardia with inverted or absent P waves'}},
 
 /* ---------- VENTRICULAR ---------- */
 {id:'pvc', g:'Ventricular', name:'Sinus rhythm with unifocal PVCs', rate:[60,100],
  gen:(S,rt)=>{ const mV=morphWide(S.rng,S.sc,{id:'V1'}); sinusEctopy(S,rt,3,7,(S,c)=>{ const q=c.last.t+c.RR*S.rng.u(0.5,0.68); const b=S.QRS(q,mV,{rr:c.RR,label:PVC_LABEL}); S.P(c.tP,null,{lab:false}); return {nextP:c.tP+c.RR,last:b}; }); },
  ans:{reg:['int'],p:['normal'],pr:['normal']},
- crit:{rate:'Underlying rate',rhythm:'Regular, interrupted by early beats',p:'None before the PVC (sinus P is hidden)',pr:'Normal for sinus beats',qrs:'PVC ≥ 0.12 s, bizarre, T opposite the QRS',key:'All PVCs look alike; full compensatory pause'}},
+ crit:{rate:'Underlying rate',rhythm:'Regular, interrupted by early beats',p:'None before the PVC (sinus P is hidden)',pr:'Normal for sinus beats',qrs:'PVC ≥ 120 ms, bizarre, T opposite the QRS',key:'All PVCs look alike; full compensatory pause'}},
 {id:'pvcm', g:'Ventricular', name:'Sinus rhythm with multifocal PVCs', rate:[60,100],
  gen:(S,rt)=>{ const ms=[morphWide(S.rng,S.sc,{id:'V1',sign:1}),morphWide(S.rng,S.sc,{id:'V2',sign:-1,w:S.rng.u(0.15,0.2)})]; let k=0; sinusEctopy(S,rt,2,4,(S,c)=>{ const q=c.last.t+c.RR*S.rng.u(0.5,0.68); const b=S.QRS(q,ms[k],{rr:c.RR,label:PVC_LABEL}); k=1-k; S.P(c.tP,null,{lab:false}); return {nextP:c.tP+c.RR,last:b}; }); },
  ans:{reg:['int'],p:['normal'],pr:['normal']},
@@ -569,29 +601,29 @@ const RH_LIST = [
  ans:{reg:['int'],p:['normal'],pr:['normal']},
  crit:{rate:'Underlying rate; run is > 100/min',rhythm:'Regular, interrupted by a run of early beats',p:'None before the PVCs',pr:'Normal for sinus beats',qrs:'Three consecutive wide PVCs',key:'Three or more PVCs in a row = a run of (nonsustained) VT'}},
 {id:'bigem', g:'Ventricular', name:'Ventricular bigeminy', rate:[60,95],
- gen:(S,rt)=>{ const mV=morphWide(S.rng,S.sc,{id:'V1'}); sinusEctopy(S,rt,1,1,(S,c)=>{ const q=c.last.t+c.RR*S.rng.u(0.52,0.66); const b=S.QRS(q,mV,{rr:c.RR,label:PVC_LABEL}); S.P(c.tP,null,{lab:false}); return {nextP:c.tP+c.RR,last:b}; }); },
+ gen:(S,rt)=>ectopicPattern(S,rt,2),
  ans:{reg:['pat','int'],p:['normal'],pr:['normal']},
- crit:{rate:'Underlying rate',rhythm:'Regularly irregular (repeating pairs)',p:'Normal for sinus beats',pr:'Normal for sinus beats',qrs:'Every other beat is a wide PVC',key:'Sinus, PVC, sinus, PVC…'}},
+ crit:{rate:'Underlying rate',rhythm:'Regularly irregular (repeating pairs)',p:'Normal for sinus beats',pr:'Normal for sinus beats',qrs:'Every other beat is a wide PVC',key:'Sinus, PVC, sinus, PVC… (every PVC follows its sinus beat at the same coupling interval)'}},
 {id:'trigem', g:'Ventricular', name:'Ventricular trigeminy', rate:[60,100],
- gen:(S,rt)=>{ const mV=morphWide(S.rng,S.sc,{id:'V1'}); sinusEctopy(S,rt,2,2,(S,c)=>{ const q=c.last.t+c.RR*S.rng.u(0.52,0.66); const b=S.QRS(q,mV,{rr:c.RR,label:PVC_LABEL}); S.P(c.tP,null,{lab:false}); return {nextP:c.tP+c.RR,last:b}; }); },
+ gen:(S,rt)=>ectopicPattern(S,rt,3),
  ans:{reg:['pat','int'],p:['normal'],pr:['normal']},
- crit:{rate:'Underlying rate',rhythm:'Regularly irregular (repeating groups of 3)',p:'Normal for sinus beats',pr:'Normal for sinus beats',qrs:'Every third beat is a wide PVC',key:'Sinus, sinus, PVC…'}},
-{id:'quadri', g:'Ventricular', name:'Ventricular quadrigeminy', rate:[60,100],
- gen:(S,rt)=>{ const mV=morphWide(S.rng,S.sc,{id:'V1'}); sinusEctopy(S,rt,3,3,(S,c)=>{ const q=c.last.t+c.RR*S.rng.u(0.52,0.66); const b=S.QRS(q,mV,{rr:c.RR,label:PVC_LABEL}); S.P(c.tP,null,{lab:false}); return {nextP:c.tP+c.RR,last:b}; }); },
+ crit:{rate:'Underlying rate',rhythm:'Regularly irregular (repeating groups of 3)',p:'Normal for sinus beats',pr:'Normal for sinus beats',qrs:'Every third beat is a wide PVC',key:'Sinus, sinus, PVC, sinus, sinus, PVC… (fixed coupling interval)'}},
+{id:'quadri', g:'Ventricular', name:'Ventricular quadrigeminy', rate:[70,100],
+ gen:(S,rt)=>ectopicPattern(S,rt,4),
  ans:{reg:['pat','int'],p:['normal'],pr:['normal']},
- crit:{rate:'Underlying rate',rhythm:'Regularly irregular (repeating groups of 4)',p:'Normal for sinus beats',pr:'Normal for sinus beats',qrs:'Every fourth beat is a wide PVC',key:'Sinus, sinus, sinus, PVC…'}},
+ crit:{rate:'Underlying rate',rhythm:'Regularly irregular (repeating groups of 4)',p:'Normal for sinus beats',pr:'Normal for sinus beats',qrs:'Every fourth beat is a wide PVC',key:'Sinus, sinus, sinus, PVC… (fixed coupling interval)'}},
 {id:'idio', g:'Ventricular', name:'Idioventricular rhythm', rate:[20,40],
  gen:(S,rt)=>{ ventRun(S,rt,morphWide(S.rng,S.sc,{w:S.rng.u(0.16,0.22),id:'E'}),0.025); },
  ans:{reg:['reg'],p:['absent','na'],pr:['na']},
- crit:{rate:'20–40/min',rhythm:'Regular (may be slightly irregular)',p:'Absent',pr:'None',qrs:'≥ 0.12 s, bizarre; T opposite the QRS',key:'Slow, wide ventricular escape rhythm'}},
+ crit:{rate:'20–40/min',rhythm:'Regular (may be slightly irregular)',p:'Absent',pr:'None',qrs:'≥ 120 ms, bizarre; T opposite the QRS',key:'Slow, wide ventricular escape rhythm'}},
 {id:'aivr', g:'Ventricular', name:'Accelerated idioventricular rhythm (AIVR)', rate:[41,100],
  gen:(S,rt)=>{ ventRun(S,rt,morphWide(S.rng,S.sc,{w:S.rng.u(0.15,0.2),id:'E'}),0.015); if(S.rng.chance(0.4)){ dissocP(S,Math.max(40,rt*S.rng.u(0.7,0.9)),S.pAmp*0.8); S.ans.p=['absent','normal','na']; S.ans.pr=['dissoc','na']; } },
  ans:{reg:['reg'],p:['absent','na'],pr:['na']},
- crit:{rate:'41–100/min',rhythm:'Regular',p:'Usually absent; may be dissociated',pr:'None',qrs:'≥ 0.12 s, bizarre',key:'Wide, regular — faster than idioventricular, slower than VT'}},
+ crit:{rate:'41–100/min',rhythm:'Regular',p:'Usually absent; may be dissociated',pr:'None',qrs:'≥ 120 ms, bizarre',key:'Wide, regular — faster than idioventricular, slower than VT'}},
 {id:'vt', g:'Ventricular', name:'Monomorphic ventricular tachycardia', rate:[140,220],
  gen:(S,rt)=>{ ventRun(S,rt,morphWide(S.rng,S.sc,{w:S.rng.u(0.14,0.18),id:'E'}),0.008); if(S.rng.chance(0.4)){ dissocP(S,S.rng.u(65,90),S.pAmp*0.8); S.ans.p=['absent','na','normal']; S.ans.pr=['na','dissoc']; } },
  ans:{reg:['reg'],p:['absent','na'],pr:['na']},
- crit:{rate:'> 100/min (usually 140–250)',rhythm:'Regular',p:'Usually not seen; if seen, dissociated from the QRS',pr:'None',qrs:'≥ 0.12 s, uniform shape',key:'Regular wide-complex tachycardia — VT until proven otherwise'}},
+ crit:{rate:'> 100/min (usually 140–250)',rhythm:'Regular',p:'Usually not seen; if seen, dissociated from the QRS',pr:'None',qrs:'≥ 120 ms, uniform shape',key:'Regular wide-complex tachycardia — VT until proven otherwise'}},
 {id:'tdp', g:'Ventricular', name:'Polymorphic VT (torsades de pointes)', rate:[190,260],
  gen:(S,rt)=>{ const r=S.rng,f=rt/60,P=r.u(1.6,2.6),A=r.u(0.9,1.3),ph=r.u(0,6.28),ph2=r.u(0,6.28); S.cont.push(t=>{ const env=Math.sin(Math.PI*t/P+ph); const w=Math.sin(2*Math.PI*f*t+ph2+0.25*Math.sin(t*1.3)); const sh=Math.sign(w)*Math.pow(Math.abs(w),0.6); return A*(0.88*env+0.12*Math.sin(0.7*t))*sh; }); S.rateOverride=rt; S.qrsOverride=['wide','none']; S.caption='QRS amplitude and polarity twist around the baseline'; },
  ans:{reg:['irr','none'],p:['na','absent'],pr:['na']},
@@ -617,15 +649,15 @@ const RH_LIST = [
 {id:'avb1', g:'AV Blocks', name:'First-degree AV block', rate:[50,95], rl:'Rate',
  gen:(S,rt)=>{ sinusRun(S,rt,{pr:S.rng.u(0.22,0.36)}); },
  ans:{reg:['reg'],p:['normal'],pr:['long']},
- crit:{rate:'Underlying rate',rhythm:'Regular',p:'Normal; one before every QRS',pr:'> 0.20 s, constant',qrs:'< 0.12 s',key:'Every P conducts, but the PR is prolonged'}},
+ crit:{rate:'Underlying rate',rhythm:'Regular',p:'Normal; one before every QRS',pr:'> 200 ms, constant',qrs:'< 120 ms',key:'Every P conducts, but the PR is prolonged'}},
 {id:'mob1', g:'AV Blocks', name:'Second-degree AV block, type I (Wenckebach)', rate:[60,100], rl:'Atrial rate',
  gen:(S,rt)=>{ const r=S.rng,PP=60/rt,pr0=r.u(0.16,0.24),inc0=r.u(0.08,0.14); let t=S.t0+r.u(0,PP),n=r.i(3,5),i=0,pr=pr0,inc=inc0; while(t<S.t1){ if(i<n-1){ S.conduct(t,pr,null,{rr:PP}); pr+=inc; inc*=0.55; } else { S.P(t); S.note(t,'non-conducted'); } i++; if(i>=n){ i=0; pr=pr0; inc=inc0; if(r.chance(0.3)) n=r.i(3,5); } t+=PP; } S.caption='PR lengthens progressively until a P wave is not conducted'; },
  ans:{reg:['pat','irr'],p:['more'],pr:['lengthen']},
- crit:{rate:'Atrial > ventricular',rhythm:'Regularly irregular (group beating)',p:'Regular; some P waves not followed by a QRS',pr:'Progressively lengthens until a QRS is dropped',qrs:'Usually < 0.12 s',key:'Longer, longer, longer, drop — then the cycle repeats'}},
+ crit:{rate:'Atrial > ventricular',rhythm:'Regularly irregular (group beating)',p:'Regular; some P waves not followed by a QRS',pr:'Progressively lengthens until a QRS is dropped',qrs:'Usually < 120 ms',key:'Longer, longer, longer, drop — then the cycle repeats'}},
 {id:'mob2', g:'AV Blocks', name:'Second-degree AV block, type II (Mobitz II)', rate:[60,100], rl:'Atrial rate',
  gen:(S,rt)=>{ const r=S.rng,PP=60/rt,pr=r.u(0.14,0.26),m=r.chance(0.4)?morphAberrant(r,S.sc):S.qrsN; let t=S.t0+r.u(0,PP),n=r.i(3,5),i=0; while(t<S.t1){ if(i<n-1) S.conduct(t,pr,m,{rr:PP}); else { S.P(t); S.note(t,'non-conducted'); } i++; if(i>=n){ i=0; if(r.chance(0.4)) n=r.i(3,5); } t+=PP; } S.ans.pr=prAns(pr); S.caption='Constant PR, then a sudden non-conducted P'; },
  ans:{reg:['pat','int'],p:['more'],pr:['normal']},
- crit:{rate:'Atrial > ventricular',rhythm:'Regular, interrupted by dropped beats',p:'Regular; some P waves not followed by a QRS',pr:'Constant (normal or prolonged) in conducted beats',qrs:'Often ≥ 0.12 s',key:'Dropped beats without any PR lengthening beforehand'}},
+ crit:{rate:'Atrial > ventricular',rhythm:'Regular, interrupted by dropped beats',p:'Regular; some P waves not followed by a QRS',pr:'Constant (normal or prolonged) in conducted beats',qrs:'Often ≥ 120 ms',key:'Dropped beats without any PR lengthening beforehand'}},
 {id:'avb21', g:'AV Blocks', name:'2:1 AV block', rate:[70,110], rl:'Atrial rate',
  gen:(S,rt)=>{ const r=S.rng,PP=60/rt,pr=r.u(0.14,0.26),m=r.chance(0.3)?morphAberrant(r,S.sc):S.qrsN; let t=S.t0+r.u(0,PP),i=r.i(0,1); while(t<S.t1){ if(i%2===0) S.conduct(t,pr,m,{rr:2*PP}); else S.P(t); i++; t+=PP; } S.ans.pr=prAns(pr); S.caption='Every other P wave is conducted'; },
  ans:{reg:['reg'],p:['more'],pr:['normal']},
@@ -637,63 +669,30 @@ const RH_LIST = [
 {id:'chbj', g:'AV Blocks', name:'Third-degree AV block (junctional escape)', dx:'chb', rate:[40,58], rl:'Ventricular rate',
  gen:(S,rt)=>{ ventRun(S,rt,S.qrsN,0.01); dissocP(S,S.rng.u(Math.max(68,rt*1.5),100)); S.caption='P waves and QRS complexes are independent (AV dissociation)'; },
  ans:{reg:['reg'],p:['more'],pr:['dissoc']},
- crit:{rate:'Atrial 60–100; ventricular 40–60',rhythm:'Atrial regular; ventricular regular',p:'Regular, more P waves than QRS complexes',pr:'No relationship — P waves march through',qrs:'< 0.12 s (junctional escape)',key:'Complete AV dissociation with a narrow escape rhythm'}},
+ crit:{rate:'Atrial 60–100; ventricular 40–60',rhythm:'Atrial regular; ventricular regular',p:'Regular, more P waves than QRS complexes',pr:'No relationship — P waves march through',qrs:'< 120 ms (junctional escape)',key:'Complete AV dissociation with a narrow escape rhythm'}},
 {id:'chbv', g:'AV Blocks', name:'Third-degree AV block (ventricular escape)', dx:'chb', rate:[22,40], rl:'Ventricular rate',
  gen:(S,rt)=>{ ventRun(S,rt,morphWide(S.rng,S.sc,{w:S.rng.u(0.16,0.2),id:'E'}),0.01); dissocP(S,S.rng.u(60,95)); S.caption='P waves and QRS complexes are independent (AV dissociation)'; },
  ans:{reg:['reg'],p:['more'],pr:['dissoc']},
- crit:{rate:'Atrial 60–100; ventricular 20–40',rhythm:'Atrial regular; ventricular regular',p:'Regular, more P waves than QRS complexes',pr:'No relationship — P waves march through',qrs:'≥ 0.12 s (ventricular escape)',key:'Complete AV dissociation with a wide, slow escape rhythm'}},
-
-/* ---------- PACED ---------- */
-{id:'pacea', g:'Paced', name:'Atrial paced rhythm', rate:[60,90], rl:'Pacing rate',
- gen:(S,rt)=>{ const r=S.rng,L=60/rt,pr=r.u(0.16,0.22),pP={c:[[0,0.024,r.u(0.08,0.13)]],txt:'P'}; let t=S.t0+r.u(0,L); while(t<S.t1){ S.spike(t,'A'); S.P(t+0.045,pP); S.QRS(t+pr-S.qrsN.on,S.qrsN,{rr:L,pOn:t}); t+=L; } S.ans.pr=prAns(pr); },
- ans:{reg:['reg'],p:['paced'],pr:['normal']},
- crit:{rate:'Programmed rate (often 60–80)',rhythm:'Regular',p:'Pacer spike followed by a P wave',pr:'Normal, constant (spike to QRS)',qrs:'< 0.12 s (normal conduction)',key:'Atrial spike before every P wave, then a normal QRS'}},
-{id:'pacev', g:'Paced', name:'Ventricular paced rhythm', rate:[60,90], rl:'Pacing rate',
- gen:(S,rt)=>{ const r=S.rng,L=60/rt,mP=morphPacedV(r,S.sc); let t=S.t0+r.u(0,L); while(t<S.t1){ S.spike(t,'V'); S.QRS(t,mP,{rr:L}); t+=L; } pacedUnderlying(S); },
- ans:{reg:['reg'],p:['absent','na'],pr:['na']},
- crit:{rate:'Programmed rate',rhythm:'Regular',p:'None related to the QRS',pr:'None',qrs:'Wide, preceded by a pacer spike; T opposite the QRS',key:'Ventricular spike before every wide QRS'}},
-{id:'paceav', g:'Paced', name:'Dual-chamber (AV) paced rhythm', rate:[60,90], rl:'Pacing rate',
- gen:(S,rt)=>{ const r=S.rng,L=60/rt,avd=r.u(0.14,0.2),mP=morphPacedV(r,S.sc),pP={c:[[0,0.024,r.u(0.08,0.12)]],txt:'P'}; let t=S.t0+r.u(0,L); while(t<S.t1){ S.spike(t,'A'); S.P(t+0.045,pP); S.spike(t+avd,'V'); S.QRS(t+avd,mP,{rr:L,pOn:t}); t+=L; } },
- ans:{reg:['reg'],p:['paced'],pr:['normal','na']},
- crit:{rate:'Programmed rate',rhythm:'Regular',p:'Atrial spike followed by a P wave',pr:'Programmed AV interval (spike to spike)',qrs:'Wide, preceded by a ventricular spike',key:'Two spikes per beat: atrial then ventricular'}},
-{id:'fcap', g:'Paced', name:'Pacemaker failure to capture', rate:[60,80], rl:'Pacing rate',
- gen:(S,rt)=>{ const r=S.rng,L=60/rt,mP=morphPacedV(r,S.sc); let t=S.t0+r.u(0,L); const failAt=r.u(1.0,3.8); let forced=false,lastFail=false; while(t<S.t1){ S.spike(t,'V'); let fail=(!forced&&t>=failAt)||(!lastFail&&r.chance(0.22)); if(!forced&&t>=failAt) forced=true; if(fail){ S.note(t,'no capture'); lastFail=true; } else { S.QRS(t,mP,{rr:L}); lastFail=false; } t+=L; } pacedUnderlying(S); S.caption='Spike not followed by a QRS'; },
- ans:{reg:['int','irr'],p:['absent','na'],pr:['na']},
- crit:{rate:'Below the programmed rate',rhythm:'Irregular because of missed beats',p:'Depends on the underlying rhythm',pr:'None',qrs:'Paced beats wide; some spikes have no QRS',key:'Pacer spike appears on time but no depolarization follows'}},
-{id:'fsense', g:'Paced', name:'Pacemaker failure to sense (undersensing)', rate:[58,72], rl:'Pacing rate',
- gen:(S,rt)=>{ const r=S.rng,L=60/rt,mP=morphPacedV(r,S.sc),srate=r.u(Math.max(76,rt+12),95),PP=60/srate,pr=r.u(0.14,0.18);
-   const items=[]; for(let p=S.t0+r.u(0,PP);p<S.t1;p+=PP*(1+r.u(-0.01,0.01))) items.push({k:'s',p,on:p-0.05+pr}); for(let s=S.t0+r.u(0,L);s<S.t1;s+=L) items.push({k:'v',s,on:s});
-   items.sort((a,b)=>a.on-b.on); let lastV=-9;
-   for(const it of items){ if(it.k==='s'){ if(it.on-lastV>0.3){ S.conduct(it.p,pr,null,{rr:PP}); lastV=it.on; } else S.P(it.p); } else { S.spike(it.s,'V'); if(it.s-lastV>0.32){ S.QRS(it.s,mP,{rr:L}); lastV=it.s; } else S.note(it.s,'not sensed'); } }
-   S.caption='Spikes fire without regard to intrinsic beats'; },
- ans:{reg:['irr','int'],p:['normal'],pr:['normal','variable']},
- crit:{rate:'Intrinsic rate plus paced beats',rhythm:'Irregular',p:'Intrinsic P waves present',pr:'Normal for intrinsic beats',qrs:'Mixture of intrinsic (narrow) and paced (wide) beats',key:'Spikes occur too soon after intrinsic beats, often landing in the ST segment or T wave'}},
-{id:'osense', g:'Paced', name:'Pacemaker oversensing', rate:[60,80], rl:'Pacing rate',
- gen:(S,rt)=>{ const r=S.rng,L=60/rt,mP=morphPacedV(r,S.sc),burst=r.chance(0.6); let t=S.t0+r.u(0,L),skipAt=r.u(0.8,2.6),done=false,cnt=0; while(t<S.t1){ const doSkip=(!done&&t>=skipAt)||(done&&cnt>=r.i(6,9)); if(doSkip){ const k=r.i(1,2),a=t-L+0.25,b=t+(k-1)*L+L*0.9; if(burst) noiseBurst(S,a,b,0.07); S.note(t+(k-1)*L/2,'pause — no spike'); t+=k*L; done=true; cnt=0; continue; } S.spike(t,'V'); S.QRS(t,mP,{rr:L}); cnt++; t+=L; } pacedUnderlying(S); S.caption='Pause longer than the pacing interval with no spike'; },
- ans:{reg:['int'],p:['absent','na'],pr:['na']},
- crit:{rate:'Below the programmed rate during pauses',rhythm:'Regular, interrupted by pauses',p:'Depends on the underlying rhythm',pr:'None',qrs:'Paced beats wide',key:'Pacer inhibited by non-cardiac signals (e.g., muscle noise) — pause with no spike'}}
+ crit:{rate:'Atrial 60–100; ventricular 20–40',rhythm:'Atrial regular; ventricular regular',p:'Regular, more P waves than QRS complexes',pr:'No relationship — P waves march through',qrs:'≥ 120 ms (ventricular escape)',key:'Complete AV dissociation with a wide, slow escape rhythm'}}
 ];
 const RH = {}; RH_LIST.forEach(r=>{ RH[r.id]=r; if(!r.dx) r.dx=r.id; });
 const DX_NAMES = {}; RH_LIST.forEach(r=>{ if(!DX_NAMES[r.dx]) DX_NAMES[r.dx] = (r.dx==='chb') ? 'Third-degree (complete) AV block' : r.name; });
-const GROUPS = ['Sinus','Atrial','Junctional','Ventricular','AV Blocks','Paced'];
+const GROUPS = ['Sinus','Atrial','Junctional','Ventricular','AV Blocks'];
 
 // Look-alike rhythms used as quick-quiz distractors
 const CONFUSE = {
-  nsr:['sarr','avb1','stach','sbrady'], sbrady:['jesc','nsr','avb1','afs'], stach:['atach','svt','afl2','nsr'],
-  sarr:['nsr','wap','afc','pac'], sarrest:['saexit','pacb','mob2','sbrady'], saexit:['sarrest','pacb','mob2','avb21'],
-  pac:['pjc','pvc','pacb','sarr'], pacb:['mob2','saexit','sarrest','pac'], paca:['pvc','pac','pjc','pvcm'],
-  wap:['mat','sarr','pac','afc'], mat:['afr','wap','atach','aflv'], atach:['svt','stach','afl2','mat'],
-  svt:['atach','stach','afl2','jtach'], afc:['mat','aflv','sarr','afr'], afr:['mat','svt','aflv','afc'], afs:['afc','sarrest','jesc','aflv'],
-  afl2:['stach','svt','atach','afl4'], afl3:['afl2','afl4','aflv','afc'], afl4:['afl2','afl3','aflv','afc'], aflv:['afc','afl4','mat','afr'],
-  pjc:['pac','pvc','sarrest','paca'], jesc:['sbrady','idio','ajr','chbj'], ajr:['jesc','aivr','nsr','jtach'], jtach:['svt','stach','ajr','atach'],
-  pvc:['pvcm','paca','pjc','bigem'], pvcm:['pvc','coup','trip','paca'], ront:['pvc','tdp','coup','pvcm'], coup:['trip','pvcm','bigem','pvc'],
-  trip:['coup','vt','pvcm','tdp'], bigem:['trigem','quadri','pvc','coup'], trigem:['bigem','quadri','pvc','pvcm'], quadri:['trigem','bigem','pvc','pvcm'],
-  idio:['aivr','jesc','chbv','agonal'], aivr:['idio','vt','ajr','pacev'], vt:['svt','tdp','aivr','vfc'], tdp:['vfc','vt','vff','trip'],
-  vfc:['vff','tdp','vt','asys'], vff:['asys','vfc','agonal','tdp'], asys:['vff','agonal','chbv','vfc'], agonal:['idio','asys','vff','chbv'],
-  avb1:['nsr','mob1','sbrady','pacea'], mob1:['mob2','avb21','pacb','avb1'], mob2:['mob1','avb21','pacb','hgavb'],
-  avb21:['mob2','mob1','hgavb','sbrady'], hgavb:['chbv','avb21','mob2','chbj'], chbj:['hgavb','avb21','jesc','mob2'], chbv:['hgavb','idio','avb21','mob2'],
-  pacea:['nsr','paceav','avb1','pacev'], pacev:['paceav','idio','aivr','fcap'], paceav:['pacev','pacea','fcap','fsense'],
-  fcap:['fsense','osense','pacev','paceav'], fsense:['fcap','osense','pvc','pacev'], osense:['fcap','fsense','sarrest','pacev']
+  nsr:['sarr','avb1','stach','sbrady'], sbrady:['jesc','nsr','avb1','afs'], stach:['atach','svt','afl2','nsr'], sarr:['nsr','wap','afc','pac'],
+  pac:['pjc','pvc','pacb','sarr'], pacb:['mob2','pac','mob1','sbrady'], paca:['pvc','pac','pjc','pvcm'], wap:['mat','sarr','pac','afc'],
+  mat:['afr','wap','atach','aflv'], atach:['svt','stach','afl2','mat'], svt:['atach','stach','afl2','jtach'], afc:['mat','aflv','sarr','afr'],
+  afr:['mat','svt','aflv','afc'], afs:['afc','jesc','aflv','sbrady'], afl2:['stach','svt','atach','afl4'], afl3:['afl2','afl4','aflv','afc'],
+  afl4:['afl2','afl3','aflv','afc'], aflv:['afc','afl4','mat','afr'], pjc:['pac','pvc','paca','pacb'], jesc:['sbrady','idio','ajr','chbj'],
+  ajr:['jesc','aivr','nsr','jtach'], jtach:['svt','stach','ajr','atach'], pvc:['pvcm','paca','pjc','bigem'], pvcm:['pvc','coup','trip','paca'],
+  ront:['pvc','tdp','coup','pvcm'], coup:['trip','pvcm','bigem','pvc'], trip:['coup','vt','pvcm','tdp'], bigem:['trigem','quadri','pvc','coup'],
+  trigem:['bigem','quadri','pvc','pvcm'], quadri:['trigem','bigem','pvc','pvcm'], idio:['aivr','jesc','chbv','agonal'],
+  aivr:['idio','vt','ajr','jesc'], vt:['svt','tdp','aivr','vfc'], tdp:['vfc','vt','vff','trip'], vfc:['vff','tdp','vt','asys'],
+  vff:['asys','vfc','agonal','tdp'], asys:['vff','agonal','chbv','vfc'], agonal:['idio','asys','vff','chbv'], avb1:['nsr','mob1','sbrady','mob2'],
+  mob1:['mob2','avb21','pacb','avb1'], mob2:['mob1','avb21','pacb','hgavb'], avb21:['mob2','mob1','hgavb','sbrady'],
+  hgavb:['chbv','avb21','mob2','chbj'], chbj:['hgavb','avb21','jesc','mob2'], chbv:['hgavb','idio','avb21','mob2']
 };
 
 /* =====================================================================
@@ -748,7 +747,7 @@ function computeTruth(S){
   let qrs;
   if(S.qrsOverride) qrs=S.qrsOverride;
   else if(!bs.length) qrs=['none'];
-  else { const set=new Set(bs.map(b=>b.paced?'paced':(b.dur>=0.12?'wide':'narrow'))); qrs = set.size===1 ? [...set] : (set.has('paced')?['mixed','paced']:['mixed']); }
+  else { const set=new Set(bs.map(b=>b.dur>=0.12?'wide':'narrow')); qrs = set.size===1 ? [...set] : ['mixed']; }
   const a=Object.assign({}, R.ans, S.ans);
   return {rate:[...rate], reg:a.reg, p:a.p, pr:a.pr, qrs, measured: vals?Math.round(vals[0]):null};
 }
@@ -757,9 +756,9 @@ function computeTruth(S){
 const OPT = {
   rate: RATE_BANDS.map(b=>[b.k,b.label]),
   reg: [['reg','Regular'],['int','Regular, interrupted by early beats or pauses'],['pat','Regularly irregular (repeating pattern / group beating)'],['irr','Irregularly irregular'],['none','No organized rhythm / no QRS complexes']],
-  p: [['normal','Normal sinus P waves, one before each QRS'],['premature','Sinus P waves plus premature P waves of a different shape'],['abnormal','Uniform but abnormal (ectopic) P waves'],['multi','Varying P-wave shapes (3 or more)'],['more','More P waves than QRS complexes'],['flutter','Flutter (sawtooth) waves'],['fib','Fibrillatory baseline, no discrete P waves'],['absent','Absent, hidden, or retrograde (inverted) P waves'],['paced','Paced P waves (preceded by a pacer spike)'],['na','No organized activity to assess']],
-  pr: [['normal','0.12–0.20 s and constant'],['short','Shorter than 0.12 s'],['long','Longer than 0.20 s and constant'],['lengthen','Progressively lengthens until a QRS is dropped'],['variable','Varies without a pattern'],['dissoc','No relationship between P waves and QRS (AV dissociation)'],['na','Not measurable / no P waves']],
-  qrs: [['narrow','Narrow (< 0.12 s)'],['wide','Wide (≥ 0.12 s)'],['mixed','Narrow beats with some wide or paced beats'],['paced','Paced (wide, preceded by a pacer spike)'],['none','No discernible QRS complexes']]
+  p: [['normal','Normal sinus P waves, one before each QRS'],['premature','Sinus P waves plus premature P waves of a different shape'],['abnormal','Uniform but abnormal (ectopic) P waves'],['multi','Varying P-wave shapes (3 or more)'],['more','More P waves than QRS complexes'],['flutter','Flutter (sawtooth) waves'],['fib','Fibrillatory baseline, no discrete P waves'],['absent','Absent, hidden, or retrograde (inverted) P waves'],['na','No organized activity to assess']],
+  pr: [['normal','120–200 ms and constant'],['short','Shorter than 120 ms'],['long','Longer than 200 ms and constant'],['lengthen','Progressively lengthens until a QRS is dropped'],['variable','Varies without a pattern'],['dissoc','No relationship between P waves and QRS (AV dissociation)'],['na','Not measurable / no P waves']],
+  qrs: [['narrow','Narrow (< 120 ms)'],['wide','Wide (≥ 120 ms)'],['mixed','Narrow beats with some wide beats'],['none','No discernible QRS complexes']]
 };
 const STEP_NAMES = {rate:'Rate', reg:'Rhythm', p:'P waves', pr:'PR interval', qrs:'QRS', dx:'Interpretation'};
 function optLabel(step, k){ const o=OPT[step].find(x=>x[0]===k); return o?o[1]:'—'; }
@@ -767,7 +766,7 @@ function optLabel(step, k){ const o=OPT[step].find(x=>x[0]===k); return o?o[1]:'
 /* =====================================================================
    STRIP VIEW (ECG paper renderer)
    ===================================================================== */
-const COL = {bg:'#fff7f7', small:'#f3c4c4', big:'#e08a8a', trace:'#111418', P:'#1f5fbf', QRS:'#b3261e', T:'#2e7d32', spike:'#7b1fa2', note:'#4a4f55', cal:'#00838f'};
+const COL = {bg:'#fff7f7', small:'#f3c4c4', big:'#e08a8a', trace:'#111418', P:'#1f5fbf', QRS:'#b3261e', T:'#2e7d32', note:'#4a4f55', cal:'#00838f'};
 const views=[];
 class StripView{
   constructor(host){
@@ -816,7 +815,7 @@ class StripView{
     // 1-second tick marks
     c.strokeStyle='#8a3b3b'; c.lineWidth=Math.max(1.5,1.5*this.dpr);
     for(let s=0;s<=STRIP_S;s++){ const x=Math.round((MARGIN_MM+s*MM_PER_S)*p)+0.5; c.beginPath(); c.moveTo(x,0); c.lineTo(x,(s%3===0?4:2.5)*p); c.stroke(); }
-    // 1 mV calibration pulse (10 mm tall, 0.20 s wide)
+    // 1 mV calibration pulse (10 mm tall, 200 ms wide)
     c.strokeStyle=COL.trace; c.lineWidth=1.4*this.dpr; c.beginPath();
     const y0=BASE_MM*p, y1=(BASE_MM-10)*p;
     c.moveTo(1*p,y0); c.lineTo(3*p,y0); c.lineTo(3*p,y1); c.lineTo(8*p,y1); c.lineTo(8*p,y0); c.lineTo(9.5*p,y0); c.stroke();
@@ -856,7 +855,7 @@ class StripView{
   drawLabels(tA,tB,xmm){
     const S=this.S, p=this.pd, d=this.dpr, inWin=t=>t>=0&&t>=tA+0.02&&t<=tB-0.02, top=11*d;
     for(const pw of S.ps){ if(!pw.lab||!inWin(pw.t)) continue; const y=Math.max(top,this.Y(this.vMax(pw.t-0.03,pw.t+0.03))-5*d); this.text(pw.txt,this.X(pw.t,tA,xmm),y,COL.P,10); }
-    const seen={};
+    const seen={}; let lastPrX=-1e9;
     S.beats.forEach((b,i)=>{
       if(!inWin(b.t)) return;
       const yq=Math.max(top,this.Y(this.vMax(b.on,b.off))-5*d);
@@ -865,14 +864,13 @@ class StripView{
       if(!S.noT && b.tPeak && inWin(b.tPeak) && (!nb || nb.on-b.tPeak>0.13)){ const yt=Math.max(top,this.Y(this.vMax(b.tPeak-0.04,b.tPeak+0.04))-5*d); this.text('T',this.X(b.tPeak,tA,xmm),yt,COL.T,10); }
       // PR bracket
       if(b.pr!=null && b.pr>0.04 && inWin(b.on-b.pr)){
-        const x0=this.X(b.on-b.pr,tA,xmm), x1=this.X(b.on,tA,xmm), y=40*p; this.bracket(x0,x1,y,COL.P);
-        this.text('PR '+b.pr.toFixed(2).replace(/^0/,''),(x0+x1)/2,42.8*p,COL.P,9);
+        const x0=this.X(b.on-b.pr,tA,xmm), x1=this.X(b.on,tA,xmm), y=40*p, xc=(x0+x1)/2; this.bracket(x0,x1,y,COL.P);
+        if(xc-lastPrX>=50*d){ this.text('PR '+ms10(b.pr)+' ms',xc,42.8*p,COL.P,9); lastPrX=xc; }
       }
       // QRS bracket for first beat of each morphology
-      const key=b.morphId+(b.paced?'p':'');
-      if(!seen[key]){ seen[key]=1; const x0=this.X(b.on,tA,xmm), x1=this.X(b.off,tA,xmm), y=44.4*p; this.bracket(x0,x1,y,COL.QRS); this.text('QRS '+b.dur.toFixed(2).replace(/^0/,''),(x0+x1)/2,47.2*p,COL.QRS,9); }
+      const key=b.morphId;
+      if(!seen[key]){ seen[key]=1; const x0=this.X(b.on,tA,xmm), x1=this.X(b.off,tA,xmm), y=44.4*p; this.bracket(x0,x1,y,COL.QRS); this.text('QRS '+ms10(b.dur)+' ms',(x0+x1)/2,47.2*p,COL.QRS,9); }
     });
-    for(const s of S.spikes){ if(!inWin(s.t)) continue; const x=this.X(s.t,tA,xmm), c=this.ctx; c.fillStyle=COL.spike; c.beginPath(); c.moveTo(x-3.5*d,4.2*p); c.lineTo(x+3.5*d,4.2*p); c.lineTo(x,4.2*p+5*d); c.closePath(); c.fill(); }
     for(const n of S.notes){ if(!inWin(n.t)) continue; this.text(n.txt,this.X(n.t,tA,xmm),7.6*p,COL.note,9); }
     for(const ft of S.fLabels){ if(!inWin(ft) || S.beats.some(b=>Math.abs(b.t-ft)<0.07)) continue; this.text('F',this.X(ft,tA,xmm),this.Y(this.vAt(ft))+13*d,COL.P,10); }
   }
@@ -886,7 +884,7 @@ class StripView{
   updateReadout(){
     if(!this.calipers){ this.readout.textContent=''; return; }
     const mm=Math.abs(this.cal.b-this.cal.a), s=mm/MM_PER_S;
-    this.readout.textContent = 'Calipers: '+s.toFixed(2)+' s ('+Math.round(s*1000)+' ms) · '+mm.toFixed(1)+' small boxes'+(s>0.15?' · if R–R, rate ≈ '+Math.round(60/s)+'/min':'')+'  — drag a line to move it, or drag on the strip to measure';
+    this.readout.textContent = 'Calipers: '+Math.round(s*1000)+' ms · '+mm.toFixed(1)+' small boxes'+(s>0.15?' · if R–R, rate ≈ '+Math.round(60/s)+'/min':'')+'  — drag a line to move it, or drag on the strip to measure';
   }
   mmFromEvent(e){ const r=this.canvas.getBoundingClientRect(); return Math.max(0,Math.min(STRIP_MM,(e.clientX-r.left)/this.ppm-MARGIN_MM)); }
   pDown(e){
@@ -897,6 +895,7 @@ class StripView{
   }
   pMove(e){ if(!this.drag) return; this.cal[this.drag]=Math.round(this.mmFromEvent(e)*4)/4; this.draw(); this.updateReadout(); }
 }
+function ms10(v){ return Math.round(v*100)*10; }   // seconds -> milliseconds, nearest 10 ms
 function frame(){ for(const v of views) if(v.S && v.mode==='live' && !v.frozen && v.visible()) v.draw(); requestAnimationFrame(frame); }
 
 /* =====================================================================
@@ -1109,6 +1108,48 @@ function initHeader(){
   };
 }
 initHeader(); initStudy(); initQuiz(); requestAnimationFrame(frame);
+</script>
+<script>
+(function(){
+  'use strict';
+  var ACCESS_PASSWORD = "12345";
+  var SESSION_KEY = "rhythmTrainerAuth";
+  var gate = document.getElementById('rhythmGate');
+  var main = document.getElementById('appMain');
+  var pwInput = document.getElementById('rhythmGatePassword');
+  var errorMsg = document.getElementById('rhythmGateError');
+  var submitBtn = document.getElementById('rhythmGateSubmit');
+
+  function grantAccess(){
+    try{ sessionStorage.setItem(SESSION_KEY, 'granted'); }catch(e){ /* sessionStorage unavailable — gate still works, just re-prompts each load */ }
+    gate.style.display = 'none';
+    /* display:contents keeps the app's own layout (body flex/grid) exactly as it was before the gate was added */
+    main.style.display = 'contents';
+    try{ window.dispatchEvent(new Event('resize')); }catch(e){}
+  }
+
+  function attempt(){
+    if (pwInput.value === ACCESS_PASSWORD){
+      grantAccess();
+    } else {
+      errorMsg.style.display = 'block';
+      pwInput.value = '';
+      pwInput.focus();
+    }
+  }
+
+  submitBtn.addEventListener('click', attempt);
+  pwInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') attempt(); });
+
+  var alreadyGranted = false;
+  try{ alreadyGranted = sessionStorage.getItem(SESSION_KEY) === 'granted'; }catch(e){}
+
+  if (alreadyGranted){
+    grantAccess();
+  } else {
+    pwInput.focus();
+  }
+})();
 </script>
 </body>
 </html>

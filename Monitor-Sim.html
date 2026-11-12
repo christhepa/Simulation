@@ -449,9 +449,46 @@
     .lane-value .lv-sub{font-size:15px;}
     .temp-corner .temp-main{font-size:22px;}
   }
+
+  /* ---- Access gate (same methodology as EMR-Sim.html) ---- */
+  #monitorGate{
+    position:fixed;inset:0;z-index:9999;
+    background:linear-gradient(135deg,#003366 0%,#1a4a7a 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;
+    padding:20px;box-sizing:border-box;
+  }
+  #monitorGate .gate-box{
+    background:#fff;border-radius:16px;padding:40px 36px;
+    box-shadow:0 12px 40px rgba(0,0,0,0.25);
+    max-width:360px;width:100%;text-align:center;box-sizing:border-box;
+  }
+  #monitorGate h2{margin:0 0 8px;font-size:1.4em;color:#1a2530;font-weight:700;letter-spacing:normal;text-transform:none;}
+  #monitorGate input[type="password"]{
+    width:100%;padding:10px 12px;font-size:14px;border:1px solid #9fabb5;
+    border-radius:6px;margin:0 0 12px;box-sizing:border-box;background:#fff;color:#1a2530;
+    font-family:inherit;display:block;
+  }
+  #monitorGate button{
+    width:100%;padding:10px;font-size:14px;font-weight:600;color:#fff;
+    background:#00629b;border:none;border-radius:6px;cursor:pointer;font-family:inherit;display:block;
+  }
+  #monitorGate button:hover{background:#003865;}
+  #monitorGate .gate-error{color:#c8102e;font-size:12.5px;margin:10px 0 0;display:none;}
 </style>
 </head>
 <body>
+<div id="monitorGate">
+  <div class="gate-box">
+    <h2>Enter your password</h2>
+    <input type="password" id="monitorGatePassword" placeholder="Password" autocomplete="off">
+    <button type="button" id="monitorGateSubmit">Enter</button>
+    <p class="gate-error" id="monitorGateError">Incorrect password. Try again.</p>
+  </div>
+</div>
+
+<div id="appMain" style="display:none;">
+
 <div class="wrap">
   <div class="device">
     <div class="zoll-unit">
@@ -595,6 +632,8 @@
     <button id="pacerBtn" style="width:100%;">Start Pacing</button>
   </div>
 </div>
+
+</div><!-- /appMain -->
 
 <script>
 (function(){
@@ -1862,6 +1901,48 @@
   refreshStageUI();
   requestAnimationFrame(loop);
 
+})();
+</script>
+<script>
+(function(){
+  'use strict';
+  var ACCESS_PASSWORD = "12345";
+  var SESSION_KEY = "monitorSimAuth";
+  var gate = document.getElementById('monitorGate');
+  var main = document.getElementById('appMain');
+  var pwInput = document.getElementById('monitorGatePassword');
+  var errorMsg = document.getElementById('monitorGateError');
+  var submitBtn = document.getElementById('monitorGateSubmit');
+
+  function grantAccess(){
+    try{ sessionStorage.setItem(SESSION_KEY, 'granted'); }catch(e){ /* sessionStorage unavailable — gate still works, just re-prompts each load */ }
+    gate.style.display = 'none';
+    /* display:contents keeps the app's own layout (body flex/grid) exactly as it was before the gate was added */
+    main.style.display = 'contents';
+    try{ window.dispatchEvent(new Event('resize')); }catch(e){}
+  }
+
+  function attempt(){
+    if (pwInput.value === ACCESS_PASSWORD){
+      grantAccess();
+    } else {
+      errorMsg.style.display = 'block';
+      pwInput.value = '';
+      pwInput.focus();
+    }
+  }
+
+  submitBtn.addEventListener('click', attempt);
+  pwInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') attempt(); });
+
+  var alreadyGranted = false;
+  try{ alreadyGranted = sessionStorage.getItem(SESSION_KEY) === 'granted'; }catch(e){}
+
+  if (alreadyGranted){
+    grantAccess();
+  } else {
+    pwInput.focus();
+  }
 })();
 </script>
 </body>
