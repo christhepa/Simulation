@@ -30,6 +30,20 @@
   }
   #emrGate button:hover{background:#003865;}
   #emrGate .gate-error{color:#c8102e;font-size:12.5px;margin-top:10px;display:none;}
+
+  /* Export for review */
+  .sb-actions .export-btn{background:var(--teal);color:#fff;border-color:var(--teal-dark);font-weight:600;}
+  .sb-actions .export-btn:hover{background:var(--teal-dark);}
+  .export-intro{font-size:13px;line-height:1.55;color:var(--ink);margin:0 0 12px;}
+  .export-counts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+  .export-counts div{background:var(--panel-alt);border:1px solid var(--border);border-radius:7px;padding:8px 6px;text-align:center;
+    font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-dim);}
+  .export-counts span{display:block;font-size:20px;font-family:var(--font-data);color:var(--teal-dark);letter-spacing:0;margin-bottom:1px;}
+  .export-msg{font-size:12.5px;line-height:1.5;border-radius:7px;padding:8px 11px;margin-bottom:12px;border:1px solid;}
+  .export-msg.warn{background:var(--amber-pale);color:#7a520b;border-color:#f0dcb0;}
+  .export-msg.err{background:var(--red-pale);color:var(--red);border-color:#f0b8bf;}
+  .export-msg.ok{background:var(--green-pale);color:#1f5a23;border-color:#c8e6d3;margin:4px 0 0;}
+  .export-msg code{font-family:var(--font-data);font-size:11.5px;word-break:break-all;}
 </style>
 </head>
 <body>
@@ -90,6 +104,7 @@
         <div class="sb-section-label">Problem List</div>
         <ul class="sb-problem-list" id="sbProblemList"></ul>
         <div class="sb-actions">
+          <button class="backbtn export-btn" id="exportChartBtn" type="button">Export for review</button>
           <button class="backbtn" id="editPatientBtn" type="button">Edit demographics</button>
           <button class="backbtn" id="perPatientResetBtn" type="button">Reset chart</button>
           <button class="backbtn danger-btn" id="deletePatientBtn" type="button">Delete patient</button>
@@ -133,6 +148,18 @@
   </div>
 </div>
 
+
+<!-- Export for review modal -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal-box" style="max-width:540px;">
+    <div class="modal-head">
+      <h3>Export Chart for Review</h3>
+      <button class="modal-close" id="exportModalClose" type="button">&times;</button>
+    </div>
+    <div class="modal-body" id="exportModalBody"></div>
+    <div class="modal-foot" id="exportModalFoot"></div>
+  </div>
+</div>
 
 <!-- Note editor / viewer modal -->
 <div class="modal-overlay" id="noteModal">

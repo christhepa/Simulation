@@ -2040,6 +2040,32 @@
       {key:'condition', label:'Patient Condition at Conclusion'},
       {key:'plan', label:'Post-Procedure Plan'}
     ]},
+    clinical: { label:'Clinical Note', tag:'Clinical', fields:[
+      {key:'topic', label:'Note Topic / Reason'},
+      {key:'body', label:'Clinical Note'},
+      {key:'plan', label:'Plan / Follow-up'}
+    ]},
+    nursing: { label:'Nursing Note', tag:'Nursing', fields:[
+      {key:'focus', label:'Focus / Nursing Concern'},
+      {key:'data', label:'Data (subjective & objective findings)'},
+      {key:'action', label:'Action (interventions performed)'},
+      {key:'response', label:'Response (patient response / outcome)'},
+      {key:'notified', label:'Provider Notified / Communication'}
+    ]},
+    nursing_assess: { label:'Nursing Assessment', tag:'Nsg Assess', fields:[
+      {key:'general', label:'General / Level of Consciousness'},
+      {key:'neuro', label:'Neurological'},
+      {key:'cardio', label:'Cardiovascular'},
+      {key:'resp', label:'Respiratory'},
+      {key:'gi', label:'Gastrointestinal / Nutrition'},
+      {key:'gu', label:'Genitourinary'},
+      {key:'msk', label:'Musculoskeletal / Mobility'},
+      {key:'skin', label:'Integumentary / Skin & Wounds'},
+      {key:'pain', label:'Pain Assessment'},
+      {key:'lines', label:'Lines, Drains & Devices'},
+      {key:'psychosocial', label:'Psychosocial'},
+      {key:'safety', label:'Safety / Fall Risk'}
+    ]},
     discharge: { label:'Discharge Summary', tag:'Discharge', fields:[
       {key:'admitDate', label:'Admission Date'},
       {key:'dischargeDate', label:'Discharge Date'},
@@ -2060,6 +2086,9 @@
     if (note.type==='hp') return tag+' — '+(patient?patient.first+' '+patient.last:'');
     if (note.type==='consult') return tag+(note.fields.service? (' — '+note.fields.service):'');
     if (note.type==='procedure_note') return tag+(note.fields.procedure ? ' — '+note.fields.procedure : '');
+    if (note.type==='clinical') return tag+' Note'+(note.fields.topic ? ' — '+note.fields.topic : '');
+    if (note.type==='nursing') return tag+' Note'+(note.fields.focus ? ' — '+note.fields.focus : '');
+    if (note.type==='nursing_assess') return 'Nursing Assessment';
     return tag+' Note';
   }
 
@@ -3236,6 +3265,652 @@
     renderPatientList();
   });
 
+  /* ---------------------------------------------------------------
+     EXPORT FOR REVIEW — builds a single PDF of everything the student
+     added to the current chart (orders + results, notes, vitals, I&O,
+     outside records) preceded by a brief case summary, as one PDF
+     for the student to download and submit as the course directs.
+
+     The PDF writer below is self-contained (standard Helvetica, WinAnsi
+     encoding) so the tool keeps working offline and needs no CDN.
+  --------------------------------------------------------------- */
+
+  /* Helvetica / Helvetica-Bold advance widths (1/1000 em), WinAnsi codes 32–255 */
+  const PDF_WIDTHS = {
+    F1: [
+      278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,
+      278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,
+      667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,
+      556,333,500,278,556,500,722,500,500,500,334,260,334,584,350,556,350,222,556,333,1000,556,556,333,1000,667,333,
+      1000,350,611,350,350,222,222,333,333,350,556,1000,333,1000,500,333,944,350,500,667,278,333,556,556,556,556,260,
+      556,333,737,370,556,584,333,737,333,400,584,333,333,333,556,537,278,333,333,365,556,834,834,834,611,667,667,
+      667,667,667,667,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,
+      667,667,611,556,556,556,556,556,556,889,500,556,556,556,556,278,278,278,278,556,556,556,556,556,556,556,584,
+      611,556,556,556,556,500,556,500
+    ],
+    F2: [
+      278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,
+      333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,
+      667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,
+      611,389,556,333,611,556,778,556,556,500,389,280,389,584,350,556,350,278,556,500,1000,556,556,333,1000,667,333,
+      1000,350,611,350,350,278,278,500,500,350,556,1000,333,1000,556,333,944,350,500,667,278,333,556,556,556,556,280,
+      556,333,737,370,556,584,333,737,333,400,584,333,333,333,611,556,278,333,333,365,556,834,834,834,611,722,722,
+      722,722,722,722,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,
+      667,667,611,556,556,556,556,556,556,889,556,556,556,556,556,278,278,278,278,611,611,611,611,611,611,611,584,
+      611,611,611,611,611,556,611,556
+    ]
+  };
+
+  /* Unicode → WinAnsi byte for the 0x80–0x9F block; Latin-1 (0xA0–0xFF) maps 1:1 */
+  const PDF_WINANSI = {
+    0x20AC:0x80,0x201A:0x82,0x0192:0x83,0x201E:0x84,0x2026:0x85,0x2020:0x86,0x2021:0x87,0x02C6:0x88,
+    0x2030:0x89,0x0160:0x8A,0x2039:0x8B,0x0152:0x8C,0x017D:0x8E,0x2018:0x91,0x2019:0x92,0x201C:0x93,
+    0x201D:0x94,0x2022:0x95,0x2013:0x96,0x2014:0x97,0x02DC:0x98,0x2122:0x99,0x0161:0x9A,0x203A:0x9B,
+    0x0153:0x9C,0x017E:0x9E,0x0178:0x9F
+  };
+  const PDF_SUBST = {
+    '≥':'>=','≤':'<=','→':'->','←':'<-','↑':'^','↓':'v','⚠':'!',
+    '✓':'x','✔':'x','✗':'x','▲':'^','▼':'v','▸':'>',' ':' ',
+    ' ':' ',' ':' ',' ':' ',' ':' ','−':'-','‑':'-',' ':' '
+  };
+
+  /* Normalise any string to WinAnsi-safe characters (each char code < 256) */
+  function pdfSafe(s){
+    if (s===undefined || s===null) return '';
+    s = String(s).replace(/\r\n?/g,'\n').replace(/\t/g,'    ');
+    let out = '';
+    for (const ch of s){
+      const c = ch.codePointAt(0);
+      if (ch==='\n') { out += ch; continue; }
+      if (PDF_SUBST[ch] !== undefined){ out += PDF_SUBST[ch]; continue; }
+      if (c>=32 && c<127){ out += ch; continue; }
+      if (c>=0xA0 && c<=0xFF){ out += ch; continue; }
+      if (PDF_WINANSI[c] !== undefined){ out += String.fromCharCode(PDF_WINANSI[c]); continue; }
+      out += '?';
+    }
+    return out;
+  }
+
+  function pdfTextWidth(str, font, size){
+    const tbl = PDF_WIDTHS[font];
+    let w = 0;
+    for (let i=0;i<str.length;i++){
+      const c = str.charCodeAt(i);
+      w += (c>=32 && c<=255) ? tbl[c-32] : 556;
+    }
+    return w*size/1000;
+  }
+
+  /* Word-wrap one (already pdfSafe) string into lines that fit maxW points.
+     Preserves hard line breaks; hyphen-less hard break for over-long words. */
+  function pdfWrap(str, font, size, maxW){
+    const lines = [];
+    String(str).split('\n').forEach(function(para){
+      if (para==='') { lines.push(''); return; }
+      const words = para.split(/( +)/);
+      let line = '';
+      words.forEach(function(word){
+        if (word==='') return;
+        const trial = line + word;
+        if (pdfTextWidth(trial, font, size) <= maxW){ line = trial; return; }
+        if (/^ +$/.test(word)) { lines.push(line); line=''; return; }
+        if (line.trim()!=='') { lines.push(line.replace(/ +$/,'')); line=''; }
+        while (pdfTextWidth(word, font, size) > maxW){
+          let cut = word.length;
+          while (cut>1 && pdfTextWidth(word.slice(0,cut), font, size) > maxW) cut--;
+          lines.push(word.slice(0,cut));
+          word = word.slice(cut);
+        }
+        line = word;
+      });
+      lines.push(line.replace(/ +$/,''));
+    });
+    return lines;
+  }
+
+  function pdfEsc(s){ return s.replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)'); }
+  function pdfRgb(hex){
+    const n = parseInt(hex.replace('#',''),16);
+    return [((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255].map(function(v){ return v.toFixed(3); }).join(' ');
+  }
+
+  /* Minimal flowing-layout PDF document (US Letter, points) */
+  function createPdfDoc(opts){
+    const W = 612, H = 792, ML = 50, MR = 50, MT = 56, MB = 58;
+    const CW = W - ML - MR;
+    const doc = { pages: [], y: 0, W: W, CW: CW, ML: ML, opts: opts || {} };
+    let ops = null;
+
+    function newPage(){
+      ops = [];
+      doc.pages.push(ops);
+      doc.y = H - MT;
+    }
+    function raw(s){ ops.push(s); }
+    function rect(x, y, w, h, fill, stroke){
+      if (fill)   raw(pdfRgb(fill)+' rg '+x.toFixed(2)+' '+y.toFixed(2)+' '+w.toFixed(2)+' '+h.toFixed(2)+' re f');
+      if (stroke) raw('0.6 w '+pdfRgb(stroke)+' RG '+x.toFixed(2)+' '+y.toFixed(2)+' '+w.toFixed(2)+' '+h.toFixed(2)+' re S');
+    }
+    function hline(x1, x2, y, color, width){
+      raw((width||0.6)+' w '+pdfRgb(color||'#c7ced4')+' RG '+x1.toFixed(2)+' '+y.toFixed(2)+' m '+x2.toFixed(2)+' '+y.toFixed(2)+' l S');
+    }
+    function text(x, y, str, font, size, color){
+      raw('BT /'+font+' '+size+' Tf '+pdfRgb(color||'#1a2530')+' rg '+x.toFixed(2)+' '+y.toFixed(2)+' Td ('+pdfEsc(str)+') Tj ET');
+    }
+    function ensure(h){ if (doc.y - h < MB) newPage(); }
+    function gap(h){ doc.y -= h; }
+
+    /* Paragraph: wraps, page-breaks line by line */
+    function para(str, o){
+      o = o || {};
+      const font = o.font || 'F1', size = o.size || 9.5, lead = o.lead || size*1.38;
+      const indent = o.indent || 0, color = o.color || '#1a2530';
+      const lines = pdfWrap(pdfSafe(str===''||str===undefined||str===null ? '—' : str), font, size, CW - indent);
+      lines.forEach(function(ln){
+        ensure(lead);
+        doc.y -= lead;
+        if (ln!=='') text(ML+indent, doc.y + (lead-size)*0.45, ln, font, size, color);
+      });
+    }
+
+    /* Section bar (navy fill, white caps) */
+    function section(title){
+      ensure(110);
+      gap(10);
+      rect(ML, doc.y-19, CW, 19, '#003865');
+      text(ML+8, doc.y-13.3, pdfSafe(title).toUpperCase(), 'F2', 9.5, '#ffffff');
+      doc.y -= 27;
+    }
+    /* Sub-heading with rule; keepWith reserves space so it is never orphaned */
+    function subhead(title, meta, keepWith){
+      ensure(28 + (keepWith||28));
+      gap(6);
+      doc.y -= 12;
+      text(ML, doc.y, pdfSafe(title), 'F2', 10.5, '#003865');
+      if (meta){
+        const m = pdfSafe(meta);
+        let size = 8.5;
+        const room = CW - pdfTextWidth(pdfSafe(title),'F2',10.5) - 12;
+        while (size>6.5 && pdfTextWidth(m,'F1',size)>room) size -= 0.5;
+        text(ML + CW - pdfTextWidth(m,'F1',size), doc.y, m, 'F1', size, '#4d5a66');
+      }
+      doc.y -= 5;
+      hline(ML, ML+CW, doc.y, '#00629b', 0.8);
+      doc.y -= 4;
+    }
+    /* Small caps field label (note sections) */
+    function label(str){
+      ensure(30);
+      gap(5);
+      doc.y -= 9;
+      text(ML, doc.y, pdfSafe(str).toUpperCase(), 'F2', 7.8, '#00629b');
+      doc.y -= 1;
+    }
+    /* Two-column key/value block with uniform label width */
+    function kv(pairs, labelW){
+      labelW = labelW || 120;
+      const size = 9.5, lead = 13;
+      pairs.forEach(function(pr){
+        const lines = pdfWrap(pdfSafe(pr[1]===''||pr[1]===undefined||pr[1]===null?'—':pr[1]), 'F1', size, CW - labelW);
+        ensure(lead * Math.min(lines.length, 3));
+        lines.forEach(function(ln, i){
+          ensure(lead);
+          doc.y -= lead;
+          if (i===0) text(ML, doc.y+3, pdfSafe(pr[0]), 'F2', 8.8, '#4d5a66');
+          text(ML+labelW, doc.y+3, ln, 'F1', size, '#1a2530');
+        });
+      });
+    }
+    /* Table: fixed column widths (fractions of content width), wrapped cells,
+       zebra rows, header repeated after each page break. */
+    function table(cols, rows, o){
+      o = o || {};
+      const size = o.size || 8.6, lead = size*1.32, padX = 5, padY = 4;
+      const widths = cols.map(function(c){ return c.w * CW; });
+      const headH = 17;
+      function drawHead(){
+        rect(ML, doc.y-headH, CW, headH, '#eef1f4');
+        hline(ML, ML+CW, doc.y-headH, '#9fabb5', 0.8);
+        let x = ML;
+        cols.forEach(function(c, i){
+          const t = pdfSafe(c.label).toUpperCase();
+          const tx = c.align==='right' ? x + widths[i] - padX - pdfTextWidth(t,'F2',7.4) : x + padX;
+          text(tx, doc.y-11.4, t, 'F2', 7.4, '#4d5a66');
+          x += widths[i];
+        });
+        doc.y -= headH;
+      }
+      ensure(headH + lead + padY*2 + 2);
+      drawHead();
+      rows.forEach(function(r, ri){
+        const cells = r.cells.map(function(v, i){
+          const font = (r.bold && r.bold[i]) ? 'F2' : 'F1';
+          return { font: font, color: (r.colors && r.colors[i]) || '#1a2530',
+                   lines: pdfWrap(pdfSafe(v===''||v===undefined||v===null?'—':v), font, size, widths[i]-padX*2) };
+        });
+        const nLines = Math.max.apply(null, cells.map(function(c){ return c.lines.length; }));
+        const rowH = Math.max(nLines*lead + padY*2, 16);
+        if (doc.y - rowH < MB){ newPage(); drawHead(); }
+        if (r.fill || ri%2===1) rect(ML, doc.y-rowH, CW, rowH, r.fill || '#f7f8fa');
+        let x = ML;
+        cells.forEach(function(c, i){
+          c.lines.forEach(function(ln, li){
+            const ty = doc.y - padY - (li+1)*lead + (lead-size)*0.5 + 1;
+            const tx = cols[i].align==='right' ? x + widths[i] - padX - pdfTextWidth(ln, c.font, size) : x + padX;
+            text(tx, ty, ln, c.font, size, c.color);
+          });
+          x += widths[i];
+        });
+        doc.y -= rowH;
+        hline(ML, ML+CW, doc.y, '#dfe3e7', 0.5);
+      });
+      gap(4);
+    }
+    /* Serialise: header/footer on every page, then objects + xref */
+    function build(){
+      const total = doc.pages.length;
+      doc.pages.forEach(function(pg, i){
+        ops = pg;
+        const hdr = pdfSafe(doc.opts.header || '');
+        text(ML, H-32, hdr, 'F2', 8, '#4d5a66');
+        const hr = pdfSafe(doc.opts.headerRight || '');
+        text(ML+CW-pdfTextWidth(hr,'F1',8), H-32, hr, 'F1', 8, '#4d5a66');
+        hline(ML, ML+CW, H-38, '#9fabb5', 0.6);
+        hline(ML, ML+CW, 40, '#9fabb5', 0.6);
+        const fl = pdfSafe(doc.opts.footer || '');
+        text(ML, 28, fl, 'F1', 7.4, '#7c8894');
+        const pn = 'Page '+(i+1)+' of '+total;
+        text(ML+CW-pdfTextWidth(pn,'F1',7.4), 28, pn, 'F1', 7.4, '#7c8894');
+      });
+
+      const objs = [];
+      function add(body){ objs.push(body); return objs.length; }
+      const catalogId = add(null), pagesId = add(null);
+      const f1 = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+      const f2 = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+      const kids = [];
+      doc.pages.forEach(function(pg){
+        const stream = pg.join('\n');
+        const cId = add('<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream');
+        kids.push(add('<< /Type /Page /Parent '+pagesId+' 0 R /MediaBox [0 0 '+W+' '+H+'] '+
+          '/Resources << /Font << /F1 '+f1+' 0 R /F2 '+f2+' 0 R >> >> /Contents '+cId+' 0 R >>'));
+      });
+      objs[catalogId-1] = '<< /Type /Catalog /Pages '+pagesId+' 0 R >>';
+      objs[pagesId-1] = '<< /Type /Pages /Kids ['+kids.map(function(k){ return k+' 0 R'; }).join(' ')+'] /Count '+kids.length+' >>';
+      const d = new Date();
+      const pd = 'D:'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+
+                 String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+String(d.getSeconds()).padStart(2,'0');
+      const infoId = add('<< /Title ('+pdfEsc(pdfSafe(doc.opts.title||''))+') /Author ('+pdfEsc(pdfSafe(doc.opts.author||''))+') '+
+                         '/Creator (PA Program Training EMR) /CreationDate ('+pd+') >>');
+
+      let out = '%PDF-1.4\n%âãÏÓ\n';
+      const offsets = [];
+      objs.forEach(function(body, i){
+        offsets.push(out.length);
+        out += (i+1)+' 0 obj\n'+body+'\nendobj\n';
+      });
+      const xref = out.length;
+      out += 'xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';
+      offsets.forEach(function(o){ out += String(o).padStart(10,'0')+' 00000 n \n'; });
+      out += 'trailer\n<< /Size '+(objs.length+1)+' /Root '+catalogId+' 0 R /Info '+infoId+' 0 R >>\nstartxref\n'+xref+'\n%%EOF\n';
+      const bytes = new Uint8Array(out.length);
+      for (let i=0;i<out.length;i++) bytes[i] = out.charCodeAt(i) & 255;
+      return bytes;
+    }
+
+    newPage();
+    doc.section = section; doc.subhead = subhead; doc.label = label; doc.para = para;
+    doc.kv = kv; doc.table = table; doc.gap = gap; doc.build = build;
+    doc.ensure = ensure;
+    return doc;
+  }
+
+  /* ---------- What did the student add? ---------- */
+  function isSeedNote(p, notes, idx){
+    const n = notes[idx];
+    if (idx!==0 || !n || n.type!=='hp') return false;
+    if (n.author===p.attending) return true;
+    try{ return JSON.stringify(n.fields)===JSON.stringify(p.seedHP); }catch(e){ return false; }
+  }
+  function collectStudentWork(p){
+    const notes = STATE.notes[p.id] || [];
+    const studentNotes = notes.filter(function(n, i){ return !isSeedNote(p, notes, i); })
+      .sort(function(a,b){ return a.timestamp-b.timestamp; });
+    const studentOrders = (STATE.orders[p.id] || []).filter(function(o){ return !o.historical; })
+      .sort(function(a,b){ return a.orderedAt-b.orderedAt; });
+    const vit = STATE.vitals[p.id] || [];
+    const studentVitals = vit.filter(function(v, i){ return !(i===0 && v.note==='Admission vitals'); })
+      .sort(function(a,b){ return a.timestamp-b.timestamp; });
+    const studentIO = (STATE.io[p.id] || []).slice().sort(function(a,b){ return a.timestamp-b.timestamp; });
+
+    /* Outside-record labs a student added on the Trends tab (built-in patients only;
+       a custom patient's authored records cannot be told apart from added ones) */
+    let outsideLabs = [];
+    if (!p.custom){
+      const canonical = PATIENTS.find(function(bp){ return bp.id===p.id; }) || {};
+      const base = ((canonical.priorRecords||{}).labs || []).map(function(e){ return JSON.stringify(e); });
+      outsideLabs = ((p.priorRecords||{}).labs || []).filter(function(e){
+        const k = JSON.stringify(e); const at = base.indexOf(k);
+        if (at===-1) return true;
+        base.splice(at,1); return false;
+      });
+    }
+    return { notes: studentNotes, orders: studentOrders, vitals: studentVitals, io: studentIO, outsideLabs: outsideLabs };
+  }
+
+  function exportCategoryLabel(o){
+    return ({lab:'Lab', imaging:'Imaging', procedure:'Procedure', medication:'Medication', diet:'Diet'})[o.category] || 'Order';
+  }
+  function exportStatusText(o){
+    if (o.status!=='resulted') return 'Pending';
+    if (o.category==='diet') return 'Active';
+    return orderStatusText(o);
+  }
+
+  /* ---------- PDF content ---------- */
+  function buildSubmissionPdf(p, studentName){
+    const work = collectStudentWork(p);
+    const now = Date.now();
+    const age = calcAge(p.dob);
+    const ptName = p.last+', '+p.first;
+    const doc = createPdfDoc({
+      title: 'Chart Submission - '+ptName+' - '+studentName,
+      author: studentName,
+      header: 'Training EMR  ·  Student Chart Submission',
+      headerRight: 'Student: '+studentName+'   |   Submitted '+fmtDateTime(now),
+      footer: ptName+'  ·  MRN '+p.mrn+'   |   Fictional training patient — not a medical record'
+    });
+
+    /* Title block */
+    doc.gap(6);
+    doc.para('Student Chart Submission', {font:'F2', size:17, lead:22, color:'#003865'});
+    doc.para(ptName+'  ·  '+age+' y '+p.sex+'  ·  MRN '+p.mrn+'  ·  Room '+p.room, {size:10.5, lead:15, color:'#4d5a66'});
+    doc.gap(8);
+    doc.table(
+      [{label:'Student', w:0.30},{label:'Submitted', w:0.22},{label:'Notes', w:0.12, align:'right'},
+       {label:'Orders', w:0.12, align:'right'},{label:'Vitals', w:0.12, align:'right'},{label:'I&O', w:0.12, align:'right'}],
+      [{ cells:[studentName, fmtDateTime(now), String(work.notes.length), String(work.orders.length),
+                String(work.vitals.length), String(work.io.length)], bold:[true] }],
+      {size:9.5}
+    );
+    const stage = getActiveLabStage(p.id);
+    const stageEntry = STATE.labOverrides[p.id];
+    if (stage && stageEntry && stageEntry.stages.length>1){
+      doc.para('Case stage active at export: '+stage.label, {size:8.6, color:'#4d5a66'});
+    }
+
+    /* 1. Case summary */
+    doc.section('1. Case Summary');
+    const allergies = (p.allergies||[]).join(', ') || 'NKDA';
+    doc.kv([
+      ['Patient', ptName],
+      ['DOB / Age / Sex', p.dob+'  ('+age+' y)  ·  '+p.sex],
+      ['Admitted', fmtDateTime(p.admitAt)],
+      ['Attending / Team', p.attending+'  ·  '+p.team],
+      ['Code Status', p.codeStatus],
+      ['Allergies', allergies],
+      ['Chief Complaint', p.chiefComplaint]
+    ], 118);
+    if (p.seedHP && p.seedHP.hpi){
+      doc.label('History of Present Illness (admission H&P)');
+      doc.para(p.seedHP.hpi);
+    }
+    doc.label('Active Problem List');
+    doc.para((p.problemList&&p.problemList.length) ? p.problemList.map(function(x){ return '•  '+x; }).join('\n') : 'None on file.');
+    const medLines = (p.activeMeds||[]).map(function(m){
+      return '•  '+[m.drug, m.dose, m.route, m.frequency].filter(function(x){ return x && String(x).trim(); }).join(' ');
+    }).concat((p.homeMeds||[]).map(function(x){ return '•  '+x; }));
+    doc.label('Active & Home Medications');
+    doc.para(medLines.length ? medLines.join('\n') : 'None on file.');
+    const v = p.vitals || {};
+    doc.label('Admission Vitals');
+    doc.para('T '+(v.temp||'—')+' °F   ·   HR '+(v.hr||'—')+'   ·   BP '+(v.bp||'—')+'   ·   RR '+
+             (v.rr||'—')+'   ·   SpO2 '+(v.spo2||'—')+'%   ·   Pain '+(v.pain||'—')+'/10');
+
+    /* 2. Orders */
+    doc.section('2. Orders Placed by Student ('+work.orders.length+')');
+    if (!work.orders.length){
+      doc.para('No orders were placed.', {color:'#7c8894'});
+    } else {
+      doc.table(
+        [{label:'#', w:0.06},{label:'Ordered', w:0.20},{label:'Type', w:0.13},{label:'Order', w:0.43},{label:'Status', w:0.18}],
+        work.orders.map(function(o, i){
+          const st = exportStatusText(o);
+          return { cells:[String(i+1), fmtDateTime(o.orderedAt), exportCategoryLabel(o), o.label, st],
+                   colors:[null,null,null,null, o.critical ? '#c8102e' : (o.status==='resulted' ? '#2e7d32' : '#a9700f')],
+                   bold:[false,false,false,false,true] };
+        })
+      );
+
+      /* 3. Results */
+      doc.section('3. Results & Order Details');
+      work.orders.forEach(function(o, i){
+        const meta = exportCategoryLabel(o)+'  ·  ordered '+fmtDateTime(o.orderedAt)+
+                     (o.status==='resulted' && o.resultAt ? '  ·  resulted '+fmtDateTime(o.resultAt) : '')+
+                     '  ·  '+exportStatusText(o);
+        doc.subhead((i+1)+'. '+o.label, meta, 40);
+        if (o.status!=='resulted' || !o.result){
+          doc.para('Result pending at time of export.', {color:'#a9700f'});
+        } else if (o.result.kind==='numeric' && o.result.lines){
+          doc.table(
+            [{label:'Component', w:0.40},{label:'Result', w:0.22, align:'right'},{label:'Flag', w:0.12},{label:'Reference', w:0.26}],
+            o.result.lines.map(function(l){
+              const flag = l.flag==='C' ? 'CRIT' : (l.flag||' ');
+              const col = l.flag==='C' || l.flag==='H' ? '#c8102e' : (l.flag==='L' ? '#1d6fae' : null);
+              return { cells:[l.label, l.value+' '+(l.unit||''), flag, l.range],
+                       colors:[null, col, col, '#4d5a66'], bold:[false, !!l.flag, true, false] };
+            })
+          );
+        } else {
+          doc.para(o.result.text || '', {size:9});
+        }
+      });
+    }
+
+    /* 4. Documentation */
+    doc.section('4. Documentation by Student ('+work.notes.length+')');
+    if (!work.notes.length){
+      doc.para('No notes were written.', {color:'#7c8894'});
+    } else {
+      work.notes.forEach(function(n){
+        const tpl = NOTE_TEMPLATES[n.type];
+        doc.subhead(tpl ? tpl.label : 'Note', 'Author: '+(n.author||'Unspecified')+'  ·  '+fmtDateTime(n.timestamp), 40);
+        (tpl ? tpl.fields : Object.keys(n.fields||{}).map(function(k){ return {key:k,label:k}; })).forEach(function(f){
+          doc.label(f.label);
+          doc.para((n.fields && n.fields[f.key]) ? n.fields[f.key] : '—');
+        });
+        doc.gap(6);
+      });
+    }
+
+    /* 5. Vitals */
+    doc.section('5. Vital Signs Entered by Student ('+work.vitals.length+')');
+    if (!work.vitals.length){
+      doc.para('No vital signs were entered.', {color:'#7c8894'});
+    } else {
+      doc.table(
+        [{label:'Date / Time', w:0.19},{label:'Temp', w:0.08, align:'right'},{label:'HR', w:0.07, align:'right'},
+         {label:'BP', w:0.10, align:'right'},{label:'RR', w:0.07, align:'right'},{label:'SpO2', w:0.08, align:'right'},
+         {label:'Pain', w:0.07, align:'right'},{label:'Comment', w:0.34}],
+        work.vitals.map(function(r){
+          const keys = ['temp','hr','bp','rr','spo2','pain'];
+          const colors = [null].concat(keys.map(function(k){ return vsFlag(k, r[k]) ? '#c8102e' : null; })).concat([null]);
+          return { cells:[fmtDateTime(r.timestamp)].concat(keys.map(function(k){ return r[k]; }))
+                          .concat([(r.historical?'[Prior record] ':'')+(r.note||'')]),
+                   colors: colors, bold: colors.map(function(c){ return !!c; }) };
+        })
+      );
+    }
+
+    /* 6. I&O */
+    doc.section('6. Intake & Output Entered by Student ('+work.io.length+')');
+    if (!work.io.length){
+      doc.para('No intake or output was recorded.', {color:'#7c8894'});
+    } else {
+      let ti = 0, to = 0;
+      work.io.forEach(function(r){ if (r.category==='intake') ti += Number(r.amount)||0; else to += Number(r.amount)||0; });
+      doc.table(
+        [{label:'Date / Time', w:0.20},{label:'Category', w:0.12},{label:'Type', w:0.24},{label:'Amount (mL)', w:0.14, align:'right'},{label:'Comment', w:0.30}],
+        work.io.map(function(r){
+          return { cells:[fmtDateTime(r.timestamp), r.category==='intake'?'Intake':'Output', r.type, String(r.amount), r.note||''],
+                   colors:[null, r.category==='intake'?'#003865':'#7a4400'], bold:[false,true] };
+        }).concat([{ cells:['Totals', '', 'Intake '+ti+'  ·  Output '+to, (ti-to>=0?'+':'')+(ti-to), 'Net balance'],
+                     bold:[true,false,true,true,true], fill:'#e1ecf5' }])
+      );
+    }
+
+    /* 7. Outside records (only if any were added) */
+    if (work.outsideLabs.length){
+      doc.section('7. Outside Records Entered by Student ('+work.outsideLabs.length+')');
+      work.outsideLabs.forEach(function(e){
+        const panel = LAB_PANELS[e.panelId];
+        const res = buildHistoricalLabResult(p, e.panelId, e.values);
+        doc.subhead(panel ? panel.label : e.panelId, 'Date '+(e.date||'—')+'  ·  Source: '+(e.orderedBy||'Outside records'), 40);
+        if (res && res.kind==='numeric'){
+          const entered = e.values || {};
+          doc.table(
+            [{label:'Component', w:0.40},{label:'Result', w:0.22, align:'right'},{label:'Flag', w:0.12},{label:'Reference', w:0.26}],
+            res.lines.filter(function(l){ return entered[l.compId]!==undefined && entered[l.compId]!==''; }).map(function(l){
+              const flag = l.flag==='C' ? 'CRIT' : (l.flag||' ');
+              return { cells:[l.label, l.value+' '+(l.unit||''), flag, l.range] };
+            })
+          );
+        } else if (res){
+          doc.para(res.text || '', {size:9});
+        }
+      });
+    }
+
+    doc.gap(14);
+    doc.para('End of submission.', {size:8.5, color:'#7c8894'});
+    return { bytes: doc.build(), work: work };
+  }
+
+  /* Self-install the button, dialog and styles if this page's HTML
+     predates the export feature, so updating app.js alone is enough. */
+  (function ensureExportUi(){
+    if (!document.getElementById('exportUiStyles') && !document.querySelector('style[data-export-ui]')){
+      const css = document.createElement('style');
+      css.id = 'exportUiStyles';
+      css.textContent =
+        '.sb-actions .export-btn{background:var(--teal);color:#fff;border-color:var(--teal-dark);font-weight:600;}'+
+        '.sb-actions .export-btn:hover{background:var(--teal-dark);}'+
+        '.export-intro{font-size:13px;line-height:1.55;color:var(--ink);margin:0 0 12px;}'+
+        '.export-counts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}'+
+        '.export-counts div{background:var(--panel-alt);border:1px solid var(--border);border-radius:7px;padding:8px 6px;text-align:center;'+
+          'font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-dim);}'+
+        '.export-counts span{display:block;font-size:20px;font-family:var(--font-data);color:var(--teal-dark);letter-spacing:0;margin-bottom:1px;}'+
+        '.export-msg{font-size:12.5px;line-height:1.5;border-radius:7px;padding:8px 11px;margin-bottom:12px;border:1px solid;}'+
+        '.export-msg.warn{background:var(--amber-pale);color:#7a520b;border-color:#f0dcb0;}'+
+        '.export-msg.err{background:var(--red-pale);color:var(--red);border-color:#f0b8bf;}'+
+        '.export-msg.ok{background:var(--green-pale);color:#1f5a23;border-color:#c8e6d3;margin:4px 0 0;}'+
+        '.export-msg code{font-family:var(--font-data);font-size:11.5px;word-break:break-all;}';
+      document.head.appendChild(css);
+    }
+    if (!document.getElementById('exportChartBtn')){
+      const actions = document.querySelector('.sb-actions');
+      if (actions){
+        const btn = document.createElement('button');
+        btn.className = 'backbtn export-btn'; btn.id = 'exportChartBtn'; btn.type = 'button';
+        btn.textContent = 'Export for review';
+        actions.insertBefore(btn, actions.firstChild);
+      }
+    }
+    if (!document.getElementById('exportModal')){
+      const wrap = document.createElement('div');
+      wrap.innerHTML =
+        '<div class="modal-overlay" id="exportModal"><div class="modal-box" style="max-width:540px;">'+
+          '<div class="modal-head"><h3>Export Chart for Review</h3>'+
+          '<button class="modal-close" id="exportModalClose" type="button">&times;</button></div>'+
+          '<div class="modal-body" id="exportModalBody"></div>'+
+          '<div class="modal-foot" id="exportModalFoot"></div>'+
+        '</div></div>';
+      (document.getElementById('appMain') || document.body).appendChild(wrap.firstChild);
+    }
+  })();
+
+  /* ---------- Export dialog ---------- */
+  const exportModal     = document.getElementById('exportModal');
+  const exportModalBody = document.getElementById('exportModalBody');
+  const exportModalFoot = document.getElementById('exportModalFoot');
+  function closeExportModal(){ exportModal.classList.remove('open'); }
+  document.getElementById('exportModalClose').addEventListener('click', closeExportModal);
+  exportModal.addEventListener('click', function(e){ if (e.target===exportModal) closeExportModal(); });
+
+  function exportFileName(p, studentName){
+    const clean = function(s){ return String(s).trim().replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,''); };
+    const d = new Date();
+    const stamp = d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'_'+
+                  String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
+    return clean(studentName)+'_'+clean(p.last)+'_'+clean(p.mrn)+'_'+stamp+'.pdf';
+  }
+
+  function downloadBlob(blob, name){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 4000);
+  }
+
+  function openExportDialog(p){
+    const work = collectStudentWork(p);
+    const total = work.notes.length + work.orders.length + work.vitals.length + work.io.length + work.outsideLabs.length;
+    const pending = work.orders.filter(function(o){ return o.status!=='resulted'; }).length;
+
+    exportModalBody.innerHTML =
+      '<p class="export-intro">Creates one PDF containing a case summary and everything you added to <b>'+
+        escapeHtml(p.first+' '+p.last)+'</b>’s chart. Submit the downloaded file as your course director instructs.</p>'+
+      '<div class="export-counts">'+
+        '<div><span>'+work.notes.length+'</span>Notes</div>'+
+        '<div><span>'+work.orders.length+'</span>Orders</div>'+
+        '<div><span>'+work.vitals.length+'</span>Vitals</div>'+
+        '<div><span>'+work.io.length+'</span>I&amp;O</div>'+
+      '</div>'+
+      (total===0 ? '<div class="export-msg warn">You haven’t added anything to this chart yet. The PDF will contain only the case summary.</div>' : '')+
+      (pending ? '<div class="export-msg warn">'+pending+' order'+(pending===1?' is':'s are')+' still pending and will be listed as “result pending.” Wait for results first if you want them included.</div>' : '')+
+      '<div class="field"><label for="exportStudentName">Your name (required)</label>'+
+        '<input type="text" id="exportStudentName" autocomplete="name" placeholder="First Last" value="'+escapeHtml(STATE.clinicianName||'')+'"></div>'+
+      '<div class="export-msg err" id="exportErr" style="display:none;"></div>'+
+      '<div class="export-msg ok" id="exportStatus" style="display:none;"></div>';
+
+    exportModalFoot.innerHTML =
+      '<button class="btn-secondary" id="exportCancelBtn" type="button">Close</button>'+
+      '<button class="btn-primary" id="exportDownloadBtn" type="button">Download PDF</button>';
+    exportModal.classList.add('open');
+    const nameEl = document.getElementById('exportStudentName');
+    const errEl = document.getElementById('exportErr');
+    const statusEl = document.getElementById('exportStatus');
+    setTimeout(function(){ nameEl.focus(); }, 30);
+
+    function showErr(msg){ errEl.textContent = msg; errEl.style.display = msg ? 'block' : 'none'; }
+
+    function download(){
+      showErr('');
+      statusEl.style.display = 'none';
+      const name = nameEl.value.trim().replace(/\s+/g,' ');
+      if (!name){ showErr('Please enter your name so your instructor knows whose work this is.'); nameEl.focus(); return; }
+      STATE.clinicianName = name;
+      saveStoredState();
+      let built;
+      try{ built = buildSubmissionPdf(p, name); }
+      catch(e){ console.error(e); showErr('The PDF could not be created ('+e.message+').'); return; }
+      const fileName = exportFileName(p, name);
+      downloadBlob(new Blob([built.bytes], {type:'application/pdf'}), fileName);
+      statusEl.innerHTML = '<b>Downloaded.</b> Saved as <code>'+escapeHtml(fileName)+'</code> (check your Downloads folder).';
+      statusEl.style.display = 'block';
+    }
+
+    document.getElementById('exportCancelBtn').addEventListener('click', closeExportModal);
+    document.getElementById('exportDownloadBtn').addEventListener('click', download);
+    nameEl.addEventListener('keydown', function(e){ if (e.key==='Enter') download(); });
+  }
+
+  document.getElementById('exportChartBtn').addEventListener('click', function(){
+    const p = PATIENT_BY_ID[STATE.currentPatientId];
+    if (p) openExportDialog(p);
+  });
+
   function setActiveTab(tab){
     STATE.currentTab = tab;
     tabBtns.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab')===tab); });
@@ -3333,6 +4008,9 @@
             '<button data-type="consult" type="button">Consultation</button>'+
             '<button data-type="procedure_note" type="button">Procedure Note</button>'+
             '<button data-type="discharge" type="button">Discharge Summary</button>'+
+            '<button data-type="clinical" type="button">Clinical Note</button>'+
+            '<button data-type="nursing" type="button">Nursing Note</button>'+
+            '<button data-type="nursing_assess" type="button">Nursing Assessment</button>'+
           '</div>'+
         '</div>'+
       '</div>'+
@@ -3370,7 +4048,7 @@
     noteModalTitle.textContent = 'New '+tpl.label;
     noteModalBody.innerHTML = tpl.fields.map(function(f){
       return '<div class="field"><label>'+escapeHtml(f.label)+'</label>'+
-        '<textarea data-key="'+f.key+'" rows="'+(f.key==='hpi'||f.key==='course'||f.key==='plan'?4:2)+'">'+escapeHtml(defaultFieldValue(type,f.key,p))+'</textarea></div>';
+        '<textarea data-key="'+f.key+'" rows="'+(f.key==='hpi'||f.key==='course'||f.key==='plan'||f.key==='body'||f.key==='data'?4:2)+'">'+escapeHtml(defaultFieldValue(type,f.key,p))+'</textarea></div>';
     }).join('');
     noteModalFoot.innerHTML =
       '<button class="btn-secondary" id="noteCancelBtn" type="button">Cancel</button>'+
