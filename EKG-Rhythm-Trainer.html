@@ -2,15 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>EKG Rhythm Trainer</title>
 <style>
 :root{
   --ink:#1d2329;--muted:#5d6670;--line:#dfe3e8;--bg:#f5f6f8;--card:#fff;
   --accent:#0b6e79;--accent-soft:#e5f2f3;--ok:#1e7a3a;--ok-bg:#e7f5eb;--bad:#b3261e;--bad-bg:#fbeaea;
+  --navh:56px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+html{-webkit-text-size-adjust:100%}
 button,select,input{font:inherit;color:inherit}
 header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:10px 18px;flex-wrap:wrap}
 header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.01em}
@@ -25,9 +27,11 @@ main{max-width:1320px;margin:0 auto;padding:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
 .hidden{display:none!important}
 .btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer}
-.btn:hover{border-color:#b9c0c8}
+@media (hover:hover){
+  .btn:hover{border-color:#b9c0c8}
+  .btn.primary:hover{filter:brightness(1.07)}
+}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn.primary:hover{filter:brightness(1.07)}
 .btn.toggle.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
 .btn:disabled{opacity:.45;cursor:default}
 select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff}
@@ -38,7 +42,7 @@ label.inline{display:inline-flex;align-items:center;gap:6px;font-size:14px}
 .rlist{padding:8px 0;max-height:calc(100vh - 110px);overflow:auto;position:sticky;top:70px}
 .rlist h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:12px 14px 4px}
 .rlist button{display:block;width:100%;text-align:left;border:0;background:none;padding:5px 14px;cursor:pointer;font-size:14px;border-left:3px solid transparent}
-.rlist button:hover{background:#f2f4f6}
+@media (hover:hover){ .rlist button:hover{background:#f2f4f6} }
 .rlist button.on{background:var(--accent-soft);border-left-color:var(--accent);color:var(--accent);font-weight:600}
 .rselect{display:none;width:100%;margin-bottom:10px}
 .title-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
@@ -59,6 +63,7 @@ label.inline{display:inline-flex;align-items:center;gap:6px;font-size:14px}
 .sv-canvas{display:block}
 .sv-caption{font-size:13px;font-weight:600;color:#4a4f55;margin-top:6px;min-height:19px}
 .sv-readout{font-size:13px;color:var(--accent);min-height:20px;margin-top:6px;font-variant-numeric:tabular-nums}
+.rot-hint{display:none;font-size:12px;color:var(--muted);margin-top:4px}
 
 /* Quiz */
 .quiz-setup{max-width:760px;margin:0 auto}
@@ -75,7 +80,7 @@ label.inline{display:inline-flex;align-items:center;gap:6px;font-size:14px}
 .answers{margin-top:14px}
 .mc{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
 .mc button{text-align:left;border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px 12px;cursor:pointer;font-size:14.5px}
-.mc button:hover{border-color:#b9c0c8}
+@media (hover:hover){ .mc button:hover{border-color:#b9c0c8} }
 .mc button.sel{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
 .mc button.right{border-color:var(--ok);background:var(--ok-bg)}
 .mc button.wrong{border-color:var(--bad);background:var(--bad-bg)}
@@ -101,6 +106,7 @@ label.inline{display:inline-flex;align-items:center;gap:6px;font-size:14px}
 .review-list col.n{width:44px}.review-list col.m{width:44px}.review-list col.b{width:96px}
 #reviewPane{scroll-margin-top:72px}
 footer{max-width:1320px;margin:8px auto 24px;padding:0 16px;font-size:12px;color:var(--muted)}
+#devNote{display:block;margin-top:2px}
 
 @media (max-width:900px){
   .study{grid-template-columns:minmax(0,1fr)}
@@ -110,6 +116,110 @@ footer{max-width:1320px;margin:8px auto 24px;padding:0 16px;font-size:12px;color
   .sys{grid-template-columns:1fr}
   header{gap:10px}
 }
+
+/* =====================================================================
+   ADAPTIVE UI
+   The Device module (script below) sets these attributes on <html>:
+     data-device = phone | tablet | desktop   (detected hardware class)
+     data-ui     = phone | tablet | desktop   (layout presented; a viewport under 600 px always gets phone)
+     data-orient = portrait | landscape
+     data-input  = touch | mouse
+   ===================================================================== */
+button,.btn,.seg button,select,label.inline{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+header{padding-left:max(18px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right))}
+main{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+footer{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+
+/* ---- Touch devices (phone + tablet): finger-sized targets, no iOS focus-zoom ---- */
+html[data-input=touch] .btn{min-height:44px;padding:8px 16px}
+html[data-input=touch] select{min-height:44px;font-size:16px;padding:8px 10px}
+html[data-input=touch] .seg button{min-height:44px;padding:8px 16px}
+html[data-input=touch] label.inline{min-height:40px}
+html[data-input=touch] input[type=radio],html[data-input=touch] input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+html[data-input=touch] .rlist button{padding:11px 14px}
+html[data-input=touch] .mc button{min-height:48px}
+html[data-input=touch] .toolbar input[type=range]{height:32px}
+
+/* ---- Phone ---- */
+html[data-ui=phone] header{padding:8px max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left));gap:8px;flex-wrap:nowrap}
+html[data-ui=phone] header h1{font-size:16px;white-space:nowrap}
+html[data-ui=phone] .seg-label{display:none}
+html[data-ui=phone] .seg button{min-width:56px;padding:8px 12px}
+html[data-ui=phone] main{padding:8px max(8px,env(safe-area-inset-right)) 12px max(8px,env(safe-area-inset-left))}
+html[data-ui=phone] .card{padding:12px;border-radius:8px}
+html[data-ui=phone] .title-row h2{font-size:18px}
+html[data-ui=phone] footer{font-size:11px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+html[data-ui=phone] .cats{display:grid;grid-template-columns:1fr 1fr}
+html[data-ui=phone] .radio-row{flex-direction:column}
+html[data-ui=phone] .sys .lbl{margin-top:8px}
+html[data-ui=phone] .sv-readout{min-height:0}
+html[data-ui=phone] .sv-readout:empty{display:none}
+html[data-ui=phone] .sv-caption{min-height:0}
+html[data-ui=phone] .sv-caption:empty{display:none}
+
+/* Phone, portrait: bottom tab bar, stacked controls, one-column tables */
+html[data-ui=phone][data-orient=portrait] main{padding-bottom:calc(var(--navh) + env(safe-area-inset-bottom) + 12px)}
+html[data-ui=phone][data-orient=portrait] footer{margin-bottom:calc(var(--navh) + env(safe-area-inset-bottom) + 12px)}
+html[data-ui=phone][data-orient=portrait] #tabSeg{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;border-radius:0;border:0;border-top:1px solid var(--line);box-shadow:0 -2px 8px rgba(0,0,0,.07);height:calc(var(--navh) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom)}
+html[data-ui=phone][data-orient=portrait] #tabSeg button{flex:1;font-size:15px;padding:0}
+html[data-ui=phone][data-orient=portrait] .toolbar{gap:8px}
+html[data-ui=phone][data-orient=portrait] #sNew,
+html[data-ui=phone][data-orient=portrait] .toolbar .grp{flex:1 1 100%}
+html[data-ui=phone][data-orient=portrait] .toolbar .grp{flex-wrap:nowrap}
+html[data-ui=phone][data-orient=portrait] .toolbar .grp select{flex:1 1 0;width:0;min-width:0}
+html[data-ui=phone][data-orient=portrait] .toolbar input[type=range]{flex:1;width:auto;min-width:0}
+html[data-ui=phone][data-orient=portrait] .toolbar .btn.toggle{flex:1 1 0}
+html[data-ui=phone][data-orient=portrait] .mc{grid-template-columns:1fr}
+html[data-ui=phone][data-orient=portrait] .qhead{gap:8px 12px}
+html[data-ui=phone][data-orient=portrait] .qhead .spacer{flex-basis:100%;height:0}
+html[data-ui=phone][data-orient=portrait] .qhead .btn{flex:1}
+html[data-ui=phone][data-orient=portrait] #qRun .actions{position:sticky;bottom:calc(var(--navh) + env(safe-area-inset-bottom));z-index:4;background:var(--card);margin:14px -12px 0;padding:10px 12px;border-top:1px solid var(--line)}
+html[data-ui=phone][data-orient=portrait] #qRun .actions .btn{flex:1}
+html[data-ui=phone][data-orient=portrait] #sView .rot-hint,
+html[data-ui=phone][data-orient=portrait] #qView .rot-hint{display:block}
+
+html[data-ui=phone][data-orient=portrait] .crit,
+html[data-ui=phone][data-orient=portrait] .crit tbody,
+html[data-ui=phone][data-orient=portrait] .crit tr{display:block}
+html[data-ui=phone][data-orient=portrait] .crit tr{padding:6px 0;border-top:1px solid var(--line)}
+html[data-ui=phone][data-orient=portrait] .crit th,
+html[data-ui=phone][data-orient=portrait] .crit td{display:block;width:auto;border:0;padding:1px 0}
+html[data-ui=phone][data-orient=portrait] .crit th{font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+html[data-ui=phone][data-orient=portrait] .crit tr.key{background:#fafbfc;padding:6px 8px;border-radius:6px}
+html[data-ui=phone][data-orient=portrait] .crit tr.key td,
+html[data-ui=phone][data-orient=portrait] .crit tr.key th{background:none}
+
+html[data-ui=phone][data-orient=portrait] .steps,
+html[data-ui=phone][data-orient=portrait] .steps tbody{display:block}
+html[data-ui=phone][data-orient=portrait] .steps colgroup{display:none}
+html[data-ui=phone][data-orient=portrait] .steps tr{display:grid;grid-template-columns:minmax(0,1fr) 28px;padding:6px 8px;border-bottom:1px solid var(--line)}
+html[data-ui=phone][data-orient=portrait] .steps tr:first-child{display:none}
+html[data-ui=phone][data-orient=portrait] .steps td{border:0;padding:1px 0}
+html[data-ui=phone][data-orient=portrait] .steps td.sn{grid-column:1;grid-row:1;font-weight:600}
+html[data-ui=phone][data-orient=portrait] .steps td.sm{grid-column:2;grid-row:1;text-align:right}
+html[data-ui=phone][data-orient=portrait] .steps td.sy,
+html[data-ui=phone][data-orient=portrait] .steps td.sa{grid-column:1/-1}
+html[data-ui=phone][data-orient=portrait] .steps td.sy::before{content:'You: ';color:var(--muted)}
+html[data-ui=phone][data-orient=portrait] .steps td.sa::before{content:'Accepted: ';color:var(--muted)}
+
+html[data-ui=phone][data-orient=portrait] .review-list,
+html[data-ui=phone][data-orient=portrait] .review-list tbody{display:block}
+html[data-ui=phone][data-orient=portrait] .review-list colgroup{display:none}
+html[data-ui=phone][data-orient=portrait] .review-list tr{display:grid;grid-template-columns:30px minmax(0,1fr) 24px auto;column-gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+html[data-ui=phone][data-orient=portrait] .review-list tr:first-child{display:none}
+html[data-ui=phone][data-orient=portrait] .review-list td{border:0;padding:0;font-size:13px}
+html[data-ui=phone][data-orient=portrait] .review-list td.rn{grid-column:1;grid-row:1/3}
+html[data-ui=phone][data-orient=portrait] .review-list td.ra{grid-column:2;grid-row:1}
+html[data-ui=phone][data-orient=portrait] .review-list td.rc{grid-column:2;grid-row:2}
+html[data-ui=phone][data-orient=portrait] .review-list td.rm{grid-column:3;grid-row:1/3}
+html[data-ui=phone][data-orient=portrait] .review-list td.rb{grid-column:4;grid-row:1/3}
+html[data-ui=phone][data-orient=portrait] .review-list td.ra::before{content:'You: ';color:var(--muted)}
+html[data-ui=phone][data-orient=portrait] .review-list td.rc::before{content:'Answer: ';color:var(--muted)}
+
+/* Phone, landscape: save vertical space — header scrolls away, tabs stay in the header */
+html[data-ui=phone][data-orient=landscape] header{position:static;padding-top:4px;padding-bottom:4px}
+html[data-ui=phone][data-orient=landscape] header h1{font-size:15px}
+html[data-ui=phone][data-orient=landscape] .card{padding:10px}
 
   /* ---- Access gate (same methodology as EMR-Sim.html) ---- */
   #rhythmGate{
@@ -126,7 +236,7 @@ footer{max-width:1320px;margin:8px auto 24px;padding:0 16px;font-size:12px;color
   }
   #rhythmGate h2{margin:0 0 8px;font-size:1.4em;color:#1a2530;font-weight:700;letter-spacing:normal;text-transform:none;}
   #rhythmGate input[type="password"]{
-    width:100%;padding:10px 12px;font-size:14px;border:1px solid #9fabb5;
+    width:100%;padding:10px 12px;font-size:16px;border:1px solid #9fabb5;
     border-radius:6px;margin:0 0 12px;box-sizing:border-box;background:#fff;color:#1a2530;
     font-family:inherit;display:block;
   }
@@ -246,12 +356,66 @@ footer{max-width:1320px;margin:8px auto 24px;padding:0 16px;font-size:12px;color
     </div>
   </section>
 </main>
-<footer>Educational simulation for rhythm-recognition practice. Waveforms are computer-generated from physiologic timing rules, not patient recordings, and are not intended for clinical decision-making.</footer>
+<footer>Educational simulation for rhythm-recognition practice. Waveforms are computer-generated from physiologic timing rules, not patient recordings, and are not intended for clinical decision-making.<span id="devNote"></span></footer>
 
 </div><!-- /appMain -->
 
 <script>
 'use strict';
+/* =====================================================================
+   DEVICE DETECTION
+   Classifies the client (phone / tablet / desktop), its input type
+   (touch / mouse) and orientation, publishes them as data-* attributes on
+   <html> for the CSS above, and notifies listeners when anything changes.
+   Override for previewing: add ?device=phone, ?device=tablet or ?device=desktop to the URL.
+   ===================================================================== */
+const Device = (function(){
+  const root = document.documentElement, nav = navigator, ua = nav.userAgent || '';
+  const mq = q => { try{ return !!(window.matchMedia && window.matchMedia(q).matches); }catch(e){ return false; } };
+  const forced = (new URLSearchParams(location.search).get('device') || '').toLowerCase();
+  const isForced = (forced==='phone' || forced==='tablet' || forced==='desktop');
+  const listeners = []; let info = {}, pending = false;
+
+  function hardware(){
+    if(isForced) return forced;
+    const tp = nav.maxTouchPoints || 0, shortSide = Math.min(screen.width || innerWidth, screen.height || innerHeight);
+    if(/iPad/.test(ua) || (nav.platform==='MacIntel' && tp>1)) return 'tablet';   // iPadOS reports as a Mac
+    if(/iPhone|iPod/.test(ua)) return 'phone';
+    if(/Android/i.test(ua)) return /Mobile/i.test(ua) ? 'phone' : 'tablet';       // Android tablets omit "Mobile"
+    if(nav.userAgentData && nav.userAgentData.mobile) return shortSide<600 ? 'phone' : 'tablet';
+    if(mq('(pointer: coarse)') && mq('(hover: none)')) return shortSide<600 ? 'phone' : 'tablet';
+    return 'desktop';
+  }
+  function orientation(type){
+    const viewport = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+    if(isForced || type==='desktop') return viewport;
+    // Device orientation is used on handhelds so the on-screen keyboard cannot flip the layout
+    if(screen.orientation && screen.orientation.type) return /landscape/.test(screen.orientation.type) ? 'landscape' : 'portrait';
+    if(typeof window.orientation==='number') return Math.abs(window.orientation)===90 ? 'landscape' : 'portrait';
+    return viewport;
+  }
+  function compute(){
+    const type = hardware();
+    const ui = (window.innerWidth < 600) ? 'phone' : type;      // a phone-width viewport always gets the phone layout
+    const touch = isForced ? type!=='desktop' : (type!=='desktop' || mq('(pointer: coarse)'));
+    return {type, ui, touch, orient:orientation(type)};
+  }
+  function apply(){
+    const n = compute(), key = [n.type,n.ui,n.orient,n.touch].join('|'), changed = key!==info.key;
+    n.key = key; info = n;
+    root.dataset.device = n.type; root.dataset.ui = n.ui; root.dataset.orient = n.orient; root.dataset.input = n.touch ? 'touch' : 'mouse';
+    const note = document.getElementById('devNote');
+    if(note) note.textContent = 'Layout: '+({phone:'Phone',tablet:'Tablet',desktop:'Desktop'})[n.ui]+(n.ui!=='desktop' ? ' · '+n.orient : '')+(isForced ? ' (set by URL)' : ' (auto-detected)');
+    if(changed) listeners.forEach(f=>f(n));
+  }
+  function schedule(){ if(pending) return; pending = true; requestAnimationFrame(()=>{ pending = false; apply(); }); }
+  window.addEventListener('resize', schedule);
+  window.addEventListener('orientationchange', ()=>setTimeout(schedule,150));
+  if(screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener('change', schedule);
+  apply();
+  return { get info(){ return info; }, onChange:f=>listeners.push(f) };
+})();
+
 /* =====================================================================
    CONSTANTS — paper geometry (all drawing is done in millimetres)
    ===================================================================== */
@@ -776,6 +940,7 @@ class StripView{
     this.scroller.appendChild(this.canvas); host.appendChild(this.scroller);
     this.capEl=document.createElement('div'); this.capEl.className='sv-caption'; host.appendChild(this.capEl);
     this.readout=document.createElement('div'); this.readout.className='sv-readout'; host.appendChild(this.readout);
+    this.hint=document.createElement('div'); this.hint.className='rot-hint'; this.hint.textContent='Tip: rotate your phone to landscape for a larger strip.'; host.appendChild(this.hint);
     this.ctx=this.canvas.getContext('2d');
     this.grid=document.createElement('canvas');
     this.labels=false; this.calipers=false; this.cal={a:30,b:55}; this.drag=null;
@@ -795,7 +960,14 @@ class StripView{
   curT(){ if(this.frozen) return this.frozenT; return ((performance.now()-this.liveStart)/1000) % (this.S?this.S.D:LIVE_S); }
   resize(force){
     const w=this.host.clientWidth-2; if(w<=0) return;
-    const ppm=Math.max(4,Math.min(8,Math.floor(w/(STRIP_MM+MARGIN_MM)))), dpr=window.devicePixelRatio||1;
+    const ui=document.documentElement.dataset.ui, fit=w/(STRIP_MM+MARGIN_MM);
+    // Phones and tablets fit the whole 6-second strip to the available width (no sideways scrolling);
+    // desktop keeps whole-pixel scales so the grid stays crisp.
+    let ppm;
+    if(ui==='phone') ppm=Math.max(2,Math.min(6,Math.floor(fit*20)/20));
+    else if(ui==='tablet') ppm=Math.max(3,Math.min(8,Math.floor(fit*20)/20));
+    else ppm=Math.max(4,Math.min(8,Math.floor(fit)));
+    const dpr=window.devicePixelRatio||1;
     if(!force && ppm===this.ppm && dpr===this.dpr) return;
     this.ppm=ppm; this.dpr=dpr; this.pd=ppm*dpr;
     const cw=(STRIP_MM+MARGIN_MM)*ppm, ch=H_MM*ppm;
@@ -877,9 +1049,10 @@ class StripView{
   bracket(x0,x1,y,color){ const c=this.ctx,d=this.dpr; c.strokeStyle=color; c.lineWidth=1.2*d; c.beginPath(); c.moveTo(x0,y-3*d); c.lineTo(x0,y); c.lineTo(x1,y); c.lineTo(x1,y-3*d); c.stroke(); }
   drawCalipers(){
     const c=this.ctx,p=this.pd,d=this.dpr,H=this.canvas.height, xa=(MARGIN_MM+this.cal.a)*p, xb=(MARGIN_MM+this.cal.b)*p;
+    const touch=document.documentElement.dataset.input==='touch', hw=(touch?8:4)*d, hh=(touch?18:10)*d;
     c.fillStyle='rgba(0,131,143,0.08)'; c.fillRect(Math.min(xa,xb),0,Math.abs(xb-xa),H);
-    c.strokeStyle=COL.cal; c.lineWidth=1.5*d;
-    for(const x of [xa,xb]){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,H); c.stroke(); c.fillStyle=COL.cal; c.fillRect(x-4*d,0,8*d,10*d); }
+    c.strokeStyle=COL.cal; c.lineWidth=(touch?2:1.5)*d;
+    for(const x of [xa,xb]){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,H); c.stroke(); c.fillStyle=COL.cal; c.fillRect(x-hw,0,2*hw,hh); }
   }
   updateReadout(){
     if(!this.calipers){ this.readout.textContent=''; return; }
@@ -888,7 +1061,8 @@ class StripView{
   }
   mmFromEvent(e){ const r=this.canvas.getBoundingClientRect(); return Math.max(0,Math.min(STRIP_MM,(e.clientX-r.left)/this.ppm-MARGIN_MM)); }
   pDown(e){
-    if(!this.calipers) return; e.preventDefault(); const mm=this.mmFromEvent(e), tol=8/this.ppm;
+    if(!this.calipers) return; e.preventDefault();
+    const touch=(e.pointerType==='touch'||e.pointerType==='pen'), mm=this.mmFromEvent(e), tol=(touch?20:8)/this.ppm;   // wider grab zone for fingers
     if(Math.abs(mm-this.cal.a)<tol) this.drag='a'; else if(Math.abs(mm-this.cal.b)<tol) this.drag='b';
     else { this.cal.a=mm; this.cal.b=mm; this.drag='b'; }
     this.draw(); this.updateReadout();
@@ -896,7 +1070,13 @@ class StripView{
   pMove(e){ if(!this.drag) return; this.cal[this.drag]=Math.round(this.mmFromEvent(e)*4)/4; this.draw(); this.updateReadout(); }
 }
 function ms10(v){ return Math.round(v*100)*10; }   // seconds -> milliseconds, nearest 10 ms
-function frame(){ for(const v of views) if(v.S && v.mode==='live' && !v.frozen && v.visible()) v.draw(); requestAnimationFrame(frame); }
+// Live-mode animation loop. Touch devices are capped at ~30 fps to save battery and keep phones cool.
+let lastFrameTs=0;
+function frame(ts){
+  const touch=document.documentElement.dataset.input==='touch';
+  if(!touch || ts-lastFrameTs>=32){ lastFrameTs=ts; for(const v of views) if(v.S && v.mode==='live' && !v.frozen && v.visible()) v.draw(); }
+  requestAnimationFrame(frame);
+}
 
 /* =====================================================================
    APP STATE + UI
@@ -1059,9 +1239,9 @@ function flash(msg){ const f=$('qFeedback'); f.innerHTML='<div style="color:var(
 function stepsTable(q){
   let h='<table class="steps"><colgroup><col class="c1"><col><col><col class="c4"></colgroup><tr><th>Step</th><th>Your answer</th><th>Accepted answer(s)</th><th></th></tr>';
   for(const k of ['rate','reg','p','pr','qrs']){
-    const ok=q.steps[k]; h+='<tr><td>'+STEP_NAMES[k]+'</td><td>'+esc(q.resp[k]?optLabel(k,q.resp[k]):'—')+'</td><td>'+q.truth[k].map(x=>esc(optLabel(k,x))).join('<br>')+'</td><td class="'+(ok?'mark-ok':'mark-bad')+'">'+(ok?'✓':'✗')+'</td></tr>';
+    const ok=q.steps[k]; h+='<tr><td class="sn">'+STEP_NAMES[k]+'</td><td class="sy">'+esc(q.resp[k]?optLabel(k,q.resp[k]):'—')+'</td><td class="sa">'+q.truth[k].map(x=>esc(optLabel(k,x))).join('<br>')+'</td><td class="sm '+(ok?'mark-ok':'mark-bad')+'">'+(ok?'✓':'✗')+'</td></tr>';
   }
-  h+='<tr><td>'+STEP_NAMES.dx+'</td><td>'+esc(q.resp.dx?DX_NAMES[q.resp.dx]:'—')+'</td><td>'+esc(DX_NAMES[RH[q.id].dx])+'</td><td class="'+(q.correct?'mark-ok':'mark-bad')+'">'+(q.correct?'✓':'✗')+'</td></tr></table>';
+  h+='<tr><td class="sn">'+STEP_NAMES.dx+'</td><td class="sy">'+esc(q.resp.dx?DX_NAMES[q.resp.dx]:'—')+'</td><td class="sa">'+esc(DX_NAMES[RH[q.id].dx])+'</td><td class="sm '+(q.correct?'mark-ok':'mark-bad')+'">'+(q.correct?'✓':'✗')+'</td></tr></table>';
   return h;
 }
 function showFeedback(q){
@@ -1086,7 +1266,7 @@ function finishQuiz(){
   if(n<quiz.qs.length) d+='<div style="font-size:13px;color:var(--muted);margin-top:6px">Ended early: '+n+' of '+quiz.qs.length+' answered.</div>';
   $('sumDetail').innerHTML=d;
   let h='<colgroup><col class="n"><col><col><col class="m"><col class="b"></colgroup><tr><th>#</th><th>Your answer</th><th>Correct rhythm</th><th></th><th></th></tr>';
-  graded.forEach(q=>{ const i=quiz.qs.indexOf(q); h+='<tr><td>'+(i+1)+'</td><td>'+esc(q.resp.dx?DX_NAMES[q.resp.dx]:(q.timedOut?'(time expired)':'—'))+'</td><td>'+esc(RH[q.id].name)+'</td><td class="'+(q.correct?'mark-ok':'mark-bad')+'">'+(q.correct?'✓':'✗')+'</td><td><button class="btn" data-q="'+i+'">Review</button></td></tr>'; });
+  graded.forEach(q=>{ const i=quiz.qs.indexOf(q); h+='<tr><td class="rn">'+(i+1)+'</td><td class="ra">'+esc(q.resp.dx?DX_NAMES[q.resp.dx]:(q.timedOut?'(time expired)':'—'))+'</td><td class="rc">'+esc(RH[q.id].name)+'</td><td class="rm '+(q.correct?'mark-ok':'mark-bad')+'">'+(q.correct?'✓':'✗')+'</td><td class="rb"><button class="btn" data-q="'+i+'">Review</button></td></tr>'; });
   $('reviewList').innerHTML=h;
 }
 function showReview(i){
@@ -1101,13 +1281,15 @@ function showReview(i){
 
 /* ---------- Header controls ---------- */
 function initHeader(){
-  $('tabSeg').onclick=e=>{ const b=e.target.closest('button[data-tab]'); if(!b) return; $('tabSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); $('studyTab').classList.toggle('hidden',b.dataset.tab!=='study'); $('quizTab').classList.toggle('hidden',b.dataset.tab!=='quiz'); views.forEach(v=>v.resize(true)); };
+  $('tabSeg').onclick=e=>{ const b=e.target.closest('button[data-tab]'); if(!b) return; $('tabSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); $('studyTab').classList.toggle('hidden',b.dataset.tab!=='study'); $('quizTab').classList.toggle('hidden',b.dataset.tab!=='quiz'); views.forEach(v=>v.resize(true)); window.scrollTo(0,0); };
   $('modeSeg').onclick=e=>{ const b=e.target.closest('button[data-mode]'); if(!b||b.dataset.mode===displayMode) return; displayMode=b.dataset.mode; $('modeSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
     regenStudy();
     if(!$('qRun').classList.contains('hidden')){ const q=quiz.qs[quiz.cur]; q.S=buildStrip(q.id,q.seed,q.rate,q.art,displayMode==='live'); quiz.view.setStrip(q.S,displayMode); $('qFreeze').classList.toggle('hidden',displayMode!=='live'); $('qFreeze').classList.remove('on'); $('qFreeze').textContent='Freeze'; }
   };
 }
 initHeader(); initStudy(); initQuiz(); requestAnimationFrame(frame);
+// Re-fit every strip whenever the detected layout changes (rotation, split-view, window crossing the phone breakpoint)
+Device.onChange(()=>views.forEach(v=>v.resize(true)));
 </script>
 <script>
 (function(){
