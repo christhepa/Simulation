@@ -1,0 +1,2102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventilator Simulator — Critical Care Ventilator Interface</title>
+<style>
+  :root{
+    --accent:#e0932f;
+    --panel-bg:#1a1c1e;
+    --panel-border:#333638;
+    --text-dim:#9aa0a6;
+
+    /* ventilator screen palette */
+    --scr-bg:#05080c;
+    --scr-panel:#0c1117;
+    --scr-line:#1b2430;
+    --scr-text:#e8edf2;
+    --scr-dim:#7d8996;
+    --c-paw:#ffd23f;
+    --c-flow:#3ddc97;
+    --c-vol:#4fb6ff;
+    --c-co2:#d8a6ff;
+    --c-spo2:#29c5ff;
+    --c-edit:#ff9f1c;
+    --al-high:#e5322d;
+    --al-med:#f2b31b;
+    --al-low:#2f9be0;
+
+    /* housing */
+    --case:#e3e6e9;
+    --case2:#cfd4d9;
+    --case-border:#a9b0b7;
+    --trim:#1d8f8a;
+    --trim-dark:#146a66;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:#0a0a0b;
+    color:#d7dadd;
+    font-family:'Menlo','Consolas','SFMono-Regular','Courier New',monospace;
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+  .wrap{flex:1;display:flex;gap:14px;padding:14px;min-height:0;}
+
+  /* ---------------- device outer bezel ---------------- */
+  .device{
+    flex:1;display:flex;flex-direction:column;min-width:0;
+    background:linear-gradient(180deg,#28292c,#1d1e20);
+    border:1px solid #0c0d0e;border-radius:12px;padding:10px;min-height:660px;
+    box-shadow:0 2px 0 rgba(255,255,255,0.03) inset, 0 8px 24px rgba(0,0,0,.4);
+  }
+  .vent-unit{
+    flex:1;display:flex;flex-direction:column;min-height:0;
+    background:linear-gradient(180deg,var(--case),var(--case2));
+    border:1px solid var(--case-border);border-radius:14px;
+    padding:0 12px 0;
+    box-shadow:0 2px 0 rgba(255,255,255,.55) inset, 0 8px 20px rgba(0,0,0,.35);
+    overflow:hidden;
+  }
+  .alarm-led{
+    height:9px;margin:0 -12px 10px;
+    background:linear-gradient(180deg,#5c6168,#464a50);
+    border-bottom:3px solid var(--trim);
+    transition:background .1s;
+  }
+  .alarm-led.high{animation:ledHigh 1s steps(1) infinite;}
+  .alarm-led.med{animation:ledMed 1.6s steps(1) infinite;}
+  .alarm-led.silenced.high{animation:none;background:#7a1c1a;}
+  .alarm-led.silenced.med{animation:none;background:#7a5a12;}
+  @keyframes ledHigh{0%{background:#ff3b30;box-shadow:0 0 18px #ff3b30;}50%{background:#5a1312;box-shadow:none;}}
+  @keyframes ledMed{0%{background:#ffc22b;box-shadow:0 0 14px #ffc22b;}50%{background:#5a4510;box-shadow:none;}}
+
+  .vent-body{flex:1;display:flex;gap:12px;min-height:0;}
+
+  /* ---------------- screen ---------------- */
+  .screen{
+    flex:1;min-width:0;position:relative;
+    background:var(--scr-bg);border:1px solid #000;border-radius:5px;
+    box-shadow:inset 0 0 30px rgba(0,0,0,.8);
+    display:grid;grid-template-rows:42px minmax(0,1fr) 30px 78px 34px;
+    min-height:480px;overflow:hidden;
+    font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+    color:var(--scr-text);
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* header */
+  .scr-header{
+    display:flex;align-items:stretch;gap:8px;padding:5px 8px;
+    background:linear-gradient(180deg,#111821,#0b1016);
+    border-bottom:1px solid var(--scr-line);
+  }
+  .mode-chip{
+    display:flex;align-items:center;gap:8px;padding:0 12px;
+    background:#16324a;border:1px solid #2b5a80;border-radius:4px;
+    font-weight:700;font-size:15px;letter-spacing:.03em;cursor:pointer;white-space:nowrap;
+  }
+  .mode-chip:hover{background:#1c3f5d;}
+  .mode-chip small{font-weight:500;font-size:10.5px;color:#9cc3e4;letter-spacing:.06em;}
+  .pt-chip{
+    display:flex;flex-direction:column;justify-content:center;padding:0 10px;
+    font-size:10.5px;color:var(--scr-dim);line-height:1.3;white-space:nowrap;
+    border-right:1px solid var(--scr-line);
+  }
+  .pt-chip b{color:var(--scr-text);font-weight:600;font-size:11.5px;}
+  .alarm-banner{
+    flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;
+    border-radius:4px;font-weight:700;font-size:14px;letter-spacing:.05em;
+    color:#56616d;background:#0d131a;border:1px solid var(--scr-line);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 10px;
+  }
+  .alarm-banner.high{background:var(--al-high);color:#fff;border-color:#ff6b66;}
+  .alarm-banner.med{background:var(--al-med);color:#1d1400;border-color:#ffd36b;}
+  .alarm-banner.low{background:#123a5a;color:#cfe8ff;border-color:var(--al-low);}
+  .alarm-banner .al-count{font-size:10.5px;font-weight:600;opacity:.85;}
+  .hdr-ind{
+    display:flex;align-items:center;justify-content:center;padding:0 8px;min-width:58px;
+    font-size:10px;font-weight:700;letter-spacing:.06em;color:#3a4652;
+    border:1px solid var(--scr-line);border-radius:4px;background:#0b1015;white-space:nowrap;
+  }
+  .hdr-ind.lit-trig{color:#1a1000;background:var(--c-edit);border-color:#ffc06b;}
+  .hdr-ind.lit-o2{color:#04131f;background:#7fd3ff;border-color:#bfe8ff;}
+  .hdr-ind.lit-sil{color:#fff;background:#4a2a6b;border-color:#8c5fc0;}
+  .hdr-ind.lit-lock{color:#ffd9d9;background:#4a1d1d;border-color:#8a3a3a;}
+  .hdr-clock{display:flex;align-items:center;padding:0 4px 0 6px;font-size:13px;color:#b9c3cc;}
+
+  /* main area */
+  .scr-main{display:flex;min-height:0;}
+  .wave-area{flex:1;min-width:0;display:flex;min-height:0;}
+  .lanes{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;}
+  .lane{flex:1;position:relative;min-height:0;border-bottom:1px solid var(--scr-line);}
+  .lane:last-child{border-bottom:none;}
+  .lane canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  .lane-tag{
+    position:absolute;top:3px;left:40px;font-size:11px;font-weight:700;letter-spacing:.05em;
+    pointer-events:none;text-shadow:0 0 4px #000;
+  }
+  .lane-tag span{font-weight:500;opacity:.75;font-size:10px;margin-left:4px;}
+  .loops{
+    width:34%;min-width:220px;display:none;flex-direction:column;
+    border-left:1px solid var(--scr-line);
+  }
+  .loops.on{display:flex;}
+  .loop-box{flex:1;position:relative;min-height:0;border-bottom:1px solid var(--scr-line);}
+  .loop-box:last-child{border-bottom:none;}
+  .loop-box canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+
+  .meas-col{
+    width:262px;flex-shrink:0;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:minmax(0,1fr);
+    gap:1px;background:var(--scr-line);border-left:1px solid var(--scr-line);
+  }
+  .mt{
+    background:var(--scr-panel);padding:4px 8px 3px;display:flex;flex-direction:column;justify-content:space-between;min-height:0;
+  }
+  .mt .mt-l{font-size:10.5px;color:var(--scr-dim);letter-spacing:.04em;white-space:nowrap;display:flex;justify-content:space-between;}
+  .mt .mt-l i{font-style:normal;font-size:9.5px;opacity:.85;}
+  .mt .mt-v{font-size:24px;font-weight:600;line-height:1;text-align:right;white-space:nowrap;}
+  .mt .mt-s{font-size:9.5px;color:var(--scr-dim);text-align:right;white-space:nowrap;min-height:11px;}
+  .mt.big .mt-v{font-size:27px;}
+  .mt.p .mt-v{color:var(--c-paw);}
+  .mt.v .mt-v{color:var(--c-vol);}
+  .mt.f .mt-v{color:var(--c-flow);}
+  .mt.c .mt-v{color:var(--c-co2);}
+  .mt.o .mt-v{color:var(--c-spo2);}
+  .mt.viol{background:#3a0f0e;}
+  .mt.viol .mt-v{color:#ff6b66 !important;}
+  .mt.hidden{visibility:hidden;}
+
+  /* edit bar */
+  .edit-bar{
+    display:flex;align-items:center;gap:8px;padding:0 8px;
+    background:#0a0f14;border-top:1px solid var(--scr-line);
+    font-size:12px;color:var(--scr-dim);white-space:nowrap;overflow:hidden;
+  }
+  .edit-bar.active{background:#2a1a05;color:#ffd7a1;border-top-color:#6b4515;}
+  .edit-bar .eb-msg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+  .edit-bar .eb-warn{color:#ff8a80;font-weight:700;}
+  .eb-btn{
+    flex:none;height:22px;padding:0 10px;border-radius:3px;border:1px solid #3a4652;
+    background:#16202a;color:#dbe4ec;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;
+  }
+  .eb-btn:hover{background:#1f2d3a;}
+  .eb-btn.accept{background:#1d6b3b;border-color:#2f9a58;color:#eaffef;}
+  .eb-btn.accept:hover{background:#238046;}
+  .edit-bar:not(.active) .eb-btn{display:none;}
+
+  /* settings tiles */
+  .scr-settings{display:flex;gap:1px;background:var(--scr-line);border-top:1px solid var(--scr-line);}
+  .set-tile{
+    flex:1;min-width:0;background:#0f1720;padding:5px 6px 4px;cursor:pointer;
+    display:flex;flex-direction:column;justify-content:space-between;align-items:center;
+    user-select:none;transition:background .1s;
+  }
+  .set-tile:hover{background:#162230;}
+  .set-tile .st-l{font-size:11px;color:#9fb2c4;letter-spacing:.04em;white-space:nowrap;}
+  .set-tile .st-v{font-size:25px;font-weight:600;line-height:1;white-space:nowrap;}
+  .set-tile .st-u{font-size:9.5px;color:var(--scr-dim);white-space:nowrap;}
+  .set-tile .st-s{font-size:9.5px;color:#8ec7ff;white-space:nowrap;min-height:11px;}
+  .set-tile.editing{background:#3a2405;outline:2px solid var(--c-edit);outline-offset:-2px;}
+  .set-tile.editing .st-v{color:var(--c-edit);}
+  .set-tile.locked{cursor:not-allowed;}
+
+  /* soft keys */
+  .softkeys{display:flex;gap:1px;background:var(--scr-line);border-top:1px solid var(--scr-line);}
+  .sk{
+    flex:1;display:flex;align-items:center;justify-content:center;text-align:center;
+    background:#0b1117;color:#b7c4d0;font-size:11px;font-weight:600;letter-spacing:.03em;
+    cursor:pointer;user-select:none;line-height:1.1;padding:0 2px;
+  }
+  .sk:hover{background:#142029;color:#fff;}
+  .sk.on{background:#123a5a;color:#cfe8ff;}
+  .sk.busy{background:#3a2405;color:#ffd7a1;}
+
+  /* overlays on screen */
+  .modal-back{
+    position:absolute;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:20;
+  }
+  .modal-back.on{display:flex;}
+  .modal{
+    width:min(640px,92%);max-height:88%;overflow:auto;background:#0e151d;border:1px solid #2e3d4c;border-radius:8px;
+    box-shadow:0 10px 40px rgba(0,0,0,.6);padding:14px 16px;
+  }
+  .modal h4{margin:0 0 10px;font-size:15px;letter-spacing:.04em;color:#fff;display:flex;justify-content:space-between;align-items:center;}
+  .modal h4 small{font-weight:500;color:var(--scr-dim);font-size:11px;}
+  .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .mode-opt{
+    background:#132030;border:1px solid #2a3c50;border-radius:6px;padding:10px 12px;cursor:pointer;
+  }
+  .mode-opt:hover{background:#18293c;}
+  .mode-opt.cur{border-color:#4a8fc7;}
+  .mode-opt.sel{background:#3a2405;border-color:var(--c-edit);}
+  .mode-opt b{display:block;font-size:15px;color:#fff;}
+  .mode-opt span{font-size:11px;color:#9fb2c4;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}
+  .modal-actions .eb-btn{display:inline-block;height:30px;padding:0 16px;font-size:13px;}
+  .al-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .al-table td{padding:6px 6px;border-bottom:1px solid #1e2a36;}
+  .al-table td:first-child{color:#c9d5e0;}
+  .al-table td.al-val{text-align:right;font-weight:700;font-size:16px;color:#fff;width:90px;}
+  .al-table td.al-u{color:var(--scr-dim);font-size:11px;width:70px;}
+  .al-table td.al-b{width:84px;text-align:right;white-space:nowrap;}
+  .al-table .eb-btn{display:inline-block;width:34px;height:26px;padding:0;font-size:14px;}
+
+  .card{
+    position:absolute;z-index:15;background:rgba(10,16,22,.96);border:1px solid #3a5168;border-radius:8px;
+    box-shadow:0 8px 30px rgba(0,0,0,.6);padding:12px 14px;display:none;
+  }
+  .card.on{display:block;}
+  .card h5{margin:0 0 8px;font-size:13px;letter-spacing:.05em;color:#fff;display:flex;justify-content:space-between;gap:16px;}
+  .card h5 .x{cursor:pointer;color:#9fb2c4;font-size:14px;}
+  .card table{border-collapse:collapse;font-size:13px;}
+  .card td{padding:3px 8px 3px 0;}
+  .card td.k{color:#9fb2c4;}
+  .card td.vv{font-weight:700;font-size:17px;text-align:right;color:#fff;}
+  .card td.u{color:var(--scr-dim);font-size:11px;}
+  #holdCard{top:54px;left:16px;min-width:270px;}
+  #abgCard{top:54px;left:50%;transform:translateX(-50%);min-width:300px;border-color:#7a5a12;}
+  #abgCard h5{color:#ffd88a;}
+  .toast{
+    position:absolute;left:50%;bottom:150px;transform:translateX(-50%);z-index:30;
+    background:#16202a;border:1px solid #4a6178;color:#e8edf2;border-radius:6px;
+    padding:8px 14px;font-size:13px;display:none;white-space:nowrap;
+  }
+  .toast.on{display:block;}
+  .audio-hint{
+    position:absolute;right:10px;bottom:118px;z-index:12;font-size:11px;color:#ffd7a1;background:#2a1a05;
+    border:1px solid #6b4515;border-radius:4px;padding:4px 8px;display:none;cursor:pointer;
+  }
+  .audio-hint.on{display:block;}
+
+  /* hardware column */
+  .hw-col{
+    width:96px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:12px;padding:6px 0 10px;
+  }
+  .hw-label{font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:.12em;color:#5d656d;text-align:center;}
+  .hw-btn{
+    width:74px;height:44px;border-radius:8px;border:1px solid #8c949c;cursor:pointer;
+    background:linear-gradient(180deg,#f6f7f8,#cfd4d9);color:#2d3338;
+    font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.05em;
+    box-shadow:0 2px 0 #9aa1a8, 0 3px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;
+  }
+  .hw-btn:active{transform:translateY(1px);box-shadow:0 1px 0 #9aa1a8;}
+  .hw-btn.accept{background:linear-gradient(180deg,#5fd08a,#2f9a58);color:#062611;border-color:#237a44;}
+  .hw-btn.silence{background:linear-gradient(180deg,#ffd76a,#e0a91f);color:#2b1d00;border-color:#a87b12;}
+  .hw-btn.o2{background:linear-gradient(180deg,#bfe6ff,#7fc6f0);color:#05263a;border-color:#4d93bd;}
+  .knob-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .knob{
+    width:78px;height:78px;border-radius:50%;cursor:grab;position:relative;touch-action:none;
+    background:radial-gradient(circle at 35% 30%,#7a838c,#3c4248 60%,#24282c);
+    border:3px solid #9aa2aa;box-shadow:0 4px 10px rgba(0,0,0,.45), inset 0 2px 3px rgba(255,255,255,.25);
+  }
+  .knob:active{cursor:grabbing;}
+  .knob-ind{position:absolute;left:50%;top:6px;width:4px;height:20px;margin-left:-2px;border-radius:2px;background:var(--c-edit);transform-origin:50% 33px;}
+  .knob.active{border-color:var(--c-edit);box-shadow:0 0 0 3px rgba(255,159,28,.35),0 4px 10px rgba(0,0,0,.45);}
+  .hw-leds{display:flex;gap:10px;margin-top:auto;}
+  .hw-led{display:flex;flex-direction:column;align-items:center;gap:3px;font-family:Arial,sans-serif;font-size:8px;letter-spacing:.08em;color:#5d656d;}
+  .hw-led i{width:9px;height:9px;border-radius:50%;background:#3ee07a;box-shadow:0 0 6px #3ee07a;display:block;}
+  .hw-led i.off{background:#555c62;box-shadow:none;}
+
+  .vent-base{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 16px 10px;margin:8px -12px 0;
+    background:linear-gradient(180deg,#d4d9de,#c0c6cc);border-top:1px solid #a9b0b6;
+    font-family:Arial,Helvetica,sans-serif;
+  }
+  .wordmark{font-weight:800;font-style:italic;font-size:18px;letter-spacing:.02em;color:var(--trim-dark);}
+  .wordmark span{font-style:normal;font-weight:600;font-size:10px;letter-spacing:.18em;color:#5d656d;margin-left:10px;}
+  .base-note{font-size:9px;letter-spacing:.1em;color:#6d757d;}
+
+  /* ---------------- panel collapse toggle ---------------- */
+  .panel-toggle{
+    flex-shrink:0;align-self:stretch;width:20px;background:#1a1c1e;border:1px solid #2a2d31;border-radius:6px;
+    color:#9aa0a6;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;
+    padding:0;flex:none;transition:background .15s,color .15s;
+  }
+  .panel-toggle:hover{background:#26292d;color:#e6e8ea;}
+  .panel-toggle:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  /* ---------------- control panel (instructor sidebar) ---------------- */
+  .controls{
+    width:350px;flex-shrink:0;background:var(--panel-bg);border:1px solid var(--panel-border);border-radius:10px;
+    padding:16px;overflow-y:auto;overflow-x:hidden;font-size:13px;
+    transition:width .25s ease,min-width .25s ease,padding .25s ease,opacity .2s ease,border-color .25s ease;
+  }
+  .controls.collapsed{width:0;min-width:0;padding-left:0;padding-right:0;border-color:transparent;opacity:0;pointer-events:none;}
+  .controls h3{
+    font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);
+    margin:18px 0 8px;border-top:1px solid #2a2c2f;padding-top:14px;
+  }
+  .controls h3:first-child{margin-top:0;border-top:none;padding-top:0;}
+  .controls label{display:block;margin-bottom:8px;color:#c7cbd1;}
+  .controls select,.controls input[type=number]{
+    width:100%;background:#101214;color:#e6e8ea;border:1px solid #34383c;border-radius:5px;
+    padding:7px 8px;font-family:inherit;font-size:13px;
+  }
+  .controls select:focus,.controls input:focus,.controls button:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
+  .check-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .check-row input{width:auto;}
+  .btn-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .controls button{
+    background:#26292d;color:#e6e8ea;border:1px solid #3a3e42;border-radius:5px;padding:8px 12px;
+    font-family:inherit;font-size:13px;cursor:pointer;flex:1;margin-bottom:6px;
+  }
+  .controls button:hover:not(:disabled){background:#2f3338;}
+  .controls button:disabled{opacity:.4;cursor:not-allowed;}
+  .controls button.warn{background:#3a1d1d;border-color:#6a3030;}
+  .status-line{font-size:12px;color:var(--text-dim);margin-top:2px;margin-bottom:6px;min-height:16px;}
+  .infobox{
+    display:none;margin-top:4px;margin-bottom:8px;background:#101214;border:1px solid #34383c;border-radius:6px;
+    padding:10px;font-size:12px;line-height:1.5;color:#c7cbd1;
+  }
+  .infobox ul{margin:6px 0 0;padding-left:18px;}
+  .physio-grid{
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:8px;
+  }
+  .pg{background:#101214;border:1px solid #2c3034;border-radius:5px;padding:5px 6px;}
+  .pg .k{font-size:9.5px;color:var(--text-dim);letter-spacing:.04em;}
+  .pg .v{font-size:15px;font-weight:700;color:#e6e8ea;}
+  .pg .v.bad{color:#ff7b72;}
+  .abg-out{background:#101214;border:1px solid #34383c;border-radius:6px;padding:8px 10px;font-size:12px;line-height:1.55;display:none;margin-bottom:8px;}
+
+  /* Stages panel (same pattern as Monitor-Sim) */
+  .stage-progress{font-size:10.5px;color:var(--text-dim);letter-spacing:.04em;margin-bottom:6px;}
+  .stage-indicator{font-size:12.5px;font-weight:700;color:#e6e8ea;background:#101214;border:1px solid #34383c;border-radius:6px;padding:8px 10px;margin-bottom:6px;min-height:17px;line-height:1.35;}
+  .stage-note{font-size:11.5px;color:var(--text-dim);line-height:1.5;background:#1e2023;border:1px solid #2a2d31;border-radius:6px;padding:8px 10px;margin-bottom:8px;min-height:16px;}
+  .stage-row{display:flex;align-items:stretch;gap:6px;background:#101214;border:1px solid #34383c;border-radius:5px;padding:7px;margin-bottom:6px;}
+  .stage-row-num{flex:none;width:16px;padding-top:5px;text-align:center;font-size:11px;font-weight:700;color:var(--accent);}
+  .stage-row-fields{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+  .stage-row-label,.stage-row-note{width:100%;background:#181a1c;color:#e6e8ea;border:1px solid #34383c;border-radius:4px;padding:5px 6px;font-family:inherit;box-sizing:border-box;}
+  .stage-row-label{font-size:12px;}
+  .stage-row-note{font-size:11px;color:#c7cbd1;resize:vertical;min-height:32px;line-height:1.4;}
+  .stage-row-summary{font-size:10px;color:var(--text-dim);padding:0 1px;line-height:1.4;}
+  .stage-row-btns{flex:none;display:flex;flex-direction:column;gap:4px;width:22px;}
+  .controls .stage-row-btns button{flex:none;width:100%;padding:3px 0;font-size:10px;line-height:1.2;margin:0;}
+
+  /* Student display role */
+  body.display-role .controls,
+  body.display-role .panel-toggle{display:none !important;}
+  body.display-role .wrap{padding:6px;height:100vh;}
+  body.display-role .device{min-height:0;height:100%;}
+
+  @media (max-width:1100px){
+    .meas-col{width:210px;}
+    .mt .mt-v{font-size:20px;}
+    .set-tile .st-v{font-size:20px;}
+    .hw-col{width:84px;}
+  }
+  @media (max-width:860px){
+    .wrap{flex-direction:column;}
+    .panel-toggle{width:100%;height:20px;}
+    .controls{width:100%;}
+    .controls.collapsed{width:100%;max-height:0;padding-top:0;padding-bottom:0;overflow:hidden;}
+    .hw-col{display:none;}
+    .vent-base{display:none;}
+  }
+
+  /* ---- Access gate (same methodology as EMR-Sim / Monitor-Sim) ---- */
+  #ventGate{
+    position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#003366 0%,#1a4a7a 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;padding:20px;box-sizing:border-box;
+  }
+  #ventGate .gate-box{background:#fff;border-radius:16px;padding:40px 36px;box-shadow:0 12px 40px rgba(0,0,0,0.25);max-width:360px;width:100%;text-align:center;box-sizing:border-box;}
+  #ventGate h2{margin:0 0 8px;font-size:1.4em;color:#1a2530;font-weight:700;}
+  #ventGate input[type="password"]{width:100%;padding:10px 12px;font-size:14px;border:1px solid #9fabb5;border-radius:6px;margin:0 0 12px;box-sizing:border-box;background:#fff;color:#1a2530;font-family:inherit;display:block;}
+  #ventGate button{width:100%;padding:10px;font-size:14px;font-weight:600;color:#fff;background:#00629b;border:none;border-radius:6px;cursor:pointer;font-family:inherit;display:block;}
+  #ventGate button:hover{background:#003865;}
+  #ventGate .gate-error{color:#c8102e;font-size:12.5px;margin:10px 0 0;display:none;}
+</style>
+</head>
+<body>
+<div id="ventGate">
+  <div class="gate-box">
+    <h2>Enter your password</h2>
+    <input type="password" id="ventGatePassword" placeholder="Password" autocomplete="off">
+    <button type="button" id="ventGateSubmit">Enter</button>
+    <p class="gate-error" id="ventGateError">Incorrect password. Try again.</p>
+  </div>
+</div>
+
+<div id="appMain" style="display:none;">
+<div class="wrap">
+  <div class="device">
+    <div class="vent-unit">
+      <div class="alarm-led" id="alarmLed"></div>
+      <div class="vent-body">
+
+        <div class="screen" id="ventScreen">
+          <!-- header -->
+          <div class="scr-header">
+            <div class="mode-chip" id="modeChip" title="Change ventilation mode"><span id="modeChipText">VC-AC</span><small>ADULT</small></div>
+            <div class="pt-chip"><b id="ibwText">IBW 73 kg</b><span id="ptSexHt">Male · 70 in</span></div>
+            <div class="alarm-banner" id="alarmBanner">NO ACTIVE ALARMS</div>
+            <div class="hdr-ind" id="indTrig">PT TRIG</div>
+            <div class="hdr-ind" id="indO2">O₂ 100%</div>
+            <div class="hdr-ind" id="indSil">🔔</div>
+            <div class="hdr-ind" id="indLock" style="display:none;">🔒 LOCKED</div>
+            <div class="hdr-clock" id="clock">--:--</div>
+          </div>
+
+          <!-- waveforms + measured values -->
+          <div class="scr-main">
+            <div class="wave-area">
+              <div class="lanes">
+                <div class="lane"><canvas id="cvPaw"></canvas><div class="lane-tag" style="color:var(--c-paw);">Paw<span>cmH₂O</span></div></div>
+                <div class="lane"><canvas id="cvFlow"></canvas><div class="lane-tag" style="color:var(--c-flow);">Flow<span>L/min</span></div></div>
+                <div class="lane"><canvas id="cvVol"></canvas><div class="lane-tag" style="color:var(--c-vol);">Volume<span>mL</span></div></div>
+                <div class="lane" id="laneCo2"><canvas id="cvCo2"></canvas><div class="lane-tag" style="color:var(--c-co2);">CO₂<span>mmHg</span></div></div>
+              </div>
+              <div class="loops" id="loopsPanel">
+                <div class="loop-box"><canvas id="cvLoopPV"></canvas><div class="lane-tag" style="color:var(--c-vol);">P–V Loop<span>Vol vs Paw</span></div></div>
+                <div class="loop-box"><canvas id="cvLoopFV"></canvas><div class="lane-tag" style="color:var(--c-flow);">F–V Loop<span>Flow vs Vol</span></div></div>
+              </div>
+            </div>
+            <div class="meas-col" id="measCol">
+              <div class="mt p big" id="mtPpeak"><div class="mt-l">Ppeak<i>cmH₂O</i></div><div class="mt-v" id="mPpeak">--</div><div class="mt-s"></div></div>
+              <div class="mt p big" id="mtPplat"><div class="mt-l">Pplat<i>cmH₂O</i></div><div class="mt-v" id="mPplat">--</div><div class="mt-s" id="mPplatS"></div></div>
+              <div class="mt p" id="mtPmean"><div class="mt-l">Pmean<i>cmH₂O</i></div><div class="mt-v" id="mPmean">--</div><div class="mt-s"></div></div>
+              <div class="mt p" id="mtPeep"><div class="mt-l">PEEP<i>cmH₂O</i></div><div class="mt-v" id="mPeep">--</div><div class="mt-s" id="mPeepS"></div></div>
+              <div class="mt v big" id="mtVte"><div class="mt-l">VTe<i>mL</i></div><div class="mt-v" id="mVte">--</div><div class="mt-s" id="mVteS"></div></div>
+              <div class="mt v big" id="mtVe"><div class="mt-l">VE<i>L/min</i></div><div class="mt-v" id="mVe">--</div><div class="mt-s" id="mVeS"></div></div>
+              <div class="mt f" id="mtRr"><div class="mt-l">RR tot<i>b/min</i></div><div class="mt-v" id="mRr">--</div><div class="mt-s" id="mRrS"></div></div>
+              <div class="mt f" id="mtIe"><div class="mt-l">I:E<i></i></div><div class="mt-v" id="mIe">--</div><div class="mt-s" id="mIeS"></div></div>
+              <div class="mt p" id="mtDp"><div class="mt-l">ΔP drive<i>cmH₂O</i></div><div class="mt-v" id="mDp">--</div><div class="mt-s"></div></div>
+              <div class="mt v" id="mtCstat"><div class="mt-l">Cstat<i>mL/cmH₂O</i></div><div class="mt-v" id="mCstat">--</div><div class="mt-s" id="mCstatS"></div></div>
+              <div class="mt" id="mtFio2"><div class="mt-l">FiO₂<i>%</i></div><div class="mt-v" id="mFio2">--</div><div class="mt-s"></div></div>
+              <div class="mt v" id="mtLeak"><div class="mt-l">Leak<i>%</i></div><div class="mt-v" id="mLeak">--</div><div class="mt-s"></div></div>
+              <div class="mt o big" id="mtSpo2"><div class="mt-l">SpO₂<i>%</i></div><div class="mt-v" id="mSpo2">--</div><div class="mt-s"></div></div>
+              <div class="mt c big" id="mtEtco2"><div class="mt-l">EtCO₂<i>mmHg</i></div><div class="mt-v" id="mEtco2">--</div><div class="mt-s"></div></div>
+            </div>
+          </div>
+
+          <!-- edit / confirm bar -->
+          <div class="edit-bar" id="editBar">
+            <span class="eb-msg" id="editMsg">Select a setting to adjust.</span>
+            <button class="eb-btn" id="ebDown" type="button">▼</button>
+            <button class="eb-btn" id="ebUp" type="button">▲</button>
+            <button class="eb-btn" id="ebCancel" type="button">Cancel</button>
+            <button class="eb-btn accept" id="ebAccept" type="button">✓ Accept</button>
+          </div>
+
+          <!-- setting tiles -->
+          <div class="scr-settings" id="setTiles"></div>
+
+          <!-- soft keys -->
+          <div class="softkeys">
+            <div class="sk" id="skModes">Modes</div>
+            <div class="sk" id="skAlarms">Alarm<br>Limits</div>
+            <div class="sk" id="skInsp">Insp<br>Hold</div>
+            <div class="sk" id="skExp">Exp<br>Hold</div>
+            <div class="sk" id="skManual">Manual<br>Breath</div>
+            <div class="sk" id="skO2">O₂ 100%<br>2 min</div>
+            <div class="sk" id="skLoops">Loops</div>
+            <div class="sk" id="skFreeze">Freeze</div>
+          </div>
+
+          <!-- overlays -->
+          <div class="card" id="holdCard"><h5><span id="holdTitle">Inspiratory Hold</span><span class="x" id="holdClose">✕</span></h5><table id="holdTable"></table></div>
+          <div class="card" id="abgCard"><h5><span id="abgTitle">Arterial Blood Gas</span><span class="x" id="abgClose">✕</span></h5><table id="abgTable"></table></div>
+          <div class="toast" id="toast"></div>
+          <div class="audio-hint" id="audioHint">🔊 Click here to enable alarm sound</div>
+
+          <div class="modal-back" id="modeModal">
+            <div class="modal">
+              <h4>Ventilation Mode <small>Select a mode, then Confirm</small></h4>
+              <div class="mode-grid" id="modeGrid"></div>
+              <div class="modal-actions">
+                <button class="eb-btn" id="modeCancel" type="button">Cancel</button>
+                <button class="eb-btn accept" id="modeConfirm" type="button">✓ Confirm Mode</button>
+              </div>
+            </div>
+          </div>
+          <div class="modal-back" id="alarmModal">
+            <div class="modal">
+              <h4>Alarm Limits <small>Adjust, then Apply</small></h4>
+              <table class="al-table" id="alarmTable"></table>
+              <div class="modal-actions">
+                <button class="eb-btn" id="alarmCancel" type="button">Cancel</button>
+                <button class="eb-btn accept" id="alarmApply" type="button">✓ Apply Limits</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- hardware column -->
+        <div class="hw-col">
+          <div class="hw-btn silence" id="hwSilence">🔕<span>ALARM<br>SILENCE</span></div>
+          <div class="hw-btn o2" id="hwO2">O₂<span>100%</span></div>
+          <div class="knob-wrap">
+            <div class="knob" id="knob"><div class="knob-ind" id="knobInd"></div></div>
+            <div class="hw-label">ADJUST</div>
+          </div>
+          <div class="hw-btn accept" id="hwAccept">ACCEPT</div>
+          <div class="hw-btn" id="hwCancel">CANCEL</div>
+          <div class="hw-leds">
+            <div class="hw-led"><i></i>MAINS</div>
+            <div class="hw-led"><i id="battLed"></i>BATT</div>
+          </div>
+        </div>
+      </div>
+      <div class="vent-base">
+        <div class="wordmark">VS-1<span>CRITICAL CARE VENTILATOR</span></div>
+        <div class="base-note">SIMULATION ONLY · NOT FOR CLINICAL USE</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="panel-toggle" id="panelToggleBtn" type="button" title="Hide control panel" aria-controls="controlsPanel" aria-expanded="true">
+    <span id="panelToggleArrow">&rsaquo;</span>
+  </button>
+
+  <div class="controls" id="controlsPanel">
+    <h3>Stages</h3>
+    <div class="stage-progress" id="stageProgress"></div>
+    <div class="stage-indicator" id="stageIndicator">No stages yet.</div>
+    <div class="stage-note" id="stageNote"></div>
+    <div class="btn-row">
+      <button id="prevStageBtn" type="button" disabled>&#9664; Prev Stage</button>
+      <button id="nextStageBtn" type="button" disabled>Next Stage &#9654;</button>
+    </div>
+    <button id="resetStageBtn" type="button" style="width:100%;" disabled>Reset to Stage 1</button>
+    <div class="check-row"><input type="checkbox" id="stageInclVent"><label for="stageInclVent" style="margin:0;">Include ventilator settings in new stages</label></div>
+    <button id="addStageBtn" type="button" style="width:100%;">+ Add Stage From Current Settings</button>
+    <div id="stageList"></div>
+    <button id="clearStagesBtn" type="button" style="width:100%;">Clear All Stages</button>
+
+    <h3>Clinical Scenario</h3>
+    <label>Preset
+      <select id="scenarioSelect"></select>
+    </label>
+    <button id="revealBtn" type="button" style="width:100%;">Show scenario ID &amp; teaching points</button>
+    <div class="infobox" id="revealText"></div>
+
+    <h3>Live Physiology (instructor only)</h3>
+    <div class="physio-grid">
+      <div class="pg"><div class="k">PaO₂</div><div class="v" id="phPao2">--</div></div>
+      <div class="pg"><div class="k">SpO₂</div><div class="v" id="phSpo2">--</div></div>
+      <div class="pg"><div class="k">P/F</div><div class="v" id="phPF">--</div></div>
+      <div class="pg"><div class="k">PaCO₂</div><div class="v" id="phPaco2">--</div></div>
+      <div class="pg"><div class="k">pH</div><div class="v" id="phPh">--</div></div>
+      <div class="pg"><div class="k">Auto-PEEP</div><div class="v" id="phAuto">--</div></div>
+      <div class="pg"><div class="k">VA L/min</div><div class="v" id="phVa">--</div></div>
+      <div class="pg"><div class="k">Shunt eff.</div><div class="v" id="phShunt">--</div></div>
+      <div class="pg"><div class="k">Missed trig</div><div class="v" id="phMiss">--</div></div>
+    </div>
+    <label>Physiology response speed
+      <select id="speedSelect">
+        <option value="1">Real-time (1×)</option>
+        <option value="3" selected>Teaching (3×)</option>
+        <option value="6">Fast (6×)</option>
+      </select>
+    </label>
+
+    <h3>Arterial Blood Gas</h3>
+    <button id="drawAbgBtn" type="button" style="width:100%;">Draw ABG</button>
+    <div class="abg-out" id="abgOut"></div>
+    <div class="btn-row">
+      <button id="sendAbgBtn" type="button" disabled>Show on vent screen</button>
+      <button id="hideAbgBtn" type="button">Hide</button>
+    </div>
+
+    <h3>Student Display</h3>
+    <button id="openDisplayBtn" type="button" style="width:100%;">Open Student Display Window</button>
+    <div class="status-line" id="displayStatus">No student display connected.</div>
+    <div class="check-row"><input type="checkbox" id="studentCtlChk" checked><label for="studentCtlChk" style="margin:0;">Students can operate the ventilator</label></div>
+    <div class="status-line" style="margin-top:-4px;">When off, the student screen is view-only. Patient changes are always hidden.</div>
+
+    <h3>Vent Display Options</h3>
+    <div class="check-row"><input type="checkbox" id="showSpo2Chk" checked><label for="showSpo2Chk" style="margin:0;">Show SpO₂ on ventilator</label></div>
+    <div class="check-row"><input type="checkbox" id="showCo2Chk" checked><label for="showCo2Chk" style="margin:0;">Show EtCO₂ / capnogram</label></div>
+    <label>Alarm sound
+      <select id="audioSelect">
+        <option value="off" selected>Off</option>
+        <option value="instructor">This (instructor) window</option>
+        <option value="display">Student display window</option>
+      </select>
+    </label>
+
+    <h3>Respiratory Mechanics</h3>
+    <div class="grid2" id="fieldsMech"></div>
+
+    <h3>Patient Effort</h3>
+    <div class="grid2" id="fieldsEffort"></div>
+    <button id="coughBtn" type="button" style="width:100%;">Cough / Buck the Vent</button>
+
+    <h3>Gas Exchange</h3>
+    <div class="grid2" id="fieldsGas"></div>
+
+    <h3>Circuit Events</h3>
+    <div class="grid2" id="fieldsCircuit"></div>
+    <div class="check-row"><input type="checkbox" id="discChk"><label for="discChk" style="margin:0;">Circuit disconnected</label></div>
+
+    <h3>Patient Size</h3>
+    <div class="grid2">
+      <label>Sex
+        <select id="sexSelect"><option value="M">Male</option><option value="F">Female</option></select>
+      </label>
+      <label>Height (in)
+        <input type="number" id="heightInput" min="48" max="84" step="1" value="70">
+      </label>
+    </div>
+    <div class="status-line" id="ibwNote"></div>
+
+    <h3>Reset</h3>
+    <button id="resetVentBtn" type="button" class="warn" style="width:100%;">Reset ventilator to defaults</button>
+  </div>
+</div>
+</div><!-- /appMain -->
+
+<script>
+(function(){
+  'use strict';
+
+  const IS_DISPLAY = new URLSearchParams(location.search).get('role') === 'display';
+  if (IS_DISPLAY) document.body.classList.add('display-role');
+
+  /* ===============================================================
+     DEFINITIONS
+  =============================================================== */
+  const SET_DEFS = {
+    vt:     {label:'VT',        unit:'mL',      min:200, max:1000, step:10},
+    rr:     {label:'RR',        unit:'b/min',   min:4,   max:40,   step:1},
+    peep:   {label:'PEEP',      unit:'cmH₂O',   min:0,   max:24,   step:1},
+    fio2:   {label:'FiO₂',      unit:'%',       min:21,  max:100,  step:1},
+    flow:   {label:'Peak Flow', unit:'L/min',   min:20,  max:120,  step:5},
+    pattern:{label:'Flow Pattern', unit:'',     options:['decel','square'], names:{decel:'Decel',square:'Square'}},
+    tpause: {label:'T pause',   unit:'s',       min:0,   max:2,    step:0.1, dec:1},
+    pinsp:  {label:'P insp',    unit:'cmH₂O',   min:5,   max:45,   step:1},
+    ti:     {label:'Ti',        unit:'s',       min:0.4, max:3,    step:0.05, dec:2},
+    rise:   {label:'Rise Time', unit:'s',       min:0.05,max:0.4,  step:0.05, dec:2},
+    ps:     {label:'P support', unit:'cmH₂O',   min:0,   max:30,   step:1},
+    esens:  {label:'E sens',    unit:'% pk flow',min:5,  max:70,   step:5},
+    trig:   {label:'Trigger',   unit:'L/min',   min:0.5, max:10,   step:0.5, dec:1},
+    phigh:  {label:'P high',    unit:'cmH₂O',   min:5,   max:40,   step:1},
+    plow:   {label:'P low',     unit:'cmH₂O',   min:0,   max:15,   step:1},
+    thigh:  {label:'T high',    unit:'s',       min:2,   max:8,    step:0.1, dec:1},
+    tlow:   {label:'T low',     unit:'s',       min:0.2, max:1.5,  step:0.05, dec:2}
+  };
+  const MODES = {
+    'VC-AC':  {name:'Volume Control – A/C',  desc:'Set VT & flow; every breath mandatory (time- or patient-triggered).', tiles:['vt','rr','peep','fio2','flow','pattern','tpause','trig']},
+    'PC-AC':  {name:'Pressure Control – A/C', desc:'Set pressure & Ti; VT varies with compliance and resistance.', tiles:['pinsp','rr','ti','peep','fio2','rise','trig']},
+    'PRVC':   {name:'Pressure-Regulated Vol. Control', desc:'Pressure breaths auto-adjusted breath-to-breath to reach target VT.', tiles:['vt','rr','ti','peep','fio2','rise','trig']},
+    'SIMV-VC':{name:'SIMV (Volume) + PS',    desc:'Set number of synchronized mandatory breaths; extra breaths pressure-supported.', tiles:['vt','rr','flow','pattern','ps','peep','fio2','trig']},
+    'CPAP/PS':{name:'CPAP + Pressure Support', desc:'All breaths spontaneous; apnea backup after the apnea alarm time.', tiles:['ps','peep','fio2','esens','rise','trig']},
+    'APRV':   {name:'Airway Pressure Release', desc:'Prolonged P high with brief releases to P low; spontaneous breathing throughout.', tiles:['phigh','plow','thigh','tlow','fio2']}
+  };
+  const ALARM_DEFS = {
+    phigh: {label:'High airway pressure (Ppeak)', unit:'cmH₂O', min:15, max:80, step:1},
+    vteLow:{label:'Low exhaled VT',               unit:'mL',    min:0,  max:800, step:10},
+    veLow: {label:'Low minute volume',            unit:'L/min', min:0.5,max:15, step:0.5, dec:1},
+    veHigh:{label:'High minute volume',           unit:'L/min', min:5,  max:40, step:0.5, dec:1},
+    rrHigh:{label:'High respiratory rate',        unit:'b/min', min:10, max:70, step:1},
+    apnea: {label:'Apnea time',                   unit:'s',     min:10, max:60, step:5},
+    spo2Low:{label:'Low SpO₂',                    unit:'%',     min:70, max:98, step:1}
+  };
+
+  const DEFAULT_S = { mode:'VC-AC', vt:450, rr:14, peep:5, fio2:40, flow:60, pattern:'decel', tpause:0, pinsp:15, ti:1.0, rise:0.1, ps:10, esens:25, trig:2, phigh:26, plow:0, thigh:4.5, tlow:0.5 };
+  const DEFAULT_AL = { phigh:40, vteLow:250, veLow:4, veHigh:15, rrHigh:35, apnea:20, spo2Low:88 };
+  const S = Object.assign({}, DEFAULT_S);
+  const AL = Object.assign({}, DEFAULT_AL);
+
+  /* Patient model parameters. Percent fields are stored as percents. */
+  const PATIENT_FIELDS = [
+    {key:'C',      group:'fieldsMech',   label:'Compliance (mL/cmH₂O)', min:5,  max:120, step:1},
+    {key:'Ri',     group:'fieldsMech',   label:'Insp resist. (cmH₂O/L/s)', min:2,  max:80,  step:1},
+    {key:'Re',     group:'fieldsMech',   label:'Exp resist. (cmH₂O/L/s)',  min:2,  max:80,  step:1},
+    {key:'rrPt',   group:'fieldsEffort', label:'Patient RR (0 = none)', min:0,  max:45,  step:1},
+    {key:'effort', group:'fieldsEffort', label:'Effort Pmus (cmH₂O)',   min:0,  max:25,  step:1},
+    {key:'shunt',  group:'fieldsGas',    label:'Shunt (%)',             min:0,  max:70,  step:1},
+    {key:'recruit',group:'fieldsGas',    label:'Recruitability (%)',    min:0,  max:100, step:5},
+    {key:'vq',     group:'fieldsGas',    label:'V/Q mismatch (%)',      min:0,  max:50,  step:1},
+    {key:'VD',     group:'fieldsGas',    label:'Dead space (mL)',       min:50, max:450, step:10},
+    {key:'VCO2',   group:'fieldsGas',    label:'VCO₂ (mL/min)',         min:100,max:450, step:10},
+    {key:'HCO3',   group:'fieldsGas',    label:'HCO₃⁻ (mEq/L)',         min:8,  max:45,  step:1},
+    {key:'Hb',     group:'fieldsGas',    label:'Hemoglobin (g/dL)',     min:5,  max:18,  step:0.5},
+    {key:'leak',   group:'fieldsCircuit',label:'Circuit/cuff leak (%)', min:0,  max:80,  step:1}
+  ];
+  const PT_BASE = { scenario:'normal', C:50, Ri:8, Re:8, rrPt:0, effort:0, shunt:5, recruit:10, vq:0, VD:150, VCO2:200, HCO3:24, Hb:13, leak:0, disc:false, sex:'M', heightIn:70 };
+  const PT = Object.assign({}, PT_BASE);
+
+  const SCENARIOS = {
+    normal:   {label:'Normal lungs — sedated', p:{}, id:'Normal respiratory mechanics, passive patient.',
+      pts:['Cstat ≈ 50 mL/cmH₂O, Raw ≈ 8; Ppeak–Pplat gap small.','Flow returns to baseline before each breath (no auto-PEEP).','Use as the reference picture for comparing every other scenario.']},
+    awake:    {label:'Normal lungs — awake, assisting', p:{rrPt:16, effort:5}, id:'Spontaneously triggering patient with normal mechanics.',
+      pts:['Patient-triggered breaths (PT TRIG lights); RR tot > set RR.','Small negative pressure/flow deflection precedes each triggered breath.','Good candidate to demonstrate CPAP/PS for a spontaneous breathing trial.']},
+    ardsMod:  {label:'ARDS — moderate', p:{C:25, Ri:10, Re:10, shunt:42, recruit:55, VD:230, VCO2:220}, id:'Moderate ARDS: low compliance, recruitable shunt.',
+      pts:['High Pplat and driving pressure at "normal" VT — reduce VT to 6 mL/kg IBW.','Targets: Pplat ≤ 30, ΔP ≤ 15 cmH₂O.','Oxygenation responds to PEEP (raises Pmean & recruits) more than to FiO₂ alone.','Permissive hypercapnia is acceptable (pH ≥ 7.20–7.25).']},
+    ardsSev:  {label:'ARDS — severe', p:{C:15, Ri:12, Re:12, shunt:55, recruit:45, VD:270, VCO2:240}, id:'Severe ARDS: very low compliance, large shunt.',
+      pts:['P/F < 100. Refractory hypoxemia — FiO₂ 100% barely helps.','Requires low VT, higher PEEP; consider prone positioning, neuromuscular blockade.','Watch ΔP — lower VT further if > 15.']},
+    asthma:   {label:'Status asthmaticus', p:{C:55, Ri:28, Re:55, shunt:10, VD:180, VCO2:230}, id:'Severe bronchospasm: high airway resistance, dynamic hyperinflation.',
+      pts:['High Ppeak with near-normal Pplat (large Ppeak–Pplat gap = resistance problem).','Expiratory flow does not return to zero → auto-PEEP (check with Exp Hold).','Fixes: lower RR, shorten Ti / raise peak flow to lengthen expiratory time; treat bronchospasm.','Accept permissive hypercapnia rather than raising RR.','Higher flow raises Ppeak (resistive) but not Pplat — the high-pressure limit may need to be raised; follow Pplat and auto-PEEP.']},
+    copd:     {label:'COPD exacerbation (spontaneous)', p:{C:60, Ri:18, Re:36, rrPt:20, effort:6, shunt:8, vq:30, VD:200, VCO2:220, HCO3:32}, id:'COPD: expiratory flow limitation, intrinsic PEEP, chronic compensated hypercapnia.',
+      pts:['Auto-PEEP makes triggering hard → missed triggers (patient efforts with no breath).','Applied PEEP (~70–80% of auto-PEEP) can reduce trigger work.','Hypoxemia is V/Q-driven and responds well to modest FiO₂.','Elevated HCO₃⁻ — do not normalize PaCO₂ too quickly (post-hypercapnic alkalosis).']},
+    edema:    {label:'Cardiogenic pulmonary edema', p:{C:30, Ri:14, Re:14, shunt:30, recruit:70, VD:180}, id:'Alveolar flooding: reduced compliance, highly recruitable shunt.',
+      pts:['PEEP improves oxygenation markedly (recruitment + reduced preload).','Ppeak and Pplat both elevated (compliance problem).']},
+    plug:     {label:'Mucus plug / ETT obstruction', p:{C:45, Ri:30, Re:30, shunt:18, recruit:10}, id:'Partial airway obstruction: acute rise in resistance.',
+      pts:['Sudden ↑ Ppeak with unchanged Pplat (resistive problem).','VC breaths may be cut short by the high-pressure alarm → low VTe.','Actions: suction, check ETT position/patency, bronchodilator.']},
+    kink:     {label:'Kinked / bitten ETT', p:{C:50, Ri:50, Re:50, shunt:8}, id:'Severe mechanical obstruction of the tube.',
+      pts:['Very high Ppeak, high-pressure alarms, truncated breaths, low VE.','In PC mode the same problem shows up as low VT instead of high pressure.','Think DOPES: Displacement, Obstruction, Pneumothorax, Equipment, Stacked breaths.']},
+    mainstem: {label:'Right mainstem intubation', p:{C:24, Ri:12, Re:12, shunt:32, recruit:5}, id:'ETT advanced into right mainstem: one-lung ventilation.',
+      pts:['Abrupt ↑ Ppeak and Pplat (compliance halves) with hypoxemia.','PEEP does not help (non-recruitable — left lung is not being ventilated).','Check tube depth, listen for unilateral breath sounds, pull back the ETT.']},
+    ptx:      {label:'Tension pneumothorax', p:{C:16, Ri:11, Re:11, shunt:40, recruit:0, VD:220}, id:'Tension pneumothorax: sudden fall in compliance, refractory hypoxemia.',
+      pts:['Rapid ↑ Ppeak and Pplat, falling VT in pressure modes, worsening SpO₂.','PEEP/FiO₂ do not correct it. Needs needle decompression / chest tube.']},
+    leak:     {label:'Cuff / circuit leak', p:{leak:32}, id:'Air leak between inspiratory and expiratory measurement.',
+      pts:['VTe < VTi; Leak % rises; volume trace fails to return to baseline.','Low VTe / low VE alarms. Check cuff pressure, circuit connections, chest tube air leak.']},
+    disc:     {label:'Circuit disconnection', p:{disc:true}, id:'Patient disconnected from the ventilator circuit.',
+      pts:['Flat pressure, no exhaled volume; disconnect and apnea alarms.','Desaturation follows. Reconnect, bag with 100% O₂ if needed.']},
+    hunger:   {label:'Air hunger / dyssynchrony', p:{C:40, rrPt:30, effort:13, shunt:12, VD:180, VCO2:280}, id:'High respiratory drive: flow starvation and double triggering.',
+      pts:['VC: scooped (concave) pressure waveform during inspiration = flow starvation.','Breath stacking / double-triggering when neural Ti exceeds vent Ti.','Fixes: raise flow, switch to PC/PS, treat pain/anxiety/acidosis, adjust sedation.']},
+    apneic:   {label:'Apnea on CPAP/PS (oversedation)', p:{rrPt:0, effort:0}, id:'No spontaneous effort — demonstrates apnea alarm and backup ventilation in CPAP/PS.',
+      pts:['Switch to CPAP/PS: apnea alarm after the set apnea time, backup breaths begin.','Return to a mandatory mode or reduce sedation.']},
+    obese:    {label:'Morbid obesity', p:{C:30, Ri:12, Re:12, shunt:16, recruit:55, VD:170, VCO2:260}, id:'Low chest-wall compliance with dependent atelectasis.',
+      pts:['High Pplat partly from chest wall, not lung (transpulmonary pressure may be acceptable).','Higher PEEP improves oxygenation; set VT by IBW, not actual weight.']},
+    sbt:      {label:'Ready to wean (SBT candidate)', p:{C:55, Ri:9, Re:9, rrPt:16, effort:4, shunt:6, VD:150}, id:'Recovered patient appropriate for a spontaneous breathing trial.',
+      pts:['Try CPAP 5 / PS 5–8: watch RR, VT, and RSBI (f / VT in L); RSBI < 105 predicts success.']}
+  };
+
+  /* ===============================================================
+     PHYSIOLOGIC MODEL — single-compartment equation of motion
+       Paw = R·Q + V/C − Pmus
+  =============================================================== */
+  const DT = 0.005;                 // 5 ms integration step
+  const DISP_HZ = 50;               // display samples per second
+  const SUBSTEPS = Math.round(1/(DT*DISP_HZ));
+  const SWEEP_S = 10;
+  const NPTS = DISP_HZ*SWEEP_S;
+  const GAP = 12;
+
+  const E = {};
+  let disp = null;
+  let missedTrig = [];
+
+  function resetEngine(){
+    Object.assign(E, {
+      t:0, V:S.peep*PT.C/1000, phase:'exp', phaseT:0, lastBreathStart:-10, cur:null,
+      effStart:-99, effNext:0.6, effN:0, effTi:1, effActive:false, effTriggered:false,
+      coughT:-1, prvcP:Math.max(8, S.pinsp), simvStart:0, simvMand:false, pendingTimeMand:false,
+      holdReq:null, manualReq:false, backup:false, pauseDur:0, holdTotPeep:null,
+      lastExpPaw:S.peep, endExpPel:S.peep, volDisp:0,
+      breaths:[], buckets:[], curBucket:{vin:0, n:0}, bucketT:0,
+      pmeanRing:new Float32Array(NPTS), pmeanIdx:0, pmeanFill:0, pmean:S.peep,
+      paw:S.peep, q:0, qMeas:0, pm:0, co2:0, subCount:0,
+      highPAt:-99, o2Until:0, aprvSpont:[], lastSampleT:0,
+      paco2:40, PA:100, pao2:90, sat:97, etco2:36, VA:5, shuntEff:0.05, pH:7.40, physioT:0,
+      lastPhysioRemote:0
+    });
+    missedTrig = [];
+    disp = {
+      p:new Array(NPTS).fill(null), f:new Array(NPTS).fill(null), v:new Array(NPTS).fill(null), c:new Array(NPTS).fill(null),
+      mk:new Uint8Array(NPTS), wi:0, loopCur:[], loopPrev:[]
+    };
+  }
+
+  function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+  function smoothstep(x){ x=clamp(x,0,1); return x*x*(3-2*x); }
+
+  /* Patient inspiratory effort: half-sine Pmus at the patient's own rate */
+  function pmusAt(){
+    let pm = 0;
+    E.effOnset = false;
+    if (PT.rrPt>0 && PT.effort>0){
+      if (E.t >= E.effNext){
+        // record missed trigger for the previous effort
+        if (E.effActive && !E.effTriggered && S.mode!=='APRV' && !PT.disc) missedTrig.push(E.t);
+        E.effN++;
+        const per = 60/PT.rrPt*(1 + 0.07*Math.sin(E.effN*2.399));
+        E.effStart = E.t; E.effNext = E.t + per;
+        E.effTi = Math.min(1.15, 0.42*per);
+        E.effActive = true; E.effTriggered = false; E.effOnset = true;
+      }
+      const tc = E.t - E.effStart;
+      if (tc>=0 && tc<E.effTi) pm = PT.effort*Math.sin(Math.PI*tc/E.effTi);
+    } else {
+      E.effNext = E.t + 0.6; E.effActive = false;
+    }
+    if (E.coughT>=0){
+      const tc = E.t - E.coughT;
+      if (tc < 0.45) pm -= 38*Math.sin(Math.PI*tc/0.45); else E.coughT = -1;
+    }
+    return pm;
+  }
+
+  function isAC(){ return S.mode==='VC-AC' || S.mode==='PC-AC' || S.mode==='PRVC'; }
+
+  function predictTi(s){
+    s = s || S;
+    if (s.mode==='VC-AC' || s.mode==='SIMV-VC'){
+      const f = s.flow/60, v = s.vt/1000;
+      return (s.pattern==='square' ? v/f : v/(0.625*f)) + (s.mode==='VC-AC' ? s.tpause : 0);
+    }
+    if (s.mode==='PC-AC' || s.mode==='PRVC') return s.ti;
+    return null;
+  }
+
+  function finalizeBreath(pel){
+    const b = E.cur;
+    if (!b) return;
+    b.ttot = E.t - b.start;
+    b.peepEnd = E.lastExpPaw;
+    b.endPel = pel;
+    E.endExpPel = pel;
+    E.breaths.push(b);
+    while (E.breaths.length && E.breaths[0].start < E.t - 70) E.breaths.shift();
+    // PRVC breath-to-breath pressure regulation
+    if (S.mode==='PRVC' && b.ctl==='press' && b.mand && b.vti>0.05){
+      const cdyn = b.vti/Math.max(1, b.pi);
+      const err = S.vt/1000 - b.vti;
+      E.prvcP = clamp(E.prvcP + clamp(err/cdyn, -3, 3), 3, Math.max(5, AL.phigh - 5 - S.peep));
+    }
+    // loops: keep last completed breath
+    disp.loopPrev = disp.loopCur; disp.loopCur = [];
+  }
+
+  function startBreath(ctl, kind, trig, opts){
+    const pel = E.V/(PT.C/1000);
+    finalizeBreath(pel);
+    const b = Object.assign({start:E.t, ctl:ctl, mand:(kind==='mand'), kind:kind, trig:trig,
+      vti:0, vte:0, vdel:0, ti:0, ppeak:-99, pplat:null, qpk:0, base:S.peep, hold:false, aborted:false}, opts||{});
+    if (ctl==='vol'){
+      b.vt = S.vt/1000; b.fpk = S.flow/60; b.pattern = S.pattern;
+      b.tiPlan = b.pattern==='square' ? b.vt/b.fpk : b.vt/(0.625*b.fpk);
+    }
+    if (S.mode==='PRVC' && ctl==='press' && kind==='mand' && trig!=='manual') b.pi = E.prvcP; // use freshly regulated pressure
+    E.cur = b;
+    E.phase = 'insp'; E.phaseT = 0; E.lastBreathStart = E.t; E.volDisp = 0;
+    E.curBucket.n += 1;
+    if (trig==='pt'){ E.effTriggered = true; flashTrig(); }
+    disp.pendingMark = (trig==='pt') ? 2 : (kind==='spont' ? 3 : 1);
+  }
+
+  function startMandatory(trig){
+    if (S.mode==='VC-AC' || S.mode==='SIMV-VC') startBreath('vol','mand',trig);
+    else if (S.mode==='PC-AC') startBreath('press','mand',trig,{pi:S.pinsp, tiSet:S.ti, rise:S.rise});
+    else if (S.mode==='PRVC') startBreath('press','mand',trig,{pi:E.prvcP, tiSet:S.ti, rise:S.rise});
+    else startBreath('press','mand',trig,{pi:15, tiSet:1.0, rise:0.1}); // CPAP backup / manual
+  }
+
+  function endInsp(aborted){
+    const b = E.cur;
+    b.ti = E.phaseT;
+    b.aborted = !!aborted;
+    if (!aborted && b.mand && (E.holdReq==='insp' || (b.ctl==='vol' && S.mode==='VC-AC' && S.tpause>0))){
+      b.hold = (E.holdReq==='insp');
+      if (b.hold) E.holdReq = null;
+      E.pauseDur = b.hold ? 2.5 : S.tpause;
+      E.phase = 'pause'; E.phaseT = 0; b.pauseAcc = 0; b.pauseN = 0;
+    } else {
+      E.phase = 'exp'; E.phaseT = 0;
+    }
+  }
+
+  /* One 5-ms integration step */
+  function step(){
+    E.t += DT; E.phaseT += DT;
+    const C = PT.C/1000, Ri = PT.Ri, Re = PT.Re;
+    const pm = pmusAt(); E.pm = pm;
+    const pel = E.V/C;
+    const palv = pel - pm;
+    const leakF = clamp(PT.leak/100, 0, 0.95);
+    let paw, q;
+
+    if (PT.disc){
+      // Open airway to atmosphere — vent sees no pressure and no returning flow
+      q = palv < 0 ? -palv/Ri : -palv/Re;
+      E.V = Math.max(0, E.V + q*DT);
+      if (q>0) E.curBucket.vin += q*DT;
+      E.paw = 0.3 + Math.sin(E.t*7)*0.15; E.q = q; E.qMeas = 0; E.volDisp = 0; E.co2 = 0;
+      if (E.cur){ E.cur = null; }
+      E.phase = 'exp'; E.phaseT = 0;
+      E.lastBreathStart = Math.min(E.lastBreathStart, E.t);
+      return;
+    }
+
+    if (S.mode==='APRV'){
+      if (E.phase!=='insp' && E.phase!=='exp'){ E.phase='exp'; }
+      if (E.phase==='insp'){
+        paw = S.plow + (S.phigh - S.plow)*(1 - Math.exp(-E.phaseT/0.08));
+        q = (paw - palv)/((paw>=palv) ? Ri : Re);
+      } else {
+        const from = E.cur ? S.phigh : S.plow;
+        paw = S.plow + (from - S.plow)*Math.exp(-E.phaseT/0.03);
+        q = (paw - palv)/((paw>=palv) ? Ri : Re);
+      }
+      if (E.effOnset && E.phase==='insp') E.aprvSpont.push(E.t), E.curBucket.n += 1;
+    } else {
+      switch (E.phase){
+        case 'insp': {
+          const b = E.cur, tIn = E.phaseT;
+          if (b.ctl==='vol'){
+            q = b.pattern==='square' ? b.fpk : b.fpk*(1 - 0.75*Math.min(1, tIn/b.tiPlan));
+            paw = palv + Ri*q;
+          } else {
+            paw = b.base + b.pi*(1 - Math.exp(-tIn/Math.max(0.012, b.rise/3)));
+            q = (paw - palv)/Ri; if (q<0) q = (paw - palv)/Re;
+          }
+          break;
+        }
+        case 'pause':
+        case 'exphold':
+          q = 0; paw = palv; break;
+        default: { // exp
+          paw = S.peep;
+          q = (paw - palv)/Re; if (q>0) q = (paw - palv)/Ri;
+        }
+      }
+    }
+
+    // integrate
+    E.V = Math.max(0, E.V + q*DT);
+    const b = E.cur;
+    let qMeas = q;
+    if (q>0){
+      E.curBucket.vin += q*DT;
+      if (b){ b.vti += q*DT; if (E.phase==='insp') b.vdel += q*DT; }
+    } else if (q<0){
+      qMeas = q*(1-leakF);
+      if (b){ b.vte += -qMeas*DT; b.leakV = (b.leakV||0) + (-q*leakF)*DT; }
+    }
+    if (b && paw > b.ppeak) b.ppeak = paw;
+    if (b && E.phase==='insp' && q > b.qpk) b.qpk = q;
+    E.volDisp = Math.max(-0.05, E.volDisp + qMeas*DT);
+    E.paw = paw; E.q = q; E.qMeas = qMeas;
+
+    // capnogram
+    if (E.phase==='exp' && b && S.mode!=='APRV'){
+      const tau = 0.12 + 0.012*Re;
+      E.co2 = E.etco2*smoothstep((E.phaseT-0.08)/tau)*(0.9 + 0.1*Math.min(1, E.phaseT/1.5));
+    } else if (S.mode==='APRV' && E.phase==='exp'){
+      E.co2 = E.etco2*smoothstep(E.phaseT/0.25);
+    } else {
+      E.co2 = Math.max(0, E.co2 - DT*E.etco2/0.12);
+    }
+
+    // ----- phase transitions -----
+    if (S.mode==='APRV'){
+      if (E.phase==='insp' && E.phaseT >= S.thigh){ b && (b.ti = E.phaseT); E.phase='exp'; E.phaseT=0; }
+      else if ((E.phase==='exp' && (E.phaseT >= S.tlow || !b)) ){
+        E.lastExpPaw = paw;
+        startBreath('aprv','mand','time');
+      }
+      return;
+    }
+
+    if (E.phase==='insp'){
+      const tIn = E.phaseT;
+      if (paw > AL.phigh){
+        E.highPAt = E.t;
+        if (b.ctl==='vol' || b.ctl==='press' || b.ctl==='ps'){ endInsp(true); }
+      } else if (b.ctl==='vol'){
+        if (b.vdel >= b.vt || tIn >= b.tiPlan*1.05) endInsp(false);
+      } else if (b.ctl==='press'){
+        if (tIn >= b.tiSet) endInsp(false);
+      } else if (b.ctl==='ps'){
+        if ((tIn>0.15 && q < (b.esens/100)*b.qpk) || tIn >= 3 || q < -0.05) endInsp(false);
+      }
+    } else if (E.phase==='pause'){
+      if (E.phaseT > E.pauseDur - 0.06){ b.pauseAcc += paw; b.pauseN++; }
+      if (E.phaseT >= E.pauseDur){
+        b.pplat = b.pauseN ? b.pauseAcc/b.pauseN : paw;
+        if (b.hold) showHoldResult('insp', b);
+        E.phase='exp'; E.phaseT=0;
+      }
+    } else if (E.phase==='exphold'){
+      if (E.phaseT >= 2.5){
+        E.holdTotPeep = paw;
+        showHoldResult('exp', {totPeep:paw});
+        E.lastExpPaw = S.peep;
+        startMandatory('time');
+      }
+    } else { // exp
+      E.lastExpPaw = paw;
+      const T = 60/Math.max(1, S.rr);
+      const sinceStart = E.t - E.lastBreathStart;
+      let timeDue = false;
+
+      if (isAC()) timeDue = sinceStart >= T;
+      else if (S.mode==='SIMV-VC'){
+        if (E.t - E.simvStart >= T){
+          const had = E.simvMand;
+          E.simvStart += T; if (E.t - E.simvStart > T) E.simvStart = E.t;
+          E.simvMand = false;
+          if (!had) E.pendingTimeMand = true;
+        }
+        if (E.pendingTimeMand) timeDue = true;
+      } else if (S.mode==='CPAP/PS'){
+        if (sinceStart >= AL.apnea) E.backup = true;
+        if (E.backup && sinceStart >= Math.min(5, AL.apnea)) timeDue = true;
+      }
+
+      const ptTrig = E.phaseT > 0.25 && q*60 > S.trig;
+
+      if (E.holdReq==='exp' && (timeDue || ptTrig) && E.phaseT>0.4){
+        E.holdReq = null; E.phase='exphold'; E.phaseT=0;
+      } else if (ptTrig){
+        if (isAC()) startMandatory('pt');
+        else if (S.mode==='SIMV-VC'){
+          if (E.pendingTimeMand || !E.simvMand){ E.simvMand = true; E.pendingTimeMand = false; startMandatory('pt'); }
+          else startBreath('ps','spont','pt',{pi:S.ps, esens:S.esens, rise:0.1});
+        } else { // CPAP/PS
+          E.backup = false;
+          startBreath('ps','spont','pt',{pi:S.ps, esens:S.esens, rise:S.rise});
+        }
+      } else if (E.manualReq && E.phaseT > 0.3){
+        E.manualReq = false;
+        startMandatory('manual');
+      } else if (timeDue){
+        if (S.mode==='SIMV-VC'){ E.simvMand = true; E.pendingTimeMand = false; }
+        startMandatory('time');
+      }
+    }
+  }
+
+  /* Sample to the display buffers at 50 Hz */
+  function recordSample(){
+    const i = disp.wi;
+    disp.p[i] = E.paw;
+    disp.f[i] = E.qMeas*60;
+    disp.v[i] = E.volDisp*1000;
+    disp.c[i] = E.co2;
+    disp.mk[i] = disp.pendingMark || 0; disp.pendingMark = 0;
+    const g = (i+GAP)%NPTS;
+    disp.p[g]=null; disp.f[g]=null; disp.v[g]=null; disp.c[g]=null; disp.mk[g]=0;
+    disp.wi = (i+1)%NPTS;
+    disp.loopCur.push([E.paw, E.volDisp*1000, E.qMeas*60]);
+    if (disp.loopCur.length > 900) disp.loopCur.shift();
+    // Pmean over sweep window
+    E.pmeanRing[E.pmeanIdx] = E.paw;
+    E.pmeanIdx = (E.pmeanIdx+1)%NPTS; if (E.pmeanFill<NPTS) E.pmeanFill++;
+  }
+
+  /* ===============================================================
+     GAS EXCHANGE (updated every 0.1 s of sim time)
+  =============================================================== */
+  function sev(p){ p=Math.max(1,p); return 100/(23400/(p*p*p + 150*p) + 1); }
+  function invertContent(ca, hb){
+    let lo=5, hi=700;
+    for (let k=0;k<40;k++){
+      const mid=(lo+hi)/2;
+      const c = 1.34*hb*sev(mid)/100 + 0.003*mid;
+      if (c>ca) hi=mid; else lo=mid;
+    }
+    return (lo+hi)/2;
+  }
+  function fio2Eff(){
+    if (PT.disc) return 0.21;
+    if (E.t < E.o2Until) return 1.0;
+    return S.fio2/100;
+  }
+  function physioStep(dtS){
+    // ventilation window (per-second buckets)
+    E.bucketT += dtS;
+    if (E.bucketT >= 1){
+      E.bucketT -= 1;
+      E.buckets.push(E.curBucket); E.curBucket = {vin:0,n:0};
+      if (E.buckets.length > 30) E.buckets.shift();
+    }
+    // pmean
+    let sum=0; for (let k=0;k<E.pmeanFill;k++) sum += E.pmeanRing[k];
+    E.pmean = E.pmeanFill ? sum/E.pmeanFill : S.peep;
+
+    if (E.lastPhysioRemote && (Date.now()-E.lastPhysioRemote) < 3000) return; // display follows instructor
+
+    const nb = E.buckets.length;
+    if (nb >= 6){
+      let vin=0, n=0;
+      E.buckets.forEach(bk=>{ vin+=bk.vin; n+=bk.n; });
+      E.VA = Math.max(0, vin - (PT.VD/1000)*n) * 60/nb;
+    }
+    const k = dtS*FLAGS.speed;
+    const target = E.VA > 0.05 ? clamp(0.863*PT.VCO2/E.VA, 12, 150) : 150;
+    if (target > E.paco2) E.paco2 += Math.min((target-E.paco2)*k/45, 0.12*k);
+    else E.paco2 += (target-E.paco2)*k/50;
+
+    const fi = fio2Eff();
+    const PAeq = Math.max(0, fi*713 - E.paco2/0.8);
+    const r = E.VA/2.4/60;
+    E.PA += (r*(PAeq - E.PA) - 1.25*Math.max(0, 1 - E.VA/2))*k;
+    E.PA = clamp(E.PA, 15, 713);
+
+    let s = PT.shunt/100;
+    const rec = PT.recruit/100;
+    s *= (1 - rec*clamp((E.pmean - 8)/17, 0, 1));
+    if (E.pmean < 6) s *= (1 + 0.35*rec);
+    s = clamp(s, 0.01, 0.85);
+    E.shuntEff = s;
+    const pc = E.PA*(1 - PT.vq/100);
+    const cc = 1.34*PT.Hb*sev(pc)/100 + 0.003*pc;
+    const ca = Math.max(2, cc - 5*s/(1-s));
+    E.pao2 = invertContent(ca, PT.Hb);
+    const satT = sev(E.pao2);
+    E.sat += (satT - E.sat)*Math.min(1, k/6);
+    E.pH = 6.1 + Math.log10(PT.HCO3/(0.0307*E.paco2));
+    const last = E.breaths[E.breaths.length-1];
+    const vtl = last ? Math.max(0.05, last.vti) : 0.45;
+    const vdvt = (PT.VD/1000)/vtl;
+    const grad = clamp(45*(vdvt - 0.25), 2, 32);
+    E.etco2 = (PT.disc) ? 0 : Math.max(0, E.paco2 - grad);
+  }
+
+  function computeAbg(){
+    const be = 0.93*(PT.HCO3 - 24.4 + 14.8*(E.pH - 7.4));
+    return {
+      pH:E.pH, paco2:E.paco2, pao2:E.pao2, hco3:PT.HCO3, be:be, sao2:sev(E.pao2), fio2:Math.round(fio2Eff()*100),
+      time:new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+    };
+  }
+
+  /* ===============================================================
+     MEASURED VALUES
+  =============================================================== */
+  const M = {};
+  function computeMeasured(){
+    const br = E.breaths;
+    const connected = !PT.disc;
+    const recent = br.filter(b=>b.start > E.t - 60);
+    M.valid = connected && recent.length > 0;
+    if (!M.valid){ Object.assign(M,{ppeak:null,pplat:null,peep:null,vte:null,vti:null,ve:null,rr:null,ie:null,dp:null,cstat:null,leak:null}); }
+    else {
+      const last = recent[recent.length-1];
+      const lastN = recent.slice(-6);
+      const meanT = lastN.reduce((a,b)=>a+b.ttot,0)/lastN.length;
+      let rr = 60/Math.max(0.5, meanT);
+      if (S.mode==='APRV'){
+        const sp = E.aprvSpont.filter(t=>t > E.t - 30);
+        E.aprvSpont = sp;
+        rr += sp.length*2;
+      }
+      M.rr = rr;
+      M.ppeak = last.ppeak;
+      M.peep = last.peepEnd;
+      M.vte = last.vte*1000;
+      M.vti = last.vti*1000;
+      const meanVte = lastN.reduce((a,b)=>a+b.vte,0)/lastN.length;
+      M.ve = meanVte*(60/Math.max(0.5,meanT));
+      M.ie = (last.ti>0 && last.ttot>last.ti) ? (last.ttot - last.ti)/last.ti : null;
+      M.ti = last.ti;
+      const withPlat = br.filter(b=>b.pplat!=null && b.start > E.t - 45);
+      if (withPlat.length){
+        const bp = withPlat[withPlat.length-1];
+        M.pplat = bp.pplat; M.pplatHold = bp.hold;
+        M.dp = bp.pplat - bp.peepEnd;
+        M.cstat = M.dp > 0.5 ? (bp.vti*1000)/M.dp : null;
+      } else { M.pplat=null; M.dp=null; M.cstat=null; }
+      const lt = lastN.reduce((a,b)=>a+b.vti,0);
+      const lv = lastN.reduce((a,b)=>a+(b.leakV||0),0);
+      M.leak = lt > 0.02 ? clamp(100*lv/lt, 0, 100) : 0;
+    }
+    M.pmean = connected ? E.pmean : 0;
+    M.fio2 = Math.round(fio2Eff()*100);
+    M.autoPeep = Math.max(0, E.endExpPel - S.peep);
+  }
+
+  /* ===============================================================
+     ALARMS
+  =============================================================== */
+  let activeAlarms = [];
+  let silenceUntil = 0;
+  let alarmCycle = 0;
+  function evalAlarms(){
+    const a = [];
+    const nowS = E.t;
+    if (PT.disc) a.push({id:'disc', pri:'high', text:'CIRCUIT DISCONNECT'});
+    if (S.mode!=='APRV' && (nowS - E.lastBreathStart) > AL.apnea && nowS > AL.apnea) a.push({id:'apnea', pri:'high', text:'APNEA'});
+    if (S.mode==='CPAP/PS' && E.backup) a.push({id:'backup', pri:'high', text:'APNEA — BACKUP VENTILATION ACTIVE'});
+    if (nowS - E.highPAt < 6) a.push({id:'highp', pri:'high', text:'HIGH AIRWAY PRESSURE'});
+    if (M.valid){
+      const lastTwo = E.breaths.slice(-2);
+      if (lastTwo.length===2 && lastTwo.every(b=>b.vte*1000 < AL.vteLow)) a.push({id:'vte', pri:'med', text:'LOW EXHALED VT'});
+      if (E.breaths.length >= 3 && M.ve < AL.veLow) a.push({id:'velow', pri:'high', text:'LOW MINUTE VOLUME'});
+      if (M.ve > AL.veHigh) a.push({id:'vehigh', pri:'med', text:'HIGH MINUTE VOLUME'});
+      if (M.rr > AL.rrHigh) a.push({id:'rr', pri:'med', text:'HIGH RESPIRATORY RATE'});
+      if (M.leak > 25) a.push({id:'leak', pri:'low', text:'CIRCUIT LEAK DETECTED'});
+      if (S.mode!=='APRV' && M.ie!=null && M.ie < 1) a.push({id:'ie', pri:'low', text:'INVERSE I:E RATIO'});
+    }
+    if (FLAGS.showSpo2 && E.sat < AL.spo2Low) a.push({id:'spo2', pri:'high', text:'LOW SpO₂'});
+    const rank = {high:0, med:1, low:2};
+    a.sort((x,y)=>rank[x.pri]-rank[y.pri]);
+    activeAlarms = a;
+  }
+
+  /* ===============================================================
+     AUDIO
+  =============================================================== */
+  let audioCtx = null;
+  function ensureAudio(){
+    if (!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; } }
+    if (audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+  }
+  function tone(freq, start, dur, gain){
+    if (!audioCtx) return;
+    try{
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type='sine'; o.frequency.value=freq;
+      const t0 = audioCtx.currentTime + start;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(gain, t0+0.02);
+      g.gain.setValueAtTime(gain, t0+dur-0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+      o.connect(g).connect(audioCtx.destination); o.start(t0); o.stop(t0+dur+0.02);
+    }catch(e){}
+  }
+  let lastAlarmSound = 0;
+  function audioHere(){
+    return (FLAGS.audio==='instructor' && !IS_DISPLAY) || (FLAGS.audio==='display' && IS_DISPLAY);
+  }
+  function alarmAudio(){
+    const hint = document.getElementById('audioHint');
+    const want = audioHere();
+    hint.classList.toggle('on', want && (!audioCtx || audioCtx.state!=='running'));
+    if (!want || !activeAlarms.length || Date.now() < silenceUntil) return;
+    if (!audioCtx || audioCtx.state!=='running') return;
+    const top = activeAlarms[0].pri;
+    const now = Date.now();
+    if (top==='high' && now - lastAlarmSound > 4500){
+      lastAlarmSound = now;
+      [0,0.22,0.44,0.95,1.17].forEach(s=>tone(880, s, 0.16, 0.12));
+    } else if (top==='med' && now - lastAlarmSound > 7000){
+      lastAlarmSound = now;
+      [0,0.3,0.6].forEach(s=>tone(660, s, 0.22, 0.10));
+    } else if (top==='low' && now - lastAlarmSound > 15000){
+      lastAlarmSound = now; tone(520, 0, 0.3, 0.08);
+    }
+  }
+
+  /* ===============================================================
+     FLAGS / UI STATE
+  =============================================================== */
+  const FLAGS = { studentControl:true, showSpo2:true, showCo2:true, speed:3, audio:'off', loops:false, freeze:false };
+
+  const $ = id => document.getElementById(id);
+  const cvPaw=$('cvPaw'), cvFlow=$('cvFlow'), cvVol=$('cvVol'), cvCo2=$('cvCo2'), cvPV=$('cvLoopPV'), cvFV=$('cvLoopFV');
+
+  function fmtSet(key, val){
+    const d = SET_DEFS[key];
+    if (d.options) return d.names[val];
+    return d.dec ? Number(val).toFixed(d.dec) : String(Math.round(val));
+  }
+  function ibw(){
+    const base = PT.sex==='F' ? 45.5 : 50;
+    return Math.max(20, base + 2.3*(PT.heightIn - 60));
+  }
+
+  function tileSub(key, s){
+    s = s || S;
+    if (key==='vt') return (s.vt/ibw()).toFixed(1)+' mL/kg';
+    if (key==='flow' || key==='ti' || key==='rr'){
+      const ti = predictTi(s);
+      if (ti==null) return '';
+      const te = 60/s.rr - ti;
+      if (key==='flow') return 'Ti '+ti.toFixed(2)+' s';
+      return te>0 ? 'I:E 1:'+(te/ti).toFixed(1) : 'I:E inverse';
+    }
+    if (key==='pinsp') return 'Ptot '+(s.pinsp + s.peep);
+    if (key==='ps') return 'Ptot '+(s.ps + s.peep);
+    if (key==='thigh' || key==='tlow') return 'Rate '+(60/(s.thigh+s.tlow)).toFixed(1);
+    return '';
+  }
+
+  /* ---------- settings tiles & editing ---------- */
+  let editing = null; // {key, val, t}
+  function renderTiles(){
+    const box = $('setTiles');
+    box.innerHTML = '';
+    MODES[S.mode].tiles.forEach(key=>{
+      const d = SET_DEFS[key];
+      const val = (editing && editing.key===key) ? editing.val : S[key];
+      const shadow = Object.assign({}, S); if (editing && editing.key===key) shadow[key] = editing.val;
+      const el = document.createElement('div');
+      el.className = 'set-tile' + ((editing && editing.key===key) ? ' editing' : '') + (locked() ? ' locked' : '');
+      el.innerHTML = '<div class="st-l">'+d.label+'</div><div class="st-v">'+fmtSet(key,val)+'</div>'+
+        '<div class="st-u">'+d.unit+'</div><div class="st-s">'+tileSub(key, shadow)+'</div>';
+      el.addEventListener('click', ()=>beginEdit(key));
+      box.appendChild(el);
+    });
+    $('modeChipText').textContent = S.mode;
+    renderEditBar();
+  }
+  function locked(){ return IS_DISPLAY && !FLAGS.studentControl; }
+  function lockToast(){ toast('Ventilator controls are locked by the instructor.'); }
+
+  function beginEdit(key){
+    if (locked()) return lockToast();
+    if (editing && editing.key===key){ return; }
+    editing = {key:key, val:S[key], t:Date.now()};
+    $('knob').classList.add('active');
+    renderTiles();
+  }
+  function adjustEdit(dir){
+    if (!editing) return;
+    const d = SET_DEFS[editing.key];
+    if (d.options){
+      const i = d.options.indexOf(editing.val);
+      editing.val = d.options[(i + (dir>0?1:d.options.length-1)) % d.options.length];
+    } else {
+      let v = editing.val + dir*d.step;
+      v = clamp(Math.round(v/d.step)*d.step, d.min, d.max);
+      editing.val = +v.toFixed(3);
+    }
+    editing.t = Date.now();
+    renderTiles();
+  }
+  function validateEdit(){
+    const s = Object.assign({}, S); s[editing.key] = editing.val;
+    if (s.mode==='APRV' && s.plow >= s.phigh) return 'P low must be below P high';
+    if (s.mode==='SIMV-VC' || s.mode==='VC-AC' || s.mode==='PC-AC' || s.mode==='PRVC'){
+      const ti = predictTi(s);
+      if (ti >= 60/s.rr - 0.2) return 'Ti too long for set RR (no time to exhale)';
+    }
+    return null;
+  }
+  function renderEditBar(){
+    const bar = $('editBar'), msg = $('editMsg');
+    if (!editing){
+      bar.classList.remove('active');
+      msg.innerHTML = locked() ? 'View only — controls locked by instructor.' : 'Touch a setting below to adjust it (knob, ▲▼, mouse wheel or arrow keys), then Accept.';
+      return;
+    }
+    bar.classList.add('active');
+    const d = SET_DEFS[editing.key];
+    const s = Object.assign({}, S); s[editing.key] = editing.val;
+    let extra = tileSub(editing.key, s);
+    if (!extra && (s.mode==='VC-AC'||s.mode==='SIMV-VC'||s.mode==='PC-AC'||s.mode==='PRVC')){
+      const ti = predictTi(s); const te = 60/s.rr - ti;
+      extra = 'Ti '+ti.toFixed(2)+' s · I:E '+(te>0?'1:'+(te/ti).toFixed(1):'inverse');
+    }
+    const err = validateEdit();
+    msg.innerHTML = '<b>'+d.label+'</b>: '+fmtSet(editing.key,S[editing.key])+' → <b style="color:var(--c-edit)">'+fmtSet(editing.key,editing.val)+'</b> '+d.unit+
+      (extra ? ' · '+extra : '') + (err ? ' · <span class="eb-warn">'+err+'</span>' : '');
+  }
+  function acceptEdit(){
+    if (!editing) return;
+    if (validateEdit()){ toast(validateEdit()); return; }
+    const o = {}; o[editing.key] = editing.val;
+    editing = null; $('knob').classList.remove('active');
+    ventAction('setSettings', o);
+    renderTiles();
+  }
+  function cancelEdit(){
+    editing = null; $('knob').classList.remove('active');
+    renderTiles();
+  }
+  $('ebUp').addEventListener('click', ()=>adjustEdit(1));
+  $('ebDown').addEventListener('click', ()=>adjustEdit(-1));
+  $('ebAccept').addEventListener('click', acceptEdit);
+  $('ebCancel').addEventListener('click', cancelEdit);
+  $('hwAccept').addEventListener('click', acceptEdit);
+  $('hwCancel').addEventListener('click', cancelEdit);
+  $('setTiles').addEventListener('wheel', e=>{ if(editing){ e.preventDefault(); adjustEdit(e.deltaY<0?1:-1); } }, {passive:false});
+  document.addEventListener('keydown', e=>{
+    if (!editing) return;
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag==='INPUT' || tag==='SELECT' || tag==='TEXTAREA') return;
+    if (e.key==='ArrowUp' || e.key==='ArrowRight'){ e.preventDefault(); adjustEdit(1); }
+    else if (e.key==='ArrowDown' || e.key==='ArrowLeft'){ e.preventDefault(); adjustEdit(-1); }
+    else if (e.key==='Enter'){ e.preventDefault(); acceptEdit(); }
+    else if (e.key==='Escape'){ cancelEdit(); }
+  });
+
+  /* rotary knob: drag around the knob or use the wheel */
+  (function knob(){
+    const k = $('knob'), ind = $('knobInd');
+    let angle = 0, dragging=false, lastA=0, acc=0;
+    function ang(e){ const r=k.getBoundingClientRect(); return Math.atan2(e.clientY-(r.top+r.height/2), e.clientX-(r.left+r.width/2))*180/Math.PI; }
+    function rot(d){ angle += d; ind.style.transform = 'rotate('+angle+'deg)'; }
+    k.addEventListener('pointerdown', e=>{ dragging=true; lastA=ang(e); acc=0; k.setPointerCapture(e.pointerId); });
+    k.addEventListener('pointermove', e=>{
+      if(!dragging) return;
+      const a=ang(e); let d=a-lastA; if(d>180)d-=360; if(d<-180)d+=360; lastA=a; rot(d); acc+=d;
+      while(acc>=20){ acc-=20; adjustEdit(1); } while(acc<=-20){ acc+=20; adjustEdit(-1); }
+    });
+    k.addEventListener('pointerup', ()=>{ dragging=false; });
+    k.addEventListener('wheel', e=>{ e.preventDefault(); const d=e.deltaY<0?1:-1; rot(d*20); adjustEdit(d); }, {passive:false});
+  })();
+
+  /* ---------- modes modal ---------- */
+  let modeSel = null;
+  function openModes(){
+    if (locked()) return lockToast();
+    modeSel = S.mode;
+    const g = $('modeGrid'); g.innerHTML='';
+    Object.keys(MODES).forEach(m=>{
+      const d=document.createElement('div');
+      d.className='mode-opt'+(m===S.mode?' cur':'')+(m===modeSel?' sel':'');
+      d.innerHTML='<b>'+m+'</b><span>'+MODES[m].name+'<br>'+MODES[m].desc+'</span>';
+      d.addEventListener('click', ()=>{ modeSel=m; g.querySelectorAll('.mode-opt').forEach(x=>x.classList.remove('sel')); d.classList.add('sel'); });
+      g.appendChild(d);
+    });
+    $('modeModal').classList.add('on');
+  }
+  $('modeChip').addEventListener('click', openModes);
+  $('skModes').addEventListener('click', openModes);
+  $('modeCancel').addEventListener('click', ()=>$('modeModal').classList.remove('on'));
+  $('modeConfirm').addEventListener('click', ()=>{
+    $('modeModal').classList.remove('on');
+    if (modeSel && modeSel!==S.mode){ cancelEdit(); ventAction('setMode', modeSel); }
+  });
+
+  /* ---------- alarm limits modal ---------- */
+  let alDraft = null;
+  function renderAlarmTable(){
+    const t = $('alarmTable'); t.innerHTML='';
+    Object.keys(ALARM_DEFS).forEach(k=>{
+      const d=ALARM_DEFS[k];
+      const tr=document.createElement('tr');
+      tr.innerHTML='<td>'+d.label+'</td><td class="al-val">'+(d.dec?alDraft[k].toFixed(d.dec):alDraft[k])+'</td><td class="al-u">'+d.unit+'</td>'+
+        '<td class="al-b"><button class="eb-btn" data-d="-1" type="button">−</button> <button class="eb-btn" data-d="1" type="button">+</button></td>';
+      tr.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{
+        alDraft[k] = clamp(+(alDraft[k] + (+b.dataset.d)*d.step).toFixed(2), d.min, d.max); renderAlarmTable();
+      }));
+      t.appendChild(tr);
+    });
+  }
+  $('skAlarms').addEventListener('click', ()=>{
+    if (locked()) return lockToast();
+    alDraft = Object.assign({}, AL); renderAlarmTable(); $('alarmModal').classList.add('on');
+  });
+  $('alarmCancel').addEventListener('click', ()=>$('alarmModal').classList.remove('on'));
+  $('alarmApply').addEventListener('click', ()=>{ $('alarmModal').classList.remove('on'); ventAction('setAlarms', alDraft); });
+
+  /* ---------- soft keys ---------- */
+  $('skInsp').addEventListener('click', ()=>ventAction('inspHold'));
+  $('skExp').addEventListener('click', ()=>ventAction('expHold'));
+  $('skManual').addEventListener('click', ()=>ventAction('manual'));
+  $('skO2').addEventListener('click', ()=>ventAction('o2'));
+  $('hwO2').addEventListener('click', ()=>ventAction('o2'));
+  $('skLoops').addEventListener('click', ()=>ventAction('loops', !FLAGS.loops));
+  $('skFreeze').addEventListener('click', ()=>ventAction('freeze', !FLAGS.freeze));
+  $('hwSilence').addEventListener('click', ()=>{ ensureAudio(); ventAction('silence'); });
+  $('holdClose').addEventListener('click', ()=>$('holdCard').classList.remove('on'));
+  $('abgClose').addEventListener('click', ()=>$('abgCard').classList.remove('on'));
+  $('audioHint').addEventListener('click', ()=>{ ensureAudio(); });
+
+  let toastTimer = null;
+  function toast(msg){
+    const t=$('toast'); t.textContent=msg; t.classList.add('on');
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('on'), 2600);
+  }
+  let trigTimer=null;
+  function flashTrig(){
+    const el=$('indTrig'); el.classList.add('lit-trig');
+    clearTimeout(trigTimer); trigTimer=setTimeout(()=>el.classList.remove('lit-trig'), 450);
+  }
+
+  let holdTimer=null;
+  function showHoldResult(kind, b){
+    const tbl = $('holdTable');
+    if (kind==='insp'){
+      $('holdTitle').textContent = 'Inspiratory Hold';
+      const peep = E.lastExpPaw;
+      const dP = b.pplat - peep;
+      const cst = dP>0.5 ? b.vti*1000/dP : null;
+      const raw = (b.ctl==='vol' && b.pattern==='square') ? (b.ppeak - b.pplat)/b.fpk : null;
+      tbl.innerHTML =
+        row('Ppeak', b.ppeak.toFixed(0), 'cmH₂O') + row('Pplat', b.pplat.toFixed(0), 'cmH₂O') +
+        row('Driving pressure', dP.toFixed(0), 'cmH₂O') + row('Cstat', cst?cst.toFixed(0):'---', 'mL/cmH₂O') +
+        row('Raw', raw!=null?raw.toFixed(0):'(square flow only)', raw!=null?'cmH₂O/L/s':'');
+    } else {
+      $('holdTitle').textContent = 'Expiratory Hold';
+      const auto = Math.max(0, b.totPeep - S.peep);
+      tbl.innerHTML = row('Set PEEP', S.peep.toFixed(0), 'cmH₂O') + row('Total PEEP', b.totPeep.toFixed(0), 'cmH₂O') + row('Auto-PEEP', auto.toFixed(0), 'cmH₂O');
+    }
+    $('holdCard').classList.add('on');
+    clearTimeout(holdTimer); holdTimer=setTimeout(()=>$('holdCard').classList.remove('on'), 15000);
+  }
+  function fmtBe(x){ const r=Math.round(x); return (r>0?'+':'')+(r===0?'0':r); }
+  function row(k,v,u){ return '<tr><td class="k">'+k+'</td><td class="vv">'+v+'</td><td class="u">'+u+'</td></tr>'; }
+
+  function showAbg(abg){
+    if (!abg){ $('abgCard').classList.remove('on'); return; }
+    $('abgTitle').textContent = 'Arterial Blood Gas · '+abg.time+' · FiO₂ '+abg.fio2+'%';
+    $('abgTable').innerHTML =
+      row('pH', abg.pH.toFixed(2), '') + row('PaCO₂', abg.paco2.toFixed(0), 'mmHg') + row('PaO₂', abg.pao2.toFixed(0), 'mmHg') +
+      row('HCO₃⁻', abg.hco3.toFixed(0), 'mEq/L') + row('Base excess', fmtBe(abg.be), 'mEq/L') + row('SaO₂', abg.sao2.toFixed(0), '%');
+    $('abgCard').classList.add('on');
+  }
+
+  /* ===============================================================
+     ACTIONS (shared by both windows)
+  =============================================================== */
+  function doAction(a, p){
+    switch(a){
+      case 'setSettings': Object.assign(S, p); if ('pinsp' in p) E.prvcP = Math.max(E.prvcP, 5); renderTiles(); break;
+      case 'setMode':
+        S.mode = p; E.backup=false; E.simvStart=E.t; E.simvMand=false; E.pendingTimeMand=false;
+        if (p==='PRVC') E.prvcP = Math.max(8, Math.min(S.pinsp, 25));
+        if (p==='APRV'){ E.phase='exp'; E.phaseT=0; }
+        else if (E.phase==='insp' || E.phase==='pause'){ E.phase='exp'; E.phaseT=0; }
+        renderTiles(); toast('Mode changed to '+p); break;
+      case 'setAlarms': Object.assign(AL, p); toast('Alarm limits updated'); break;
+      case 'inspHold':
+        if (S.mode==='APRV'){ toast('Hold maneuvers not available in APRV'); break; }
+        E.holdReq='insp'; if (S.mode==='CPAP/PS') E.manualReq = true; toast('Inspiratory hold on next mandatory breath'); break;
+      case 'expHold':
+        if (S.mode==='APRV' || S.mode==='CPAP/PS'){ toast('Expiratory hold requires a mandatory mode'); break; }
+        E.holdReq='exp'; toast('Expiratory hold at end of current exhalation'); break;
+      case 'manual':
+        if (S.mode==='APRV'){ toast('Manual breath not available in APRV'); break; }
+        E.manualReq = true; break;
+      case 'o2':
+        E.o2Until = (E.t < E.o2Until) ? 0 : E.t + 120; break;
+      case 'loops': FLAGS.loops = !!p; break;
+      case 'freeze': FLAGS.freeze = !!p; break;
+      case 'silence': silenceUntil = Date.now() + 120000; break;
+      case 'cough': E.coughT = E.t; break;
+      case 'showAbg': showAbg(p); break;
+    }
+    refreshSoftkeys();
+  }
+  const GUARDED = {setSettings:1, setMode:1, setAlarms:1, inspHold:1, expHold:1, manual:1, o2:1, loops:1, freeze:1};
+  function ventAction(a, p){
+    if (IS_DISPLAY){
+      if (!FLAGS.studentControl && GUARDED[a]) return lockToast();
+      if (SYNC) SYNC.postMessage({type:'request', action:a, payload:p});
+      else doAction(a,p);
+      return;
+    }
+    doAction(a,p);
+    if (SYNC) SYNC.postMessage({type:'event', action:a, payload:p});
+    broadcastState();
+  }
+
+  function refreshSoftkeys(){
+    $('skLoops').classList.toggle('on', FLAGS.loops);
+    $('skFreeze').classList.toggle('on', FLAGS.freeze);
+    $('skO2').classList.toggle('on', E.t < E.o2Until);
+    $('skInsp').classList.toggle('busy', E.holdReq==='insp' || E.phase==='pause' && E.cur && E.cur.hold);
+    $('skExp').classList.toggle('busy', E.holdReq==='exp' || E.phase==='exphold');
+    $('skManual').classList.toggle('busy', E.manualReq);
+    $('loopsPanel').classList.toggle('on', FLAGS.loops);
+    $('laneCo2').style.display = FLAGS.showCo2 ? '' : 'none';
+    $('mtSpo2').classList.toggle('hidden', !FLAGS.showSpo2);
+    $('mtEtco2').classList.toggle('hidden', !FLAGS.showCo2);
+    $('indLock').style.display = locked() ? '' : 'none';
+  }
+
+  /* ===============================================================
+     RENDERING
+  =============================================================== */
+  const SCALES = { p:[20,30,40,60,80], f:[30,60,90,120,180], v:[300,600,900,1200,1800], c:[50,80] };
+  const curScale = { p:40, f:60, v:600, c:50 };
+  function pickScale(key, maxAbs){
+    const arr = SCALES[key];
+    let s = arr[arr.length-1];
+    for (let i=0;i<arr.length;i++){ if (maxAbs*1.08 <= arr[i]){ s = arr[i]; break; } }
+    // hysteresis: only shrink when clearly smaller
+    if (s < curScale[key]){ const idx = arr.indexOf(curScale[key]); if (idx>0 && maxAbs*1.4 > arr[idx-1]) return curScale[key]; }
+    curScale[key] = s; return s;
+  }
+  let scaleTimer = 0;
+  function updateScales(){
+    let mp=0, mf=0, mv=0;
+    for (let i=0;i<NPTS;i++){
+      const p=disp.p[i], f=disp.f[i], v=disp.v[i];
+      if (p!=null && p>mp) mp=p; if (f!=null && Math.abs(f)>mf) mf=Math.abs(f); if (v!=null && v>mv) mv=v;
+    }
+    pickScale('p', Math.max(mp, AL.phigh*0.5)); pickScale('f', mf); pickScale('v', mv);
+    curScale.c = (E.etco2 > 45) ? 80 : 50;
+  }
+
+  function prepCanvas(cv){
+    const dpr = window.devicePixelRatio||1;
+    const w = cv.clientWidth||400, h = cv.clientHeight||100;
+    const W=Math.round(w*dpr), H=Math.round(h*dpr);
+    if (cv.width!==W || cv.height!==H){ cv.width=W; cv.height=H; }
+    const ctx = cv.getContext('2d');
+    if (!ctx) return null;
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    return {ctx, w, h};
+  }
+
+  function drawLane(cv, buf, color, yMin, yMax, ticks, fill, marks){
+    const c = prepCanvas(cv); if (!c) return;
+    const {ctx,w,h} = c;
+    const padT=18, padB=6, padL=34;
+    const y = v => padT + (1 - (v - yMin)/(yMax - yMin))*(h - padT - padB);
+    // grid
+    ctx.font='9.5px Segoe UI, Arial, sans-serif'; ctx.textBaseline='middle'; ctx.textAlign='right';
+    ticks.forEach(tv=>{
+      const yy=y(tv);
+      ctx.strokeStyle = tv===0 ? 'rgba(160,175,190,.45)' : 'rgba(90,105,120,.28)';
+      ctx.setLineDash(tv===0 ? [] : [3,4]); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(padL,yy); ctx.lineTo(w,yy); ctx.stroke();
+      ctx.fillStyle='rgba(170,185,200,.75)'; ctx.fillText(String(tv), padL-5, yy);
+    });
+    ctx.setLineDash([]);
+    const xOf = i => padL + (i/(NPTS-1))*(w - padL - 2);
+    // fill under curve
+    if (fill){
+      ctx.fillStyle = fill;
+      const base = y(Math.max(yMin,0));
+      let start=-1;
+      for (let i=0;i<=NPTS;i++){
+        const v = i<NPTS ? buf[i] : null;
+        if (v!=null && start<0){ start=i; ctx.beginPath(); ctx.moveTo(xOf(i), base); }
+        if (v!=null) ctx.lineTo(xOf(i), y(clamp(v,yMin,yMax)));
+        if ((v==null || i===NPTS) && start>=0){ ctx.lineTo(xOf(i-1), base); ctx.closePath(); ctx.fill(); start=-1; }
+      }
+    }
+    // trace
+    ctx.strokeStyle=color; ctx.lineWidth=2; ctx.shadowColor=color; ctx.shadowBlur=3;
+    ctx.beginPath(); let st=false;
+    for (let i=0;i<NPTS;i++){
+      const v=buf[i];
+      if (v==null){ st=false; continue; }
+      const xx=xOf(i), yy=y(clamp(v,yMin,yMax));
+      if (!st){ ctx.moveTo(xx,yy); st=true; } else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke(); ctx.shadowBlur=0;
+    // breath markers
+    if (marks){
+      for (let i=0;i<NPTS;i++){
+        const m = marks[i]; if (!m) continue;
+        const xx=xOf(i);
+        ctx.fillStyle = m===2 ? '#ff9f1c' : (m===3 ? '#8ec7ff' : '#ffffff');
+        ctx.beginPath(); ctx.moveTo(xx-5, h-2); ctx.lineTo(xx+5, h-2); ctx.lineTo(xx, h-10); ctx.closePath(); ctx.fill();
+      }
+    }
+    // high-pressure limit line
+    if (cv===cvPaw && AL.phigh < yMax){
+      ctx.strokeStyle='rgba(229,50,45,.75)'; ctx.setLineDash([6,4]); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(padL,y(AL.phigh)); ctx.lineTo(w,y(AL.phigh)); ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+
+  function drawLoop(cv, pts, prev, xf, yf, xMin, xMax, yMin, yMax, color, xLab, yLab){
+    const c = prepCanvas(cv); if (!c) return;
+    const {ctx,w,h} = c;
+    const padL=34, padR=10, padT=20, padB=18;
+    const X = v => padL + (v - xMin)/(xMax - xMin)*(w - padL - padR);
+    const Y = v => padT + (1 - (v - yMin)/(yMax - yMin))*(h - padT - padB);
+    ctx.font='9.5px Segoe UI, Arial, sans-serif'; ctx.fillStyle='rgba(170,185,200,.75)';
+    ctx.strokeStyle='rgba(160,175,190,.45)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(X(Math.max(xMin,0)),padT); ctx.lineTo(X(Math.max(xMin,0)),h-padB); ctx.moveTo(padL,Y(Math.max(yMin,0))); ctx.lineTo(w-padR,Y(Math.max(yMin,0))); ctx.stroke();
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText(String(yMax), padL-4, Y(yMax)); if (yMin<0) ctx.fillText(String(yMin), padL-4, Y(yMin));
+    ctx.textAlign='center'; ctx.textBaseline='bottom';
+    ctx.fillText(String(xMax)+' '+xLab, X(xMax)-14, h-2);
+    function trace(arr, col, lw){
+      if (arr.length<2) return;
+      ctx.strokeStyle=col; ctx.lineWidth=lw; ctx.beginPath();
+      arr.forEach((p,i)=>{ const xx=X(clamp(xf(p),xMin,xMax)), yy=Y(clamp(yf(p),yMin,yMax)); if(i) ctx.lineTo(xx,yy); else ctx.moveTo(xx,yy); });
+      ctx.stroke();
+    }
+    trace(prev, 'rgba(150,160,175,.45)', 1.5);
+    trace(pts, color, 2);
+  }
+
+  function drawAll(){
+    if (FLAGS.freeze) return;
+    if (++scaleTimer % 25 === 0) updateScales();
+    const ps=curScale.p, fs=curScale.f, vs=curScale.v;
+    drawLane(cvPaw, disp.p, '#ffd23f', -5, ps, ticksFor(0, ps), 'rgba(255,210,63,.16)', disp.mk);
+    drawLane(cvFlow, disp.f, '#3ddc97', -fs, fs, [-fs, -fs/2, 0, fs/2, fs], 'rgba(61,220,151,.10)', null);
+    drawLane(cvVol, disp.v, '#4fb6ff', -50, vs, ticksFor(0, vs), 'rgba(79,182,255,.14)', null);
+    if (FLAGS.showCo2) drawLane(cvCo2, disp.c, '#d8a6ff', 0, curScale.c, [0, curScale.c/2, curScale.c], 'rgba(216,166,255,.12)', null);
+    if (FLAGS.loops){
+      drawLoop(cvPV, disp.loopCur, disp.loopPrev, p=>p[0], p=>p[1], 0, ps, 0, vs, '#4fb6ff', 'cmH₂O');
+      drawLoop(cvFV, disp.loopCur, disp.loopPrev, p=>p[1], p=>p[2], 0, vs, -fs, fs, '#3ddc97', 'mL');
+    }
+  }
+  function ticksFor(a, b){
+    const span = b - a;
+    const steps = [5,10,20,25,50,100,150,200,250,300,400,450,500,600];
+    let st = steps.find(x => span % x === 0 && span/x <= 4 && span/x >= 3) || steps.find(x => span/x <= 4) || span/4;
+    const out=[]; for (let v=a; v<=b+0.001; v+=st) out.push(Math.round(v)); return out;
+  }
+
+  function setM(id, val, dec){ $(id).textContent = (val==null || !isFinite(val)) ? '---' : (dec ? val.toFixed(dec) : String(Math.round(val))); }
+  function updateReadouts(){
+    setM('mPpeak', M.ppeak); setM('mPplat', M.pplat); setM('mPmean', M.pmean); setM('mPeep', M.peep);
+    $('mPplatS').textContent = M.pplat!=null ? (M.pplatHold ? 'insp hold' : 'pause') : 'use Insp Hold';
+    $('mPeepS').textContent = (E.holdTotPeep!=null) ? 'PEEPtot '+E.holdTotPeep.toFixed(0) : 'set '+S.peep;
+    setM('mVte', M.vte); $('mVteS').textContent = M.vte!=null ? (M.vte/ibw()).toFixed(1)+' mL/kg' : '';
+    setM('mVe', M.ve, 1); $('mVeS').textContent = (M.rr && M.vte) ? 'RSBI '+Math.round(M.rr/(M.vte/1000)) : '';
+    setM('mRr', M.rr); $('mRrS').textContent = (S.mode!=='CPAP/PS' && S.mode!=='APRV') ? 'set '+S.rr : '';
+    $('mIe').textContent = M.ie!=null ? '1:'+M.ie.toFixed(1) : '---';
+    $('mIeS').textContent = M.ti!=null && M.valid ? 'Ti '+M.ti.toFixed(2)+' s' : '';
+    setM('mDp', M.dp); setM('mCstat', M.cstat);
+    $('mCstatS').textContent = '';
+    setM('mFio2', M.fio2); setM('mLeak', M.leak);
+    $('mSpo2').textContent = PT.disc && E.sat<20 ? '---' : String(Math.round(E.sat));
+    $('mEtco2').textContent = (M.valid && !PT.disc) ? String(Math.round(E.etco2)) : '---';
+    // violation highlights
+    const ids = {highp:'mtPpeak', vte:'mtVte', velow:'mtVe', vehigh:'mtVe', rr:'mtRr', spo2:'mtSpo2', leak:'mtLeak', ie:'mtIe'};
+    ['mtPpeak','mtVte','mtVe','mtRr','mtSpo2','mtLeak','mtIe'].forEach(x=>$(x).classList.remove('viol'));
+    activeAlarms.forEach(a=>{ if (ids[a.id]) $(ids[a.id]).classList.add('viol'); });
+    if (M.dp!=null && M.dp>15) $('mtDp').classList.add('viol'); else $('mtDp').classList.remove('viol');
+    if (M.pplat!=null && M.pplat>30) $('mtPplat').classList.add('viol'); else $('mtPplat').classList.remove('viol');
+  }
+
+  function updateAlarmUi(){
+    const ban = $('alarmBanner'), led = $('alarmLed');
+    const sil = Date.now() < silenceUntil;
+    ban.className = 'alarm-banner'; led.className = 'alarm-led';
+    if (!activeAlarms.length){ ban.textContent = 'NO ACTIVE ALARMS'; }
+    else {
+      alarmCycle = (alarmCycle+1);
+      const idx = Math.floor(alarmCycle/8) % activeAlarms.length;
+      const a = activeAlarms[idx];
+      ban.classList.add(a.pri);
+      ban.innerHTML = (a.pri==='high'?'!!! ':(a.pri==='med'?'!! ':'! ')) + a.text + (activeAlarms.length>1 ? ' <span class="al-count">('+(idx+1)+'/'+activeAlarms.length+')</span>' : '');
+      const top = activeAlarms[0].pri;
+      if (top==='high') led.classList.add('high'); else if (top==='med') led.classList.add('med');
+      if (sil) led.classList.add('silenced');
+    }
+    const si = $('indSil');
+    if (sil){ si.classList.add('lit-sil'); si.textContent = '🔕 '+Math.ceil((silenceUntil-Date.now())/1000)+'s'; }
+    else { si.classList.remove('lit-sil'); si.textContent = '🔔'; }
+    const o2 = $('indO2');
+    if (E.t < E.o2Until){ o2.classList.add('lit-o2'); o2.textContent = 'O₂ 100% '+Math.ceil((E.o2Until-E.t)/FLAGS.speed*FLAGS.speed)+'s'; }
+    else { o2.classList.remove('lit-o2'); o2.textContent = 'O₂ 100%'; }
+    $('skO2').classList.toggle('on', E.t < E.o2Until);
+  }
+
+  function updateHeader(){
+    $('ibwText').textContent = 'IBW '+Math.round(ibw())+' kg';
+    $('ptSexHt').textContent = (PT.sex==='F'?'Female':'Male')+' · '+PT.heightIn+' in';
+    const d = new Date();
+    $('clock').textContent = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+
+  /* ===============================================================
+     MAIN LOOP
+  =============================================================== */
+  let lastTs = null, acc = 0, physAcc = 0, alarmAcc = 0, uiAcc = 0;
+  function advance(seconds){
+    acc += seconds;
+    while (acc >= DT){
+      step();
+      acc -= DT;
+      E.subCount++;
+      if (E.subCount >= SUBSTEPS){ E.subCount = 0; recordSample(); }
+      physAcc += DT; if (physAcc >= 0.1){ physioStep(physAcc); physAcc = 0; }
+      alarmAcc += DT; if (alarmAcc >= 0.25){ alarmAcc = 0; computeMeasured(); evalAlarms(); }
+    }
+  }
+  function loop(ts){
+    if (lastTs===null) lastTs = ts;
+    let d = (ts - lastTs)/1000; lastTs = ts;
+    if (d > 0.25) d = 0.25;
+    advance(d);
+    drawAll();
+    uiAcc += d;
+    if (uiAcc > 0.2){ uiAcc = 0; updateReadouts(); updateAlarmUi(); refreshSoftkeys(); alarmAudio(); updateInstructorPhysio();
+      if (editing && Date.now() - editing.t > 20000) cancelEdit(); }
+    requestAnimationFrame(loop);
+  }
+
+  /* ===============================================================
+     INSTRUCTOR PANEL
+  =============================================================== */
+  const fieldEls = {};
+  function buildFields(){
+    PATIENT_FIELDS.forEach(f=>{
+      const lab = document.createElement('label');
+      lab.innerHTML = f.label+'<input type="number" min="'+f.min+'" max="'+f.max+'" step="'+f.step+'">';
+      const inp = lab.querySelector('input');
+      inp.value = PT[f.key];
+      inp.addEventListener('input', ()=>{
+        const v = parseFloat(inp.value);
+        if (!isNaN(v)) PT[f.key] = clamp(v, f.min, f.max);
+      });
+      fieldEls[f.key] = inp;
+      $(f.group).appendChild(lab);
+    });
+  }
+  function syncFieldsFromPT(){
+    PATIENT_FIELDS.forEach(f=>{ fieldEls[f.key].value = PT[f.key]; });
+    $('discChk').checked = !!PT.disc;
+    $('sexSelect').value = PT.sex; $('heightInput').value = PT.heightIn;
+    $('scenarioSelect').value = SCENARIOS[PT.scenario] ? PT.scenario : 'custom';
+    updateIbwNote();
+  }
+  function updateIbwNote(){
+    const w = ibw();
+    $('ibwNote').textContent = 'IBW '+w.toFixed(0)+' kg → 6 mL/kg = '+Math.round(w*6)+' mL · 8 mL/kg = '+Math.round(w*8)+' mL';
+  }
+  function applyScenario(id){
+    const sc = SCENARIOS[id]; if (!sc) return;
+    const keep = {sex:PT.sex, heightIn:PT.heightIn};
+    Object.assign(PT, PT_BASE, sc.p, keep, {scenario:id});
+    syncFieldsFromPT();
+    $('revealText').style.display = 'none';
+  }
+
+  function updateInstructorPhysio(){
+    if (IS_DISPLAY) return;
+    const pf = E.pao2/(fio2Eff());
+    const set = (id, v, bad)=>{ const el=$(id); el.textContent=v; el.classList.toggle('bad', !!bad); };
+    set('phPao2', E.pao2.toFixed(0), E.pao2<60);
+    set('phSpo2', E.sat.toFixed(0), E.sat<90);
+    set('phPF', pf.toFixed(0), pf<200);
+    set('phPaco2', E.paco2.toFixed(0), E.paco2>50 || E.paco2<30);
+    set('phPh', E.pH.toFixed(2), E.pH<7.30 || E.pH>7.50);
+    set('phAuto', M.autoPeep!=null ? M.autoPeep.toFixed(1) : '--', M.autoPeep>2);
+    set('phVa', E.VA.toFixed(1), E.VA<3);
+    set('phShunt', Math.round(E.shuntEff*100)+'%', E.shuntEff>0.25);
+    missedTrig = missedTrig.filter(t=>t > E.t - 60);
+    set('phMiss', missedTrig.length+'/min', missedTrig.length>2);
+  }
+
+  let lastAbg = null;
+  function wireInstructor(){
+    // scenario list
+    const sel = $('scenarioSelect');
+    Object.keys(SCENARIOS).forEach(id=>{ const o=document.createElement('option'); o.value=id; o.textContent=SCENARIOS[id].label; sel.appendChild(o); });
+    const oc=document.createElement('option'); oc.value='custom'; oc.textContent='Custom (edited)'; sel.appendChild(oc);
+    sel.addEventListener('change', ()=>{ if (sel.value!=='custom') applyScenario(sel.value); });
+    buildFields();
+    // mark scenario custom when a field is edited by hand
+    PATIENT_FIELDS.forEach(f=>fieldEls[f.key].addEventListener('input', ()=>{ PT.scenario='custom'; sel.value='custom'; }));
+    $('discChk').addEventListener('change', ()=>{ PT.disc = $('discChk').checked; });
+    $('sexSelect').addEventListener('change', ()=>{ PT.sex = $('sexSelect').value; updateIbwNote(); renderTiles(); });
+    $('heightInput').addEventListener('input', ()=>{ const v=parseInt($('heightInput').value,10); if(!isNaN(v)){ PT.heightIn=clamp(v,48,84); updateIbwNote(); renderTiles(); } });
+    $('coughBtn').addEventListener('click', ()=>ventAction('cough'));
+    $('speedSelect').addEventListener('change', ()=>{ FLAGS.speed = parseFloat($('speedSelect').value)||1; });
+    $('studentCtlChk').addEventListener('change', ()=>{ FLAGS.studentControl = $('studentCtlChk').checked; });
+    $('showSpo2Chk').addEventListener('change', ()=>{ FLAGS.showSpo2 = $('showSpo2Chk').checked; refreshSoftkeys(); });
+    $('showCo2Chk').addEventListener('change', ()=>{ FLAGS.showCo2 = $('showCo2Chk').checked; refreshSoftkeys(); });
+    $('audioSelect').addEventListener('change', ()=>{ FLAGS.audio = $('audioSelect').value; if (FLAGS.audio==='instructor') ensureAudio(); });
+
+    $('revealBtn').addEventListener('click', ()=>{
+      const sc = SCENARIOS[PT.scenario];
+      const box = $('revealText');
+      if (!sc){ box.innerHTML = '<strong>Custom patient</strong><br>Parameters edited by hand.'; }
+      else box.innerHTML = '<strong>'+sc.label+'</strong><br>'+sc.id+'<ul>'+sc.pts.map(p=>'<li>'+p+'</li>').join('')+'</ul>';
+      box.style.display = box.style.display==='block' ? 'none' : 'block';
+    });
+
+    $('drawAbgBtn').addEventListener('click', ()=>{
+      lastAbg = computeAbg();
+      const a = lastAbg;
+      const out = $('abgOut');
+      out.innerHTML = '<b>ABG '+a.time+'</b> (FiO₂ '+a.fio2+'%)<br>pH <b>'+a.pH.toFixed(2)+'</b> · PaCO₂ <b>'+a.paco2.toFixed(0)+'</b> · PaO₂ <b>'+a.pao2.toFixed(0)+
+        '</b><br>HCO₃⁻ <b>'+a.hco3.toFixed(0)+'</b> · BE <b>'+fmtBe(a.be)+'</b> · SaO₂ <b>'+a.sao2.toFixed(0)+'%</b> · P/F <b>'+Math.round(a.pao2/(a.fio2/100))+'</b>';
+      out.style.display='block';
+      $('sendAbgBtn').disabled = false;
+    });
+    $('sendAbgBtn').addEventListener('click', ()=>{ if (lastAbg) ventAction('showAbg', lastAbg); });
+    $('hideAbgBtn').addEventListener('click', ()=>ventAction('showAbg', null));
+
+    $('resetVentBtn').addEventListener('click', ()=>{
+      ventAction('setAlarms', Object.assign({}, DEFAULT_AL));
+      const s = Object.assign({}, DEFAULT_S); const mode = s.mode; delete s.mode;
+      ventAction('setSettings', s); ventAction('setMode', mode);
+      if (E.t < E.o2Until) ventAction('o2');
+    });
+
+    // panel collapse
+    let collapsed = false;
+    const panel=$('controlsPanel'), tbtn=$('panelToggleBtn'), arrow=$('panelToggleArrow');
+    function setCollapsed(c){ collapsed=c; panel.classList.toggle('collapsed', c); arrow.innerHTML = c ? '&lsaquo;' : '&rsaquo;';
+      tbtn.title = c ? 'Show control panel' : 'Hide control panel'; tbtn.setAttribute('aria-expanded', String(!c)); }
+    tbtn.addEventListener('click', ()=>setCollapsed(!collapsed));
+    setCollapsed(true);
+
+    // student display
+    $('openDisplayBtn').addEventListener('click', ()=>{
+      const u = new URL(location.href); u.search='?role=display'; u.hash='';
+      window.open(u.href, 'ventStudentDisplay');
+    });
+    setInterval(()=>{
+      $('displayStatus').textContent = (Date.now()-lastDisplayHello) < 5000 ? 'Student display connected.' : 'No student display connected.';
+    }, 1000);
+
+    syncFieldsFromPT();
+    wireStages();
+  }
+
+  /* ===============================================================
+     STAGES — facilitator-built scenario progression
+  =============================================================== */
+  const STAGES_KEY = 'ventSimStages';
+  let stages = [];
+  let stageIdx = 0;
+  function loadStages(){ try{ const r=localStorage.getItem(STAGES_KEY); const p=r?JSON.parse(r):[]; return Array.isArray(p)?p:[]; }catch(e){ return []; } }
+  function saveStages(){ try{ localStorage.setItem(STAGES_KEY, JSON.stringify(stages)); }catch(e){} }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function stageSummary(st){
+    const p = st.patient;
+    const sc = SCENARIOS[p.scenario];
+    const parts = [sc ? sc.label : 'Custom', 'C '+p.C, 'R '+p.Ri+'/'+p.Re];
+    if (p.rrPt>0) parts.push('pt RR '+p.rrPt);
+    if (p.leak>0) parts.push('leak '+p.leak+'%');
+    if (p.disc) parts.push('DISCONNECTED');
+    if (st.vent) parts.push('vent: '+st.vent.mode);
+    return parts.join(' • ');
+  }
+  function applyStage(i){
+    if (i<0 || i>=stages.length) return;
+    stageIdx = i;
+    const st = stages[i];
+    const keep = {sex:PT.sex, heightIn:PT.heightIn};
+    Object.assign(PT, PT_BASE, st.patient, keep);
+    syncFieldsFromPT();
+    if (st.vent){
+      const v = Object.assign({}, st.vent); const mode = v.mode; delete v.mode;
+      ventAction('setSettings', v);
+      if (mode !== S.mode) ventAction('setMode', mode);
+    }
+    refreshStageUI();
+    broadcastState();
+  }
+  function refreshStageUI(){
+    const prog=$('stageProgress'), ind=$('stageIndicator'), note=$('stageNote');
+    if (!stages.length){
+      prog.textContent=''; ind.textContent='No stages yet — set the patient below and click “+ Add Stage.”'; note.textContent='';
+      $('prevStageBtn').disabled=true; $('nextStageBtn').disabled=true; $('resetStageBtn').disabled=true; return;
+    }
+    if (stageIdx>=stages.length) stageIdx=stages.length-1;
+    const st=stages[stageIdx];
+    prog.textContent='Stage '+(stageIdx+1)+' of '+stages.length; ind.textContent=st.label; note.textContent=st.note||'';
+    $('prevStageBtn').disabled = stageIdx<=0; $('nextStageBtn').disabled = stageIdx>=stages.length-1; $('resetStageBtn').disabled=false;
+  }
+  function renderStageList(){
+    const list=$('stageList'); list.innerHTML='';
+    stages.forEach((st,i)=>{
+      const row=document.createElement('div'); row.className='stage-row';
+      row.innerHTML='<span class="stage-row-num">'+(i+1)+'</span><div class="stage-row-fields">'+
+        '<input type="text" class="stage-row-label" value="'+esc(st.label)+'">'+
+        '<div class="stage-row-summary">'+esc(stageSummary(st))+'</div>'+
+        '<textarea class="stage-row-note" placeholder="Facilitator note (optional)">'+esc(st.note||'')+'</textarea></div>'+
+        '<div class="stage-row-btns"><button type="button" class="u" title="Move up">↑</button><button type="button" class="d" title="Move down">↓</button><button type="button" class="r" title="Remove stage">✕</button></div>';
+      row.querySelector('.stage-row-label').addEventListener('input', e=>{ st.label=e.target.value; saveStages(); refreshStageUI(); });
+      row.querySelector('.stage-row-note').addEventListener('input', e=>{ st.note=e.target.value; saveStages(); refreshStageUI(); });
+      row.querySelector('.u').addEventListener('click', ()=>moveStage(i,-1));
+      row.querySelector('.d').addEventListener('click', ()=>moveStage(i,1));
+      row.querySelector('.r').addEventListener('click', ()=>{ stages.splice(i,1); saveStages(); renderStageList(); refreshStageUI(); });
+      list.appendChild(row);
+    });
+  }
+  function moveStage(i,d){
+    const j=i+d; if (j<0||j>=stages.length) return;
+    const t=stages[i]; stages[i]=stages[j]; stages[j]=t;
+    if (stageIdx===i) stageIdx=j; else if (stageIdx===j) stageIdx=i;
+    saveStages(); renderStageList(); refreshStageUI();
+  }
+  function wireStages(){
+    stages = loadStages();
+    $('addStageBtn').addEventListener('click', ()=>{
+      const p = Object.assign({}, PT); delete p.sex; delete p.heightIn;
+      const sc = SCENARIOS[PT.scenario];
+      stages.push({ label:(sc ? sc.label : 'Stage '+(stages.length+1)), note:'', patient:p, vent: $('stageInclVent').checked ? Object.assign({}, S) : null });
+      if (stages.length===1) stageIdx=0;
+      saveStages(); renderStageList(); refreshStageUI();
+    });
+    $('prevStageBtn').addEventListener('click', ()=>{ if (stageIdx>0) applyStage(stageIdx-1); });
+    $('nextStageBtn').addEventListener('click', ()=>{ if (stageIdx<stages.length-1) applyStage(stageIdx+1); });
+    $('resetStageBtn').addEventListener('click', ()=>applyStage(0));
+    $('clearStagesBtn').addEventListener('click', ()=>{ stages=[]; stageIdx=0; saveStages(); renderStageList(); refreshStageUI(); });
+    renderStageList(); refreshStageUI();
+  }
+
+  /* ===============================================================
+     TWO-SCREEN SYNC (BroadcastChannel)
+     Instructor window is authoritative. It broadcasts settings, patient
+     model, alarm limits and display flags after every change, and slow
+     physiology once per second. The student display runs its own
+     waveform engine from that state. Student actions (if allowed) are
+     sent back as requests; the instructor applies them and re-broadcasts.
+  =============================================================== */
+  const SYNC = (typeof BroadcastChannel!=='undefined') ? new BroadcastChannel('sim-vent-sync') : null;
+  let lastDisplayHello = 0;
+
+  function buildState(){
+    return {
+      S:Object.assign({}, S), AL:Object.assign({}, AL), PT:Object.assign({}, PT),
+      FLAGS:Object.assign({}, FLAGS), o2Remaining: Math.max(0, E.o2Until - E.t),
+      physio:{paco2:E.paco2, PA:E.PA, pao2:E.pao2, sat:E.sat, etco2:E.etco2, VA:E.VA, pH:E.pH, shuntEff:E.shuntEff}
+    };
+  }
+  function broadcastState(){ if (SYNC && !IS_DISPLAY) SYNC.postMessage({type:'state', state:buildState()}); }
+  function scheduleBroadcast(){ setTimeout(broadcastState, 0); }
+
+  function applyRemoteState(st){
+    const modeChanged = st.S.mode !== S.mode;
+    const flagsBefore = FLAGS.studentControl;
+    Object.assign(S, st.S); Object.assign(AL, st.AL); Object.assign(PT, st.PT);
+    ['studentControl','showSpo2','showCo2','audio','loops','freeze','speed'].forEach(k=>{ FLAGS[k]=st.FLAGS[k]; });
+    E.o2Until = st.o2Remaining > 0 ? E.t + st.o2Remaining : 0;
+    if (st.physio){ Object.assign(E, st.physio); E.lastPhysioRemote = Date.now(); }
+    if (modeChanged){ E.backup=false; E.simvStart=E.t; E.simvMand=false; if (E.phase!=='exp'){ E.phase='exp'; E.phaseT=0; } }
+    if (!editing || modeChanged || flagsBefore!==FLAGS.studentControl){ if (locked()) editing=null; renderTiles(); }
+    updateHeader(); refreshSoftkeys();
+  }
+
+  if (SYNC){
+    SYNC.onmessage = e=>{
+      const m = e.data; if (!m) return;
+      if (IS_DISPLAY){
+        if (m.type==='state') applyRemoteState(m.state);
+        else if (m.type==='event') doAction(m.action, m.payload);
+        else if (m.type==='denied') lockToast();
+      } else {
+        if (m.type==='hello'){ lastDisplayHello = Date.now(); broadcastState(); }
+        else if (m.type==='request'){
+          if (!FLAGS.studentControl && GUARDED[m.action]){ SYNC.postMessage({type:'denied'}); return; }
+          ventAction(m.action, m.payload);
+        }
+      }
+    };
+    if (IS_DISPLAY){
+      SYNC.postMessage({type:'hello'});
+      setInterval(()=>SYNC.postMessage({type:'hello'}), 2000);
+    } else {
+      setInterval(broadcastState, 1000);
+    }
+  }
+
+  /* ===============================================================
+     INIT
+  =============================================================== */
+  resetEngine();
+  if (!IS_DISPLAY){
+    wireInstructor();
+    ['change','input','click'].forEach(t=>$('controlsPanel').addEventListener(t, scheduleBroadcast, true));
+  }
+  renderTiles();
+  refreshSoftkeys();
+  updateHeader();
+  setInterval(updateHeader, 1000);
+  requestAnimationFrame(loop);
+
+  // test hook (headless verification only)
+  window.__ventSim = { E, S, PT, AL, M, FLAGS, advance, applyScenario: (id)=>{ if (!IS_DISPLAY) applyScenario(id); }, doAction, computeAbg, getAlarms:()=>activeAlarms, resetEngine };
+})();
+</script>
+<script>
+(function(){
+  'use strict';
+  var ACCESS_PASSWORD = "12345";
+  var SESSION_KEY = "ventSimAuth";
+  var gate = document.getElementById('ventGate');
+  var main = document.getElementById('appMain');
+  var pwInput = document.getElementById('ventGatePassword');
+  var errorMsg = document.getElementById('ventGateError');
+  var submitBtn = document.getElementById('ventGateSubmit');
+  function grantAccess(){
+    try{ sessionStorage.setItem(SESSION_KEY, 'granted'); }catch(e){}
+    gate.style.display = 'none';
+    main.style.display = 'contents';
+    try{ window.dispatchEvent(new Event('resize')); }catch(e){}
+  }
+  function attempt(){
+    if (pwInput.value === ACCESS_PASSWORD){ grantAccess(); }
+    else { errorMsg.style.display = 'block'; pwInput.value = ''; pwInput.focus(); }
+  }
+  submitBtn.addEventListener('click', attempt);
+  pwInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') attempt(); });
+  var ok = false;
+  try{ ok = sessionStorage.getItem(SESSION_KEY) === 'granted'; }catch(e){}
+  if (ok) grantAccess(); else pwInput.focus();
+})();
+</script>
+</body>
+</html>
