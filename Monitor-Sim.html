@@ -438,6 +438,14 @@
     line-height:1.2;
   }
 
+  /* ---------------- Student display role ----------------
+     Opened from the instructor window with ?role=display. Shows only the
+     monitor face; the instructor control panel and its toggle are removed. */
+  body.display-role .controls,
+  body.display-role .panel-toggle{display:none !important;}
+  body.display-role .wrap{padding:6px;height:100vh;}
+  body.display-role .device{min-height:0;height:100%;}
+
   @media (max-width:860px){
     .wrap{flex-direction:column;}
     .panel-toggle{width:100%;height:20px;}
@@ -581,6 +589,10 @@
     <button id="revealBtn" style="width:100%;">Show rhythm ID &amp; treatment</button>
     <div id="revealText"></div>
 
+    <h3>Student Display</h3>
+    <button id="openDisplayBtn" type="button" style="width:100%;">Open Student Display Window</button>
+    <div class="status-line" id="displayStatus">No student display connected.</div>
+
     <h3>Display</h3>
     <div class="check-row"><input type="checkbox" id="soundToggle"><label for="soundToggle" style="margin:0;">QRS beep</label></div>
     <button id="pauseBtn" style="width:100%;">Freeze</button>
@@ -638,6 +650,14 @@
 <script>
 (function(){
   'use strict';
+
+  /* ---------------------------------------------------------------
+     Window role. The same file runs in two windows:
+       - instructor (default): full control panel
+       - display (?role=display): monitor face only, driven remotely
+  --------------------------------------------------------------- */
+  const IS_DISPLAY = new URLSearchParams(location.search).get('role') === 'display';
+  if (IS_DISPLAY) document.body.classList.add('display-role');
 
   /* ---------------------------------------------------------------
      Math helpers — synthetic PQRST waveform built from Gaussian bumps
@@ -1234,6 +1254,8 @@
     setTimeout(()=>beatDotEl.classList.remove('lit'),90);
   }
   function flashScreen(){
+    // Instructor window tells any student display to flash too (shock events).
+    if (!IS_DISPLAY && SYNC_CHANNEL) SYNC_CHANNEL.postMessage({ type:'flash' });
     const overlay = document.getElementById('flashOverlay');
     overlay.classList.add('active');
     setTimeout(()=>overlay.classList.remove('active'),150);
@@ -1265,6 +1287,8 @@
   const panelToggleBtn = document.getElementById('panelToggleBtn');
   const panelToggleArrow = document.getElementById('panelToggleArrow');
   const controlsPanel = document.getElementById('controlsPanel');
+  const openDisplayBtn = document.getElementById('openDisplayBtn');
+  const displayStatusEl = document.getElementById('displayStatus');
 
   const stageProgressEl = document.getElementById('stageProgress');
   const stageIndicatorEl = document.getElementById('stageIndicator');
@@ -1493,6 +1517,7 @@
       selectRhythm('nsr');
       rhythmSelect.value = 'nsr';
       defibStatus.textContent = 'Rhythm converted — reassess pulse.';
+      scheduleBroadcast();
     },500);
     charged = false;
     chargeBtn.disabled = false;
@@ -1745,7 +1770,7 @@
   function refreshStageUI(){
     if (!stages.length){
       stageProgressEl.textContent = '';
-      stageIndicatorEl.textContent = 'No stages yet \u2014 set the monitor below and click \u201c+ Add Stage.\u201d';
+      stageIndicatorEl.textContent = 'No stages yet — set the monitor below and click “+ Add Stage.”';
       stageNoteEl.textContent = '';
       prevStageBtn.disabled = true;
       nextStageBtn.disabled = true;
@@ -1780,8 +1805,8 @@
     if (stage.spo2 && stage.spo2.enabled) parts.push('SpO2 '+stage.spo2.value+'%');
     if (stage.art && stage.art.enabled) parts.push('ART '+stage.art.sbp+'/'+stage.art.dbp);
     if (stage.co2 && stage.co2.enabled) parts.push('EtCO2 '+stage.co2.value);
-    if (stage.temp && stage.temp.enabled) parts.push(stage.temp.value+'\u00b0F');
-    return parts.join(' \u2022 ');
+    if (stage.temp && stage.temp.enabled) parts.push(stage.temp.value+'°F');
+    return parts.join(' • ');
   }
 
   function addStageFromCurrent(){
@@ -1816,9 +1841,9 @@
           '<textarea class="stage-row-note" placeholder="Facilitator note (optional)">'+escapeHtml(stage.note||'')+'</textarea>'+
         '</div>'+
         '<div class="stage-row-btns">'+
-          '<button type="button" class="mv-up" title="Move up">\u2191</button>'+
-          '<button type="button" class="mv-down" title="Move down">\u2193</button>'+
-          '<button type="button" class="rm" title="Remove stage">\u2715</button>'+
+          '<button type="button" class="mv-up" title="Move up">↑</button>'+
+          '<button type="button" class="mv-down" title="Move down">↓</button>'+
+          '<button type="button" class="rm" title="Remove stage">✕</button>'+
         '</div>';
       const labelInput = row.querySelector('.stage-row-label');
       const noteInput = row.querySelector('.stage-row-note');
@@ -1879,6 +1904,111 @@
   resetStageBtn.addEventListener('click', resetToStage1);
   addStageBtn.addEventListener('click', addStageFromCurrent);
   clearStagesBtn.addEventListener('click', clearAllStages);
+
+  /* ---------------------------------------------------------------
+     Instructor → student display sync (BroadcastChannel)
+     The instructor window broadcasts a full control-state snapshot after
+     each change. A display window says hello on load (and every 2 s); the
+     instructor answers with the current state, so a display opened late
+     catches up. Each window runs its own waveform engine; only control
+     state and the shock-flash event cross the channel.
+  --------------------------------------------------------------- */
+  const SYNC_CHANNEL = (typeof BroadcastChannel !== 'undefined')
+    ? new BroadcastChannel('sim-monitor-sync') : null;
+  let lastDisplayHello = 0;
+
+  function buildSyncState(){
+    return {
+      rhythm: currentId, rate: currentRate,
+      pacing: pacing, pacerRate: pacerRate,
+      energy: energySelect.value, syncMode: syncMode, paused: paused,
+      nibp: { enabled: nibpEnabled, sbp: nibpSBP, dbp: nibpDBP },
+      spo2: { enabled: spo2Enabled, value: spo2Value, poor: poorSignal },
+      art:  { enabled: arterialEnabled, sbp: artSBP, dbp: artDBP },
+      co2:  { enabled: co2Enabled, value: co2Value, rr: co2RR },
+      temp: { enabled: tempEnabled, value: tempValue }
+    };
+  }
+
+  function broadcastState(){
+    if (SYNC_CHANNEL && !IS_DISPLAY){
+      SYNC_CHANNEL.postMessage({ type:'state', state: buildSyncState() });
+    }
+  }
+  function scheduleBroadcast(){ setTimeout(broadcastState, 0); }
+
+  function applyRemoteState(s){
+    if (!s) return;
+    const rhythmChanged = (s.rhythm !== currentId) || (!!s.pacing !== pacing);
+    currentId = s.rhythm;
+    pacing = !!s.pacing;
+    pacerRate = s.pacerRate;
+    currentRate = s.rate;
+    if (rhythmChanged){ rrHistory = []; lastRTime = -10000; }
+
+    const wasSpo2 = spo2Enabled, wasArt = arterialEnabled, wasCo2 = co2Enabled;
+    nibpEnabled = !!s.nibp.enabled; nibpSBP = s.nibp.sbp; nibpDBP = s.nibp.dbp;
+    spo2Enabled = !!s.spo2.enabled; spo2Value = s.spo2.value; poorSignal = !!s.spo2.poor;
+    arterialEnabled = !!s.art.enabled; artSBP = s.art.sbp; artDBP = s.art.dbp;
+    co2Enabled = !!s.co2.enabled; co2Value = s.co2.value; co2RR = s.co2.rr;
+    tempEnabled = !!s.temp.enabled; tempValue = s.temp.value;
+    paused = !!s.paused;
+
+    if (syncMode !== !!s.syncMode){
+      syncMode = !!s.syncMode;
+      syncSoftkey.classList.toggle('active', syncMode);
+    }
+    modeSelLabel.textContent = (syncMode ? 'SYNC ' : 'DEFIB ') + s.energy + 'J SEL.';
+
+    nibpRow.style.display = nibpEnabled ? '' : 'none';
+    laneSpo2.style.display = spo2Enabled ? '' : 'none';
+    laneArt.style.display = arterialEnabled ? '' : 'none';
+    laneCo2.style.display = co2Enabled ? '' : 'none';
+    tempCorner.style.display = tempEnabled ? '' : 'none';
+    if (spo2Enabled && !wasSpo2) spo2Buffer.fill(null);
+    if (arterialEnabled && !wasArt) artBuffer.fill(null);
+    if (co2Enabled && !wasCo2) co2Buffer.fill(null);
+  }
+
+  if (SYNC_CHANNEL){
+    SYNC_CHANNEL.onmessage = function(e){
+      const m = e.data;
+      if (!m) return;
+      if (IS_DISPLAY){
+        if (m.type === 'state') applyRemoteState(m.state);
+        else if (m.type === 'flash') flashScreen();
+      } else if (m.type === 'hello'){
+        lastDisplayHello = Date.now();
+        broadcastState();
+      }
+    };
+    if (IS_DISPLAY){
+      SYNC_CHANNEL.postMessage({ type:'hello' });
+      setInterval(function(){ SYNC_CHANNEL.postMessage({ type:'hello' }); }, 2000);
+    }
+  }
+
+  if (!IS_DISPLAY){
+    // Any control change in the instructor window (including stage
+    // advances, which dispatch synthetic change events) is broadcast.
+    ['change','input','click'].forEach(function(type){
+      document.addEventListener(type, scheduleBroadcast, true);
+    });
+
+    openDisplayBtn.addEventListener('click', function(){
+      const u = new URL(location.href);
+      u.search = '?role=display';
+      u.hash = '';
+      window.open(u.href, 'simStudentDisplay');
+    });
+
+    setInterval(function(){
+      const connected = (Date.now() - lastDisplayHello) < 5000;
+      displayStatusEl.textContent = connected
+        ? 'Student display connected.'
+        : 'No student display connected.';
+    }, 1000);
+  }
 
   updateModeSelLabel();
   updateClock();

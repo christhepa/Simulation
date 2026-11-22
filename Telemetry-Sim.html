@@ -54,6 +54,7 @@
   .topbar-controls input[type=checkbox]{cursor:pointer;}
   #clockReadout{color:#c7cbd1;font-size:12.5px;letter-spacing:.03em;}
   #alarmCount{color:var(--c-alarm);font-weight:700;display:none;}
+  #displayStatus{font-size:11px;color:var(--text-dim);}
   button.reset-all{
     background:#26292d;color:#e6e8ea;border:1px solid #3a3e42;border-radius:5px;
     padding:6px 12px;font-family:inherit;font-size:11px;cursor:pointer;
@@ -170,6 +171,8 @@
   .vital-input:disabled{opacity:.4;}
   .vital-sep{opacity:.55;}
   .vital-map,.vital-unit{font-size:9.5px;opacity:.85;}
+  /* Read-only numbers shown on the student display (hidden on the instructor view) */
+  .vital-readout{display:none;font-size:10px;font-weight:700;}
 
   .tile-canvas-wrap{flex:1;position:relative;min-height:0;}
   canvas.ecg-canvas{width:100%;height:100%;display:block;}
@@ -191,6 +194,12 @@
   }
   .silence-btn:hover{background:#2a1414;}
   .silence-btn.silenced{opacity:.5;cursor:default;border-color:#555;}
+
+  /* ---- Student display role ----
+     Opened from the instructor window with ?role=display. Every control is
+     removed; only bed labels, numbers, traces and alarms remain. */
+  body.display-role .instructor-only{display:none !important;}
+  body.display-role .vital-readout{display:inline;}
 
   @media (max-width:900px){
     .grid{grid-template-columns:1fr;grid-template-rows:none;overflow-y:auto;}
@@ -244,9 +253,11 @@
   <div class="topbar-controls">
     <span id="clockReadout">--:--</span>
     <span id="alarmCount"></span>
-    <label><input type="checkbox" id="soundToggle" checked> Alarm sound</label>
-    <label><input type="checkbox" id="revealToggle"> Reveal rhythm labels (instructor)</label>
-    <button class="reset-all" id="resetAllBtn" type="button">Reset All to NSR</button>
+    <label class="instructor-only"><input type="checkbox" id="soundToggle" checked> Alarm sound</label>
+    <label class="instructor-only"><input type="checkbox" id="revealToggle"> Reveal rhythm labels (instructor)</label>
+    <button class="reset-all instructor-only" id="resetAllBtn" type="button">Reset All to NSR</button>
+    <button class="reset-all instructor-only" id="openDisplayBtn" type="button">Open Student Display</button>
+    <span class="instructor-only" id="displayStatus">No student display connected.</span>
   </div>
 </header>
 <div class="grid" id="grid"></div>
@@ -256,6 +267,14 @@
 <script>
 (function(){
   'use strict';
+
+  /* ---------------------------------------------------------------
+     Window role. The same file runs in two windows:
+       - instructor (default): full controls
+       - display (?role=display): bed traces and numbers only, driven remotely
+  --------------------------------------------------------------- */
+  const IS_DISPLAY = new URLSearchParams(location.search).get('role') === 'display';
+  if (IS_DISPLAY) document.body.classList.add('display-role');
 
   /* ---------------------------------------------------------------
      Math helpers — synthetic PQRST waveform built from Gaussian bumps
@@ -474,7 +493,9 @@
   const REFRACTORY = 200;
   const CHIME_REPEAT_MS = 1000;
 
-  let soundEnabled = true;
+  /* The student display is silent: alarm chimes are played only from the
+     instructor window, so students can't hear a rhythm change coming. */
+  let soundEnabled = !IS_DISPLAY;
 
   /* ---------------------------------------------------------------
      Audio — a distinct alarm chime, separate from any per-beat sound.
@@ -545,31 +566,33 @@
     tileEl.innerHTML =
       '<div class="tile-header">' +
         '<span class="bed-label">Bed ' + bedNumber + '</span>' +
-        '<span class="rhythm-picker">' +
+        '<span class="rhythm-picker instructor-only">' +
           '<select class="rhythm-select" title="Select rhythm"></select>' +
           '<span class="rhythm-mask">Rhythm <span class="mask-arrow">&#9662;</span></span>' +
         '</span>' +
-        '<input type="number" class="rate-input" title="Intrinsic rate (bpm)">' +
+        '<input type="number" class="rate-input instructor-only" title="Intrinsic rate (bpm)">' +
         '<span class="hr-readout"><span class="hr-value">--</span><span class="beat-dot"></span></span>' +
       '</div>' +
       '<div class="vitals-row">' +
         '<span class="vital-group nibp-group" title="Noninvasive blood pressure">' +
           '<span class="vital-tag">NIBP</span>' +
-          '<input type="number" class="nibp-sbp-input vital-input" title="Systolic (mmHg)" min="40" max="260">' +
-          '<span class="vital-sep">/</span>' +
-          '<input type="number" class="nibp-dbp-input vital-input" title="Diastolic (mmHg)" min="20" max="160">' +
+          '<span class="vital-readout nibp-readout">--/--</span>' +
+          '<input type="number" class="nibp-sbp-input vital-input instructor-only" title="Systolic (mmHg)" min="40" max="260">' +
+          '<span class="vital-sep instructor-only">/</span>' +
+          '<input type="number" class="nibp-dbp-input vital-input instructor-only" title="Diastolic (mmHg)" min="20" max="160">' +
           '<span class="vital-map">(<span class="nibp-map-value">--</span>)</span>' +
         '</span>' +
         '<span class="vital-group spo2-group" title="Oxygen saturation">' +
           '<span class="vital-tag">SpO2</span>' +
-          '<input type="number" class="spo2-input vital-input" title="SpO2 (%)" min="50" max="100">' +
+          '<span class="vital-readout spo2-readout">--</span>' +
+          '<input type="number" class="spo2-input vital-input instructor-only" title="SpO2 (%)" min="50" max="100">' +
           '<span class="vital-unit">%</span>' +
         '</span>' +
       '</div>' +
       '<div class="tile-canvas-wrap">' +
         '<canvas class="ecg-canvas"></canvas>' +
         '<div class="alarm-badge">ALARM</div>' +
-        '<button class="silence-btn" type="button">Silence</button>' +
+        '<button class="silence-btn instructor-only" type="button">Silence</button>' +
       '</div>';
     grid.appendChild(tileEl);
 
@@ -584,7 +607,9 @@
     const nibpSbpInput = tileEl.querySelector('.nibp-sbp-input');
     const nibpDbpInput = tileEl.querySelector('.nibp-dbp-input');
     const nibpMapEl = tileEl.querySelector('.nibp-map-value');
+    const nibpReadoutEl = tileEl.querySelector('.nibp-readout');
     const spo2Input = tileEl.querySelector('.spo2-input');
+    const spo2ReadoutEl = tileEl.querySelector('.spo2-readout');
 
     const tile = {
       bedNumber: bedNumber,
@@ -646,7 +671,8 @@
        cuff or pulse-ox can't produce a reading without a perfusing pulse, so
        whenever the selected rhythm has no pulse, the readouts blank to "--"
        (matching the bedside monitor) while the instructor's set values are
-       preserved underneath and reappear the moment pulse returns. */
+       preserved underneath and reappear the moment pulse returns. The
+       read-only readouts are what the student display shows. */
     function updateVitals(){
       const pulseOk = RHYTHMS[tile.currentId].pulse;
       if (pulseOk){
@@ -659,6 +685,8 @@
           spo2Input.value = tile.spo2Value;
         }
         nibpMapEl.textContent = String(Math.round(tile.nibpDBP + (tile.nibpSBP-tile.nibpDBP)/3));
+        nibpReadoutEl.textContent = tile.nibpSBP + '/' + tile.nibpDBP;
+        spo2ReadoutEl.textContent = String(tile.spo2Value);
       } else {
         if (!nibpSbpInput.disabled){
           nibpSbpInput.disabled = true;
@@ -669,6 +697,8 @@
           spo2Input.value = '';
         }
         nibpMapEl.textContent = '--';
+        nibpReadoutEl.textContent = '- - / - -';
+        spo2ReadoutEl.textContent = '- -';
       }
     }
 
@@ -735,13 +765,11 @@
     applyRhythm(defaultId);
 
     tile.reset = function(){ rhythmSelect.value='nsr'; applyRhythm('nsr'); };
+    tile.applyRhythm = applyRhythm;
+    tile.updateVitals = updateVitals;
 
     tiles.push(tile);
     return tile;
-  }
-
-  function currentPulseOk(tile){
-    return RHYTHMS[tile.currentId].pulse;
   }
 
   function stepTile(tile){
@@ -829,6 +857,8 @@
   const resetAllBtn = document.getElementById('resetAllBtn');
   const clockReadoutEl = document.getElementById('clockReadout');
   const alarmCountEl = document.getElementById('alarmCount');
+  const openDisplayBtn = document.getElementById('openDisplayBtn');
+  const displayStatusEl = document.getElementById('displayStatus');
 
   soundToggle.addEventListener('change', function(){
     soundEnabled = soundToggle.checked;
@@ -845,6 +875,90 @@
     ensureAudio();
     tiles.forEach(function(t){ t.reset(); });
   });
+
+  /* ---------------------------------------------------------------
+     Instructor → student display sync (BroadcastChannel)
+     The instructor window broadcasts the rhythm, rate and vital-sign
+     settings of every bed after each change. A display window says hello
+     on load (and every 2 s); the instructor answers with the current state.
+     Each window runs its own waveform engine, so tracings match in rhythm
+     but are not identical frame by frame.
+  --------------------------------------------------------------- */
+  const SYNC_CHANNEL = (typeof BroadcastChannel !== 'undefined')
+    ? new BroadcastChannel('sim-telemetry-sync') : null;
+  let lastDisplayHello = 0;
+
+  function buildSyncState(){
+    return {
+      tiles: tiles.map(function(t){
+        return { id: t.currentId, rate: t.currentRate,
+                 sbp: t.nibpSBP, dbp: t.nibpDBP, spo2: t.spo2Value };
+      })
+    };
+  }
+
+  function broadcastState(){
+    if (SYNC_CHANNEL && !IS_DISPLAY){
+      SYNC_CHANNEL.postMessage({ type:'state', state: buildSyncState() });
+    }
+  }
+  function scheduleBroadcast(){ setTimeout(broadcastState, 0); }
+
+  function applyRemoteState(s){
+    if (!s || !s.tiles) return;
+    s.tiles.forEach(function(ts, i){
+      const t = tiles[i];
+      if (!t) return;
+      if (t.currentId !== ts.id){
+        t.rhythmSelect.value = ts.id;
+        t.applyRhythm(ts.id);
+      }
+      t.currentRate = ts.rate;
+      t.nibpSBP = ts.sbp;
+      t.nibpDBP = ts.dbp;
+      t.spo2Value = ts.spo2;
+      t.updateVitals();
+    });
+  }
+
+  if (SYNC_CHANNEL){
+    SYNC_CHANNEL.onmessage = function(e){
+      const m = e.data;
+      if (!m) return;
+      if (IS_DISPLAY){
+        if (m.type === 'state') applyRemoteState(m.state);
+      } else if (m.type === 'hello'){
+        lastDisplayHello = Date.now();
+        broadcastState();
+      }
+    };
+    if (IS_DISPLAY){
+      SYNC_CHANNEL.postMessage({ type:'hello' });
+      setInterval(function(){ SYNC_CHANNEL.postMessage({ type:'hello' }); }, 2000);
+    }
+  }
+
+  if (!IS_DISPLAY){
+    // Any control change in the instructor window is broadcast, including
+    // changes made through synthetic events and the Reset All button.
+    ['change','input','click'].forEach(function(type){
+      document.addEventListener(type, scheduleBroadcast, true);
+    });
+
+    openDisplayBtn.addEventListener('click', function(){
+      const u = new URL(location.href);
+      u.search = '?role=display';
+      u.hash = '';
+      window.open(u.href, 'simStudentDisplay');
+    });
+
+    setInterval(function(){
+      const connected = (Date.now() - lastDisplayHello) < 5000;
+      displayStatusEl.textContent = connected
+        ? 'Student display connected.'
+        : 'No student display connected.';
+    }, 1000);
+  }
 
   function updateClock(){
     const now = new Date();
