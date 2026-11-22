@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>12-Lead EKG Trainer</title>
+<style>
+:root{
+  --ink:#1d2329;--muted:#5d6670;--line:#dfe3e8;--bg:#f5f6f8;--card:#fff;
+  --accent:#0b6e79;--accent-soft:#e5f2f3;--ok:#1e7a3a;--ok-bg:#e7f5eb;--bad:#b3261e;--bad-bg:#fbeaea;
+  --navh:56px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+html{-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:10px 18px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.01em}
+header h1 span{color:var(--accent)}
+.spacer{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.seg button{border:0;background:none;padding:6px 14px;cursor:pointer;min-width:64px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--accent);color:#fff}
+.seg-label{font-size:12px;color:var(--muted);margin-right:6px}
+main{max-width:1320px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.hidden{display:none!important}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer}
+@media (hover:hover){
+  .btn:hover{border-color:#b9c0c8}
+  .btn.primary:hover{filter:brightness(1.07)}
+}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.toggle.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.btn:disabled{opacity:.45;cursor:default}
+select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff}
+label.inline{display:inline-flex;align-items:center;gap:6px;font-size:14px}
+
+/* Study layout */
+.study{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;align-items:start}
+.rlist{padding:8px 0;max-height:calc(100vh - 110px);overflow:auto;position:sticky;top:70px}
+.rlist h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:12px 14px 4px}
+.rlist button{display:block;width:100%;text-align:left;border:0;background:none;padding:5px 14px;cursor:pointer;font-size:14px;border-left:3px solid transparent}
+@media (hover:hover){ .rlist button:hover{background:#f2f4f6} }
+.rlist button.on{background:var(--accent-soft);border-left-color:var(--accent);color:var(--accent);font-weight:600}
+.rselect{display:none;width:100%;margin-bottom:10px}
+.title-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.title-row h2{margin:0;font-size:21px}
+.chip{font-size:12px;padding:2px 8px;border-radius:10px;background:#eef0f3;color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.toolbar .grp{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.toolbar input[type=range]{width:150px;accent-color:var(--accent)}
+.rate-val{font-variant-numeric:tabular-nums;min-width:62px;font-size:14px}
+.legend{font-size:12px;color:var(--muted);margin-top:6px}
+.crit{width:100%;border-collapse:collapse;margin-top:14px;table-layout:fixed}
+.crit th,.crit td{text-align:left;vertical-align:top;padding:8px 10px;border-top:1px solid var(--line);font-size:14px}
+.crit th{width:150px;color:var(--muted);font-weight:600}
+.crit tr.key td,.crit tr.key th{background:#fafbfc}
+
+/* 12-lead view */
+.sv-scroll{display:inline-block;max-width:100%;vertical-align:top;overflow-x:auto;overflow-y:hidden;border:1px solid #e3b8b8;border-radius:4px;background:#fff7f7;line-height:0}
+.sv-canvas{display:block}
+.sv-caption{font-size:13px;font-weight:600;color:#4a4f55;margin-top:6px;min-height:19px}
+.sv-meas:empty{display:none}
+.sv-meas{font-size:13px;color:#4a4f55;font-variant-numeric:tabular-nums}
+.sv-readout{font-size:13px;color:var(--accent);min-height:20px;margin-top:4px;font-variant-numeric:tabular-nums}
+.rot-hint{display:none;font-size:12px;color:var(--muted);margin-top:4px}
+
+/* Quiz */
+.quiz-setup{max-width:760px;margin:0 auto}
+.quiz-setup h2{margin:0 0 4px;font-size:20px}
+.form-grid{display:grid;grid-template-columns:170px 1fr;gap:12px 16px;align-items:center;margin-top:16px}
+.form-grid .lbl{font-weight:600;font-size:14px}
+.cats{display:flex;flex-wrap:wrap;gap:8px 18px}
+.radio-row{display:flex;flex-wrap:wrap;gap:8px 18px}
+.qhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.qhead .prog{font-weight:700}
+.qhead .score{color:var(--muted)}
+.timer{font-variant-numeric:tabular-nums;font-weight:700;padding:2px 10px;border-radius:12px;background:#eef0f3}
+.timer.low{background:var(--bad-bg);color:var(--bad)}
+.answers{margin-top:14px}
+.mc{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.mc button{text-align:left;border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px 12px;cursor:pointer;font-size:14.5px}
+@media (hover:hover){ .mc button:hover{border-color:#b9c0c8} }
+.mc button.sel{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.mc button.right{border-color:var(--ok);background:var(--ok-bg)}
+.mc button.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.sys{display:grid;grid-template-columns:190px minmax(0,1fr);gap:8px 12px;align-items:center;max-width:920px}
+.sys .lbl{font-weight:600;font-size:14px}
+.sys select{width:100%}
+.actions{display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap}
+.fb{margin-top:16px;border-radius:10px;padding:14px 16px;border:1px solid var(--line)}
+.fb.ok{background:var(--ok-bg);border-color:#b6dec2}
+.fb.bad{background:var(--bad-bg);border-color:#efc2bf}
+.fb h3{margin:0 0 6px;font-size:16px}
+.steps{width:100%;border-collapse:collapse;margin:8px 0;background:#fff;border-radius:6px;overflow:hidden;table-layout:fixed}
+.steps th,.steps td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:top}
+.steps th{background:#f4f5f7;font-weight:600}
+.steps col.c1{width:150px}.steps col.c4{width:44px}
+.mark-ok{color:var(--ok);font-weight:700}.mark-bad{color:var(--bad);font-weight:700}
+.sum-top{display:flex;gap:24px;flex-wrap:wrap;align-items:center}
+.big{font-size:34px;font-weight:800}
+.stepacc{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.stepacc span{background:#f1f3f5;border-radius:8px;padding:4px 10px;font-size:13px}
+.review-list{width:100%;border-collapse:collapse;margin-top:14px;table-layout:fixed}
+.review-list th,.review-list td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);font-size:14px}
+.review-list col.n{width:44px}.review-list col.m{width:44px}.review-list col.b{width:96px}
+#reviewPane{scroll-margin-top:72px}
+footer{max-width:1320px;margin:8px auto 24px;padding:0 16px;font-size:12px;color:var(--muted)}
+#devNote{display:block;margin-top:2px}
+
+@media (max-width:900px){
+  .study{grid-template-columns:minmax(0,1fr)}
+  .rlist{display:none}
+  .rselect{display:block}
+  .form-grid{grid-template-columns:1fr}
+  .sys{grid-template-columns:1fr}
+  header{gap:10px}
+}
+
+/* =====================================================================
+   ADAPTIVE UI  (same Device module as EKG Rhythm Trainer)
+   ===================================================================== */
+button,.btn,.seg button,select,label.inline{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+header{padding-left:max(18px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right))}
+main{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+footer{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+
+html[data-input=touch] .btn{min-height:44px;padding:8px 16px}
+html[data-input=touch] select{min-height:44px;font-size:16px;padding:8px 10px}
+html[data-input=touch] .seg button{min-height:44px;padding:8px 16px}
+html[data-input=touch] label.inline{min-height:40px}
+html[data-input=touch] input[type=radio],html[data-input=touch] input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+html[data-input=touch] .rlist button{padding:11px 14px}
+html[data-input=touch] .mc button{min-height:48px}
+html[data-input=touch] .toolbar input[type=range]{height:32px}
+
+html[data-ui=phone] header{padding:8px max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left));gap:8px;flex-wrap:nowrap}
+html[data-ui=phone] header h1{font-size:16px;white-space:nowrap}
+html[data-ui=phone] .seg-label{display:none}
+html[data-ui=phone] .seg button{min-width:56px;padding:8px 12px}
+html[data-ui=phone] main{padding:8px max(8px,env(safe-area-inset-right)) 12px max(8px,env(safe-area-inset-left))}
+html[data-ui=phone] .card{padding:12px;border-radius:8px}
+html[data-ui=phone] .title-row h2{font-size:18px}
+html[data-ui=phone] footer{font-size:11px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+html[data-ui=phone] .cats{display:grid;grid-template-columns:1fr 1fr}
+html[data-ui=phone] .radio-row{flex-direction:column}
+html[data-ui=phone] .sys .lbl{margin-top:8px}
+html[data-ui=phone] .sv-readout:empty,html[data-ui=phone] .sv-caption:empty,html[data-ui=phone] .sv-meas:empty{display:none}
+
+html[data-ui=phone][data-orient=portrait] main{padding-bottom:calc(var(--navh) + env(safe-area-inset-bottom) + 12px)}
+html[data-ui=phone][data-orient=portrait] footer{margin-bottom:calc(var(--navh) + env(safe-area-inset-bottom) + 12px)}
+html[data-ui=phone][data-orient=portrait] #tabSeg{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;border-radius:0;border:0;border-top:1px solid var(--line);box-shadow:0 -2px 8px rgba(0,0,0,.07);height:calc(var(--navh) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom)}
+html[data-ui=phone][data-orient=portrait] #tabSeg button{flex:1;font-size:15px;padding:0}
+html[data-ui=phone][data-orient=portrait] .toolbar{gap:8px}
+html[data-ui=phone][data-orient=portrait] #sNew,
+html[data-ui=phone][data-orient=portrait] .toolbar .grp{flex:1 1 100%}
+html[data-ui=phone][data-orient=portrait] .toolbar .grp{flex-wrap:nowrap}
+html[data-ui=phone][data-orient=portrait] .toolbar .grp select{flex:1 1 0;width:0;min-width:0}
+html[data-ui=phone][data-orient=portrait] .toolbar input[type=range]{flex:1;width:auto;min-width:0}
+html[data-ui=phone][data-orient=portrait] .toolbar .btn.toggle{flex:1 1 0}
+html[data-ui=phone][data-orient=portrait] .mc{grid-template-columns:1fr}
+html[data-ui=phone][data-orient=portrait] .qhead{gap:8px 12px}
+html[data-ui=phone][data-orient=portrait] .qhead .spacer{flex-basis:100%;height:0}
+html[data-ui=phone][data-orient=portrait] .qhead .btn{flex:1}
+html[data-ui=phone][data-orient=portrait] #qRun .actions{position:sticky;bottom:calc(var(--navh) + env(safe-area-inset-bottom));z-index:4;background:var(--card);margin:14px -12px 0;padding:10px 12px;border-top:1px solid var(--line)}
+html[data-ui=phone][data-orient=portrait] #qRun .actions .btn{flex:1}
+html[data-ui=phone][data-orient=portrait] #sView .rot-hint,
+html[data-ui=phone][data-orient=portrait] #qView .rot-hint{display:block}
+
+html[data-ui=phone][data-orient=portrait] .crit,
+html[data-ui=phone][data-orient=portrait] .crit tbody,
+html[data-ui=phone][data-orient=portrait] .crit tr{display:block}
+html[data-ui=phone][data-orient=portrait] .crit tr{padding:6px 0;border-top:1px solid var(--line)}
+html[data-ui=phone][data-orient=portrait] .crit th,
+html[data-ui=phone][data-orient=portrait] .crit td{display:block;width:auto;border:0;padding:1px 0}
+html[data-ui=phone][data-orient=portrait] .crit th{font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+html[data-ui=phone][data-orient=portrait] .crit tr.key{background:#fafbfc;padding:6px 8px;border-radius:6px}
+html[data-ui=phone][data-orient=portrait] .crit tr.key td,
+html[data-ui=phone][data-orient=portrait] .crit tr.key th{background:none}
+
+html[data-ui=phone][data-orient=portrait] .steps,
+html[data-ui=phone][data-orient=portrait] .steps tbody{display:block}
+html[data-ui=phone][data-orient=portrait] .steps colgroup{display:none}
+html[data-ui=phone][data-orient=portrait] .steps tr{display:grid;grid-template-columns:minmax(0,1fr) 28px;padding:6px 8px;border-bottom:1px solid var(--line)}
+html[data-ui=phone][data-orient=portrait] .steps tr:first-child{display:none}
+html[data-ui=phone][data-orient=portrait] .steps td{border:0;padding:1px 0}
+html[data-ui=phone][data-orient=portrait] .steps td.sn{grid-column:1;grid-row:1;font-weight:600}
+html[data-ui=phone][data-orient=portrait] .steps td.sm{grid-column:2;grid-row:1;text-align:right}
+html[data-ui=phone][data-orient=portrait] .steps td.sy,
+html[data-ui=phone][data-orient=portrait] .steps td.sa{grid-column:1/-1}
+html[data-ui=phone][data-orient=portrait] .steps td.sy::before{content:'You: ';color:var(--muted)}
+html[data-ui=phone][data-orient=portrait] .steps td.sa::before{content:'Accepted: ';color:var(--muted)}
+
+html[data-ui=phone][data-orient=portrait] .review-list,
+html[data-ui=phone][data-orient=portrait] .review-list tbody{display:block}
+html[data-ui=phone][data-orient=portrait] .review-list colgroup{display:none}
+html[data-ui=phone][data-orient=portrait] .review-list tr{display:grid;grid-template-columns:30px minmax(0,1fr) 24px auto;column-gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+html[data-ui=phone][data-orient=portrait] .review-list tr:first-child{display:none}
+html[data-ui=phone][data-orient=portrait] .review-list td{border:0;padding:0;font-size:13px}
+html[data-ui=phone][data-orient=portrait] .review-list td.rn{grid-column:1;grid-row:1/3}
+html[data-ui=phone][data-orient=portrait] .review-list td.ra{grid-column:2;grid-row:1}
+html[data-ui=phone][data-orient=portrait] .review-list td.rc{grid-column:2;grid-row:2}
+html[data-ui=phone][data-orient=portrait] .review-list td.rm{grid-column:3;grid-row:1/3}
+html[data-ui=phone][data-orient=portrait] .review-list td.rb{grid-column:4;grid-row:1/3}
+html[data-ui=phone][data-orient=portrait] .review-list td.ra::before{content:'You: ';color:var(--muted)}
+html[data-ui=phone][data-orient=portrait] .review-list td.rc::before{content:'Answer: ';color:var(--muted)}
+
+html[data-ui=phone][data-orient=landscape] header{position:static;padding-top:4px;padding-bottom:4px}
+html[data-ui=phone][data-orient=landscape] header h1{font-size:15px}
+html[data-ui=phone][data-orient=landscape] .card{padding:10px}
+
+  /* ---- Access gate (same methodology as EMR-Sim.html / EKG Rhythm Trainer) ---- */
+  #twelveGate{
+    position:fixed;inset:0;z-index:9999;
+    background:linear-gradient(135deg,#003366 0%,#1a4a7a 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;
+    padding:20px;box-sizing:border-box;
+  }
+  #twelveGate .gate-box{
+    background:#fff;border-radius:16px;padding:40px 36px;
+    box-shadow:0 12px 40px rgba(0,0,0,0.25);
+    max-width:360px;width:100%;text-align:center;box-sizing:border-box;
+  }
+  #twelveGate h2{margin:0 0 8px;font-size:1.4em;color:#1a2530;font-weight:700;letter-spacing:normal;text-transform:none;}
+  #twelveGate input[type="password"]{
+    width:100%;padding:10px 12px;font-size:16px;border:1px solid #9fabb5;
+    border-radius:6px;margin:0 0 12px;box-sizing:border-box;background:#fff;color:#1a2530;
+    font-family:inherit;display:block;
+  }
+  #twelveGate button{
+    width:100%;padding:10px;font-size:14px;font-weight:600;color:#fff;
+    background:#00629b;border:none;border-radius:6px;cursor:pointer;font-family:inherit;display:block;
+  }
+  #twelveGate button:hover{background:#003865;}
+  #twelveGate .gate-error{color:#c8102e;font-size:12.5px;margin:10px 0 0;display:none;}
+</style>
+</head>
+<body>
+<div id="twelveGate">
+  <div class="gate-box">
+    <h2>Enter your password</h2>
+    <input type="password" id="twelveGatePassword" placeholder="Password" autocomplete="off">
+    <button type="button" id="twelveGateSubmit">Enter</button>
+    <p class="gate-error" id="twelveGateError">Incorrect password. Try again.</p>
+  </div>
+</div>
+
+<div id="appMain" style="display:none;">
+
+<header>
+  <h1>12-Lead <span>EKG Trainer</span></h1>
+  <div class="seg" id="tabSeg"><button data-tab="study" class="on">Study</button><button data-tab="quiz">Quiz</button></div>
+  <div class="spacer"></div>
+  <span class="seg-label">Display</span>
+  <div class="seg" id="modeSeg"><button data-mode="static" class="on">Strip</button><button data-mode="live">Live</button></div>
+</header>
+
+<main>
+  <!-- STUDY -->
+  <section id="studyTab" class="study">
+    <nav class="card rlist" id="rlist" aria-label="12-lead bank"></nav>
+    <div class="card">
+      <select class="rselect" id="rselect" aria-label="Choose 12-lead pattern"></select>
+      <div class="title-row"><h2 id="sTitle"></h2><span class="chip" id="sGroup"></span></div>
+      <div class="toolbar">
+        <button class="btn primary" id="sNew" title="Generate a new variation of this 12-lead">New variation</button>
+        <span class="grp" id="sRateGrp"><span id="sRateLbl">Rate</span><input type="range" id="sRate"><span class="rate-val" id="sRateVal"></span></span>
+        <span class="grp">Artifact
+          <select id="sArt"><option value="none">None</option><option value="tremor">Muscle tremor</option><option value="ac">60-cycle interference</option><option value="wander">Wandering baseline</option><option value="loose">Loose lead / motion</option><option value="mixed">Mixed</option></select>
+          <select id="sSev"><option value="mild">Mild</option><option value="moderate" selected>Moderate</option><option value="severe">Severe</option></select>
+        </span>
+        <button class="btn toggle" id="sLabels">Labels</button>
+        <button class="btn toggle" id="sCal">Calipers</button>
+        <button class="btn toggle hidden" id="sFreeze">Freeze</button>
+      </div>
+      <div id="sView"></div>
+      <div class="legend">Standard 3 × 4 format · 25 mm/s · 10 mm/mV · each column = 2.5 s (all 12 leads recorded simultaneously) · rhythm strip = lead II, 10 s · 1 small box = 40 ms / 0.1 mV · 1 large box = 200 ms / 0.5 mV</div>
+      <table class="crit" id="sCrit"></table>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quizTab" class="hidden">
+    <div class="card quiz-setup" id="qSetup">
+      <h2>Quiz setup</h2>
+      <div style="color:var(--muted);font-size:14px">Every question is a newly generated 12-lead, so no two quizzes are alike.</div>
+      <div class="form-grid">
+        <div class="lbl">Quiz type</div>
+        <div class="radio-row">
+          <label class="inline"><input type="radio" name="qtype" value="quick" checked> Quick — name the pattern</label>
+          <label class="inline"><input type="radio" name="qtype" value="sys"> Systematic — step-by-step</label>
+        </div>
+        <div class="lbl">Questions</div>
+        <div><select id="qN"><option>5</option><option selected>10</option><option>15</option><option>20</option><option>30</option><option>50</option></select></div>
+        <div class="lbl">Time per question</div>
+        <div><select id="qTime"><option value="0" selected>Off</option><option value="30">30 s</option><option value="60">60 s</option><option value="90">90 s</option><option value="120">2 min</option><option value="180">3 min</option></select></div>
+        <div class="lbl">Feedback</div>
+        <div class="radio-row">
+          <label class="inline"><input type="radio" name="qfb" value="now" checked> After each question</label>
+          <label class="inline"><input type="radio" name="qfb" value="end"> At the end</label>
+        </div>
+        <div class="lbl">Artifact</div>
+        <div><select id="qArt"><option value="0">None</option><option value="0.3" selected>Occasional</option><option value="0.7">Frequent</option></select></div>
+        <div class="lbl">Categories</div>
+        <div class="cats" id="qCats"></div>
+      </div>
+      <div class="actions"><button class="btn primary" id="qStart">Start quiz</button><span id="qSetupMsg" style="color:var(--bad);font-size:14px"></span></div>
+    </div>
+
+    <div class="card hidden" id="qRun">
+      <div class="qhead">
+        <span class="prog" id="qProg"></span>
+        <span class="score" id="qScore"></span>
+        <span class="timer hidden" id="qTimer"></span>
+        <div class="spacer"></div>
+        <button class="btn toggle" id="qCal">Calipers</button>
+        <button class="btn toggle hidden" id="qFreeze">Freeze</button>
+        <button class="btn toggle hidden" id="qLabels">Labels</button>
+        <button class="btn" id="qQuit">End quiz</button>
+      </div>
+      <div id="qView"></div>
+      <div class="answers" id="qAnswers"></div>
+      <div class="actions">
+        <button class="btn primary" id="qSubmit">Submit</button>
+        <button class="btn primary hidden" id="qNext">Next</button>
+      </div>
+      <div id="qFeedback"></div>
+    </div>
+
+    <div class="card hidden" id="qSummary">
+      <div class="sum-top">
+        <div><div style="color:var(--muted);font-size:13px">Interpretation score</div><div class="big" id="sumScore"></div></div>
+        <div id="sumDetail" style="flex:1;min-width:240px"></div>
+        <div class="actions" style="margin-top:0"><button class="btn primary" id="qRetake">Retake (same settings)</button><button class="btn" id="qNewSetup">New setup</button></div>
+      </div>
+      <div id="reviewPane" class="hidden" style="margin-top:16px">
+        <div class="title-row"><h2 id="rvTitle" style="font-size:18px"></h2><span class="chip" id="rvGroup"></span><div class="spacer"></div><button class="btn toggle" id="rvCal">Calipers</button><button class="btn toggle on" id="rvLabels">Labels</button></div>
+        <div id="rvView"></div>
+        <div id="rvSteps"></div>
+        <table class="crit" id="rvCrit"></table>
+      </div>
+      <table class="review-list" id="reviewList"></table>
+    </div>
+  </section>
+</main>
+<footer>Educational simulation for 12-lead interpretation practice. Tracings are computer-generated from a cardiac-vector model with physiologic timing rules, not patient recordings, and are not intended for clinical decision-making.<span id="devNote"></span></footer>
+
+</div><!-- /appMain -->
+
+<script>
+'use strict';
+/* =====================================================================
+   DEVICE DETECTION  (identical to EKG Rhythm Trainer)
+   Override for previewing: ?device=phone | tablet | desktop
+   ===================================================================== */
+const Device = (function(){
+  const root = document.documentElement, nav = navigator, ua = nav.userAgent || '';
+  const mq = q => { try{ return !!(window.matchMedia && window.matchMedia(q).matches); }catch(e){ return false; } };
+  const forced = (new URLSearchParams(location.search).get('device') || '').toLowerCase();
+  const isForced = (forced==='phone' || forced==='tablet' || forced==='desktop');
+  const listeners = []; let info = {}, pending = false;
+  function hardware(){
+    if(isForced) return forced;
+    const tp = nav.maxTouchPoints || 0, shortSide = Math.min(screen.width || innerWidth, screen.height || innerHeight);
+    if(/iPad/.test(ua) || (nav.platform==='MacIntel' && tp>1)) return 'tablet';
+    if(/iPhone|iPod/.test(ua)) return 'phone';
+    if(/Android/i.test(ua)) return /Mobile/i.test(ua) ? 'phone' : 'tablet';
+    if(nav.userAgentData && nav.userAgentData.mobile) return shortSide<600 ? 'phone' : 'tablet';
+    if(mq('(pointer: coarse)') && mq('(hover: none)')) return shortSide<600 ? 'phone' : 'tablet';
+    return 'desktop';
+  }
+  function orientation(type){
+    const viewport = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+    if(isForced || type==='desktop') return viewport;
+    if(screen.orientation && screen.orientation.type) return /landscape/.test(screen.orientation.type) ? 'landscape' : 'portrait';
+    if(typeof window.orientation==='number') return Math.abs(window.orientation)===90 ? 'landscape' : 'portrait';
+    return viewport;
+  }
+  function compute(){
+    const type = hardware();
+    const ui = (window.innerWidth < 600) ? 'phone' : type;
+    const touch = isForced ? type!=='desktop' : (type!=='desktop' || mq('(pointer: coarse)'));
+    return {type, ui, touch, orient:orientation(type)};
+  }
+  function apply(){
+    const n = compute(), key = [n.type,n.ui,n.orient,n.touch].join('|'), changed = key!==info.key;
+    n.key = key; info = n;
+    root.dataset.device = n.type; root.dataset.ui = n.ui; root.dataset.orient = n.orient; root.dataset.input = n.touch ? 'touch' : 'mouse';
+    const note = document.getElementById('devNote');
+    if(note) note.textContent = 'Layout: '+({phone:'Phone',tablet:'Tablet',desktop:'Desktop'})[n.ui]+(n.ui!=='desktop' ? ' · '+n.orient : '')+(isForced ? ' (set by URL)' : ' (auto-detected)');
+    if(changed) listeners.forEach(f=>f(n));
+  }
+  function schedule(){ if(pending) return; pending = true; requestAnimationFrame(()=>{ pending = false; apply(); }); }
+  window.addEventListener('resize', schedule);
+  window.addEventListener('orientationchange', ()=>setTimeout(schedule,150));
+  if(screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener('change', schedule);
+  apply();
+  return { get info(){ return info; }, onChange:f=>listeners.push(f) };
+})();
+
+/* =====================================================================
+   CONSTANTS — paper geometry (all drawing is done in millimetres)
+   ===================================================================== */
+const DT = 0.001;              // sample interval (s)
+const MM_PER_S = 25;           // paper speed
+const MM_PER_MV = 10;          // gain
+const PAGE_S = 10;             // one 12-lead page = 10 s
+const COL_S = 2.5;             // each column of the 3 x 4 layout
+const LEFT_MM = 10;            // left margin holding the 1 mV calibration pulse
+const PAGE_MM = PAGE_S*MM_PER_S;   // 250 mm
+const W_MM = LEFT_MM + PAGE_MM;    // 260 mm
+const H_MM = 150;
+const ROW_BASE = [25, 61, 97, 133];  // isoelectric line of each row (mm from top)
+const ROW_H = 36;
+const LIVE_S = 120;            // length of generated live sequence (s) — a multiple of PAGE_S
+const LAYOUT = [['I','aVR','V1','V4'],['II','aVL','V2','V5'],['III','aVF','V3','V6']];
+const RHY_LEAD = 'II';
+const LEADS = ['I','II','III','aVR','aVL','aVF','V1','V2','V3','V4','V5','V6'];
+
+/* =====================================================================
+   RANDOM + NOISE
+   ===================================================================== */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function makeRng(seed){
+  const f = mulberry32(seed>>>0);
+  return { next:f, u:(a,b)=>a+(b-a)*f(), i:(a,b)=>Math.floor(a+(b-a+1)*f()), pick:arr=>arr[Math.floor(f()*arr.length)], chance:p=>f()<p };
+}
+function newSeed(){return Math.floor(Math.random()*2147483647)+1;}
+function makeNoise(rng, spacing, t0, t1){
+  const n = Math.ceil((t1-t0)/spacing)+3, v = new Float32Array(n);
+  for(let i=0;i<n;i++) v[i]=rng.u(-1,1);
+  return t=>{
+    const x=(t-t0)/spacing; let i=Math.floor(x);
+    if(i<0) i=0; if(i>n-2) i=n-2;
+    const f=x-i, w=(1-Math.cos(Math.PI*f))/2;
+    return v[i]*(1-w)+v[i+1]*w;
+  };
+}
+
+/* =====================================================================
+   CARDIAC VECTOR MODEL
+   The heart is modelled as a moving dipole (x = left, y = inferior,
+   z = anterior, in mV). Every wave is a sum of Gaussian vector components.
+   Limb leads follow Einthoven/Goldberger exactly (I + III = II, etc.);
+   precordial leads are projections onto chest-lead vectors with
+   proximity gain, plus optional local (non-dipolar) terms for
+   regional findings such as Brugada or Wellens.
+   ===================================================================== */
+const vs=(v,k)=>[v[0]*k,v[1]*k,v[2]*k];
+const va=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+const vn=v=>{ const m=Math.hypot(v[0],v[1],v[2])||1; return vs(v,1/m); };
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const PREC = {
+  V1:{v:[-0.45,0.05,0.89], g:1.3}, V2:{v:[-0.09,0.05,1.0], g:2.0}, V3:{v:[0.26,0.1,0.96], g:2.1},
+  V4:{v:[0.5,0.2,0.84], g:2.0},    V5:{v:[0.85,0.2,0.5], g:1.6},   V6:{v:[1.0,0.2,0.05], g:1.2}
+};
+function projLead(L, v){
+  const I=v[0], II=0.5*v[0]+0.866*v[1], III=II-I;
+  switch(L){
+    case 'I': return I; case 'II': return II; case 'III': return III;
+    case 'aVR': return -(I+II)/2; case 'aVL': return (I-III)/2; case 'aVF': return (II+III)/2;
+    default: return PREC[L].g*dot(PREC[L].v, v);
+  }
+}
+
+class Ecg{
+  constructor(rng, t0, t1){
+    this.rng=rng; this.t0=t0; this.t1=t1;
+    this.g=[]; this.pl=[]; this.loc=[]; this.beats=[]; this.ans={}; this.hl=null;
+    this.swap=false; this.caption=''; this.art={}; this.looseEl=null; this.sp=null;
+  }
+  g3(c,s,v,k){ if(k===0) return; this.g.push({c, s, v:(k==null?v:vs(v,k))}); }
+  p3(on,off,r1,r2,v,k){ this.pl.push({on, off, r1, r2, v:(k==null?v:vs(v,k))}); }
+  lg(lead,c,s,a){ if(a) this.loc.push({lead, c, s, a}); }
+  lp(lead,on,off,r1,r2,a){ if(a) this.loc.push({lead, on, off, r1, r2, a, p:1}); }
+  // One P-QRS-T complex. tOn = QRS onset.
+  beat(tOn, sp, o){
+    const odd = (o.i%2===1), qk = (sp.alt && odd) ? sp.alt : 1;
+    const pOn = tOn - sp.pr;
+    if(sp.p) for(const c of sp.p) this.g3(pOn+c[0], c[1], c[2]);
+    if(sp.prseg) this.p3(pOn+0.085, tOn+0.004, 0.008, 0.004, sp.prseg);
+    for(const c of sp.qrs) this.g3(tOn+c[0], c[1], (sp.altV && odd) ? va(c[2], sp.altV) : c[2], qk);
+    const J = tOn+sp.qd, QT = sp.qtc*Math.sqrt(o.rr), tEnd = tOn+QT, T = sp.t, pk = tEnd-2.4*T.s;
+    if(T.v){ this.g3(pk, T.s, T.v); if(!T.sym) this.g3(pk-1.2*T.s, T.s*1.1, T.v, 0.3); }
+    if(T.v2) this.g3(pk+T.d2, T.s2, T.v2);
+    if(sp.st){ const s=sp.st; this.p3(J+(s.dj||0), pk+(s.de||0), s.r1||0.008, s.r2||0.035, s.v); }
+    if(sp.u) this.g3(tEnd+0.075, 0.042, sp.u);
+    if(sp.jw) this.g3(J+0.008, 0.012, sp.jw);
+    if(sp.local) sp.local(this, {tOn, J, pk, tEnd, pOn, T, rr:o.rr, i:o.i});
+    const b = {t:tOn+0.04, on:tOn, off:J, pOn:sp.p?pOn:null, pk, tEnd, qt:QT, rr:o.rr};
+    this.beats.push(b); return b;
+  }
+}
+
+function render(E, D){
+  const n=Math.round(D/DT)+1, X=new Float32Array(n), Y=new Float32Array(n), Z=new Float32Array(n);
+  for(const e of E.g){
+    const lo=e.c-4*e.s, hi=e.c+4*e.s; if(hi<0||lo>D) continue;
+    const i0=Math.max(0,Math.ceil(lo/DT)), i1=Math.min(n-1,Math.floor(hi/DT)), inv=1/(2*e.s*e.s), v=e.v;
+    for(let i=i0;i<=i1;i++){ const x=i*DT-e.c, w=Math.exp(-x*x*inv); X[i]+=v[0]*w; Y[i]+=v[1]*w; Z[i]+=v[2]*w; }
+  }
+  const platW=(e,t)=>1/(1+Math.exp(-(t-e.on)/e.r1))/(1+Math.exp((t-e.off)/e.r2));
+  for(const e of E.pl){
+    const lo=e.on-7*e.r1, hi=e.off+7*e.r2; if(hi<0||lo>D) continue;
+    const i0=Math.max(0,Math.ceil(lo/DT)), i1=Math.min(n-1,Math.floor(hi/DT)), v=e.v;
+    for(let i=i0;i<=i1;i++){ const w=platW(e,i*DT); X[i]+=v[0]*w; Y[i]+=v[1]*w; Z[i]+=v[2]*w; }
+  }
+  const L={};
+  L.I=X; const II=new Float32Array(n); for(let i=0;i<n;i++) II[i]=0.5*X[i]+0.866*Y[i]; L.II=II;
+  const III=new Float32Array(n), aVR=new Float32Array(n), aVL=new Float32Array(n), aVF=new Float32Array(n);
+  for(let i=0;i<n;i++){ III[i]=II[i]-X[i]; aVR[i]=-(X[i]+II[i])/2; aVL[i]=(X[i]-III[i])/2; aVF[i]=(II[i]+III[i])/2; }
+  L.III=III; L.aVR=aVR; L.aVL=aVL; L.aVF=aVF;
+  for(const k of ['V1','V2','V3','V4','V5','V6']){
+    const a=new Float32Array(n), pv=PREC[k].v, g=PREC[k].g;
+    for(let i=0;i<n;i++) a[i]=g*(pv[0]*X[i]+pv[1]*Y[i]+pv[2]*Z[i]);
+    L[k]=a;
+  }
+  for(const e of E.loc){
+    const a=L[e.lead];
+    if(e.p){ const lo=e.on-7*e.r1, hi=e.off+7*e.r2; if(hi<0||lo>D) continue;
+      const i0=Math.max(0,Math.ceil(lo/DT)), i1=Math.min(n-1,Math.floor(hi/DT));
+      for(let i=i0;i<=i1;i++) a[i]+=e.a*platW(e,i*DT);
+    } else { const lo=e.c-4*e.s, hi=e.c+4*e.s; if(hi<0||lo>D) continue;
+      const i0=Math.max(0,Math.ceil(lo/DT)), i1=Math.min(n-1,Math.floor(hi/DT)), inv=1/(2*e.s*e.s);
+      for(let i=i0;i<=i1;i++){ const x=i*DT-e.c; a[i]+=e.a*Math.exp(-x*x*inv); }
+    }
+  }
+  if(E.swap){ // LA/RA electrodes reversed
+    const I=L.I.map(x=>-x), II2=L.III, III2=L.II, aVR2=L.aVL, aVL2=L.aVR;
+    L.I=I; L.II=II2; L.III=III2; L.aVR=aVR2; L.aVL=aVL2;
+  }
+  // Electrode-level artifact: each electrode carries its own noise; leads are re-derived from electrodes,
+  // so (for example) a loose LL electrode disturbs II, III and aVF but leaves lead I clean.
+  const els=Object.keys(E.art);
+  if(els.length){
+    const ev={};
+    for(const el of els){ const fs=E.art[el], a=new Float32Array(n); for(let i=0;i<n;i++){ const t=i*DT; let s=0; for(const f of fs) s+=f(t); a[i]=s; } ev[el]=a; }
+    const Z0=new Float32Array(0), R=ev.RA||null, Lf=ev.LA||null, F=ev.LL||null;
+    for(let i=0;i<n;i++){
+      const r=R?R[i]:0, l=Lf?Lf[i]:0, f=F?F[i]:0, wct=(r+l+f)/3;
+      L.I[i]+=l-r; L.II[i]+=f-r; L.III[i]+=f-l; L.aVR[i]+=r-(l+f)/2; L.aVL[i]+=l-(r+f)/2; L.aVF[i]+=f-(r+l)/2;
+      for(const k of ['V1','V2','V3','V4','V5','V6']) L[k][i]+=(ev[k]?ev[k][i]:0)-wct;
+    }
+  }
+  return L;
+}
+
+/* =====================================================================
+   MORPHOLOGY BUILDING BLOCKS
+   ===================================================================== */
+// Normal adult QRS/P/T spec. o: overrides (ax range, A amplitude, qd duration, zb posterior bias, sep, term, tA, pa)
+function baseSpec(r, o={}){
+  const ax = o.axis!=null ? o.axis : r.u(o.ax?o.ax[0]:5, o.ax?o.ax[1]:75);
+  const A = o.A || r.u(0.95,1.3), a = ax*Math.PI/180;
+  const qd = o.qd || r.u(0.08,0.098), k = qd/0.09;
+  const cx=Math.cos(a), cy=Math.sin(a), zb = (o.zb!=null) ? o.zb : r.u(0.6,0.85);
+  const m1=[0.8*A*cx, 0.8*A*cy, 0.2*A], m2=[0.6*A*cx, 0.6*A*cy, -zb*A];
+  const sep = o.sep || [-0.16*r.u(0.7,1.2), 0.05, 0.22*r.u(0.7,1.2)];
+  const term = o.term || vs([-0.12*A,-0.16*A,-0.18*A], r.u(0.5,1.1));
+  const pa = (o.pa||1)*r.u(0.8,1.2);
+  return {
+    ax, A, qd, k, dir:vn([cx,cy,-0.45]),
+    pr: o.pr || r.u(0.13,0.18), qtc: o.qtc || r.u(0.38,0.43),
+    qrs:[[0.012*k,0.006*k,sep],[0.034*k,0.0095*k,m1],[0.05*k,0.0095*k,m2],[0.07*k,0.008*k,term]],
+    p:[[0.03,0.016,vs([0.04,0.10,0.05],pa)],[0.058,0.017,vs([0.08,0.06,-0.02],pa)]],
+    t:{v:vs([0.32*r.u(0.85,1.15),0.24*r.u(0.85,1.15),0.17*r.u(0.8,1.2)], (o.tA||1)*r.u(0.85,1.15)), s:r.u(0.036,0.043)}
+  };
+}
+function sinus(E, rate, sp){
+  E.sp=sp; const r=E.rng, RR=60/rate; let t=E.t0+r.u(0,RR), i=0;
+  while(t<E.t1){ const rr=RR*(1+r.u(-0.015,0.015)); E.beat(t, sp, {rr, i}); t+=rr; i++; }
+}
+const LAE_P = (r,pa)=>[[0.03,0.016,vs([0.04,0.10,0.05],pa)],[0.078,0.021,vs([0.12,0.08,-0.08],pa)]];
+const RAE_P = (r,pa)=>[[0.035,0.0145,vs([0.05,0.24,0.12],pa)],[0.06,0.016,vs([0.07,0.05,-0.02],pa)]];
+// ST-elevation infarction: injury vector stv, hyperacute T in the same direction, optional Q waves
+function stemi(E, rt, stv, o={}){
+  const r=E.rng, sp=baseSpec(r, o.base||{});
+  sp.st={v:stv, r1:0.006, r2:0.035};
+  sp.t.v=va(sp.t.v, vs(stv, o.tk!=null?o.tk:r.u(0.9,1.4)));
+  if(o.mod) o.mod(sp, r);
+  sinus(E, rt, sp);
+}
+// Local T-wave changes in chosen precordial leads: depth (mV) below the baseline, relative to the normal T
+function localT(map, depth, o={}){
+  return (E,b)=>{ for(const L in map){ const k=map[L], base=projLead(L, b.T.v);
+    if(o.biphasic){ E.lg(L, b.pk+0.035, 0.035, -(base*0.55+depth*k)); }
+    else { E.lg(L, b.pk-1.2*b.T.s, b.T.s*1.1, -0.3*base); E.lg(L, b.pk, b.T.s*(o.sw||1), -(base+depth*k)); } } };
+}
+
+/* =====================================================================
+   12-LEAD BANK
+   ans: accepted systematic answers for chamber / ST-T / location.
+   Rate, axis, PR, QRS and QTc are computed from the generated tracing.
+   ===================================================================== */
+const N_ANS = {chamb:['none'], stt:['none'], loc:['none']};
+const RH_LIST = [
+/* ---------- NORMAL & TECHNICAL ---------- */
+{id:'normal', g:'Normal & Technical', name:'Normal 12-lead EKG', rate:[55,98],
+ gen:(E,rt)=>sinus(E,rt,baseSpec(E.rng)),
+ ans:N_ANS,
+ crit:{axis:'Normal (−30° to +90°)',int:'PR 120–200 ms · QRS < 110 ms · QTc ≤ 450 (men) / 460 (women) ms',p:'Upright in I, II, aVF; inverted in aVR',qrs:'Small septal q in I, aVL, V5–V6; R waves grow V1→V6 with transition at V3–V4',st:'Isoelectric',t:'Upright in I, II, V3–V6; inverted in aVR (V1 may be inverted)',leads:'—',key:'Know normal cold — every abnormal pattern is a departure from it'}},
+{id:'erepol', g:'Normal & Technical', name:'Benign early repolarization', rate:[50,85],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{tA:r.u(1.25,1.5)}); sp.st={v:vs([0.28,0.3,0.32],r.u(0.22,0.32)), r1:0.016, r2:0.04};
+   const nA=r.u(0.07,0.13); sp.local=(E,b)=>{ for(const [L,k] of [['V2',0.6],['V3',1],['V4',1],['V5',0.8],['V6',0.4]]) E.lg(L,b.J+0.004,0.0075,nA*k); };
+   sinus(E,rt,sp); E.caption='J-point notch with concave ST elevation, no reciprocal depression'; },
+ ans:{chamb:['none'],stt:['jwave','diffuse'],loc:['none','diffuse']},
+ hl:[{leads:['V2','V3','V4','V5'],kind:'up',txt:'J notch / ST↑'}],
+ crit:{axis:'Normal',int:'Normal; QTc normal',p:'Normal; no PR depression',qrs:'Notched or slurred J point (“fishhook”), most often V2–V5',st:'Concave (“smiley”) elevation, usually < 2 mm, most prominent V2–V5',t:'Tall, broad, concordant',leads:'V2–V5 (± II, III, aVF)',key:'Young, asymptomatic, stable over time; no reciprocal ST depression (except aVR)'}},
+{id:'lareversal', g:'Normal & Technical', name:'Limb lead reversal (LA/RA)', rate:[55,95],
+ gen:(E,rt)=>{ sinus(E,rt,baseSpec(E.rng)); E.swap=true; E.caption='Lead I is upside-down: P, QRS and T all negative'; },
+ ans:N_ANS,
+ hl:[{leads:['I'],kind:'note',txt:'all inverted'},{leads:['aVR'],kind:'note',txt:'upright'}],
+ crit:{axis:'Appears rightward or extreme — an artifact of the reversal',int:'Normal',p:'Inverted P wave in lead I; upright P in aVR',qrs:'Lead I globally negative; II ↔ III and aVR ↔ aVL exchanged',st:'Normal',t:'Inverted in lead I',leads:'I, II, III, aVR, aVL (aVF unchanged)',key:'Global negativity in lead I with NORMAL precordial R-wave progression (unlike dextrocardia) — repeat the EKG'}},
+
+/* ---------- CONDUCTION ---------- */
+{id:'rbbb', g:'Conduction', name:'Right bundle branch block', rate:[55,95],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{qd:0.08, zb:r.u(0.35,0.5)}), qd=r.u(0.125,0.15);
+   sp.qrs.push([qd-0.046,0.023,vs([-0.45,0.05,0.6],r.u(0.8,1.1))]); sp.qd=qd;
+   sp.local=localT({V1:1,V2:0.8,V3:0.35}, r.u(0.12,0.22)); sinus(E,rt,sp); E.caption='Terminal R′ in V1 and broad S in I and V6'; },
+ ans:{chamb:['none'],stt:['secondary','none'],loc:['none']},
+ hl:[{leads:['V1','V2'],kind:'note',txt:'rsR′'},{leads:['I','V6'],kind:'note',txt:'wide S'}],
+ crit:{axis:'Usually normal',int:'QRS ≥ 120 ms',p:'Normal',qrs:'rsR′ (“M”) in V1–V2; wide, slurred S wave in I, aVL, V5–V6',st:'Mild depression V1–V3 (secondary)',t:'Inverted V1–V3 (discordant to the R′)',leads:'V1–V2; I, V6',key:'Late rightward–anterior forces: R′ in V1, wide S in the lateral leads'}},
+{id:'lbbb', g:'Conduction', name:'Left bundle branch block', rate:[55,95],
+ gen:(E,rt)=>{ const r=E.rng, ax=r.u(-25,40), A=r.u(1.2,1.45), a=ax*Math.PI/180, qd=r.u(0.14,0.17), k=qd/0.15;
+   const dir=[Math.cos(a),Math.sin(a),-0.72], m=vs(dir,A), un=vn(dir), sp=baseSpec(r,{axis:ax, qtc:r.u(0.42,0.45)});
+   sp.qd=qd; sp.qrs=[[0.022*k,0.012*k,[0.25,0.05,-0.15]],[0.058*k,0.02*k,vs(m,0.75)],[0.105*k,0.02*k,vs(m,0.8)]];
+   sp.st={v:vs(un,-r.u(0.1,0.15)), r1:0.01, r2:0.04}; sp.t={v:vs(un,-r.u(0.3,0.4)), s:0.05};
+   sinus(E,rt,sp); E.caption='Broad notched R in I/V6 with no septal q; deep QS in V1'; },
+ ans:{chamb:['none'],stt:['secondary'],loc:['none']},
+ hl:[{leads:['V1','V2'],kind:'note',txt:'deep QS'},{leads:['I','aVL','V6'],kind:'note',txt:'broad R'}],
+ crit:{axis:'Normal or left',int:'QRS ≥ 120 ms',p:'Normal',qrs:'Broad, notched/slurred R in I, aVL, V5–V6 with NO septal q; deep QS or rS in V1–V3',st:'Discordant: elevated V1–V3, depressed I, aVL, V5–V6',t:'Discordant to the main QRS deflection',leads:'V1–V3; I, aVL, V5–V6',key:'Appropriate discordance is expected — concordant ST changes suggest infarction (Sgarbossa)'}},
+{id:'lafb', g:'Conduction', name:'Left anterior fascicular block', rate:[55,95],
+ gen:(E,rt)=>{ const r=E.rng; sinus(E,rt,baseSpec(r,{ax:[-75,-50], sep:[-0.06*r.u(0.8,1.2),0.24*r.u(0.8,1.2),0.15], qd:r.u(0.088,0.105)})); E.caption='qR in I/aVL, rS in II/III/aVF, axis beyond −45°'; },
+ ans:N_ANS,
+ hl:[{leads:['I','aVL'],kind:'note',txt:'qR'},{leads:['II','III','aVF'],kind:'note',txt:'rS'}],
+ crit:{axis:'Left axis deviation, −45° to −90°',int:'QRS < 120 ms',p:'Normal',qrs:'qR in I and aVL; rS in II, III, aVF',st:'Normal',t:'Normal',leads:'I, aVL; II, III, aVF',key:'Marked left axis with qR in aVL — the most common cause of LAD'}},
+{id:'lpfb', g:'Conduction', name:'Left posterior fascicular block', rate:[55,95],
+ gen:(E,rt)=>{ const r=E.rng; sinus(E,rt,baseSpec(r,{ax:[108,135], sep:[0.22*r.u(0.8,1.2),-0.24*r.u(0.8,1.2),0.12], qd:r.u(0.088,0.105)})); E.caption='rS in I, qR in III/aVF, axis beyond +100°'; },
+ ans:N_ANS,
+ hl:[{leads:['I','aVL'],kind:'note',txt:'rS'},{leads:['III','aVF'],kind:'note',txt:'qR'}],
+ crit:{axis:'Right axis deviation, +100° to +180°',int:'QRS < 120 ms',p:'Normal',qrs:'rS in I and aVL; qR in III and aVF',st:'Normal',t:'Normal',leads:'I, aVL; III, aVF',key:'Diagnosis of exclusion — rule out RVH, lateral MI, PE, and limb-lead reversal first'}},
+{id:'bifasc', g:'Conduction', name:'Bifascicular block (RBBB + LAFB)', rate:[55,95],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{ax:[-78,-58], sep:[-0.06,0.24,0.15], qd:0.08, A:r.u(1.15,1.4), zb:r.u(0.35,0.5)}), qd=r.u(0.125,0.15);
+   sp.qrs.push([qd-0.046,0.023,vs([-0.28,-0.12,0.62],r.u(0.85,1.1))]); sp.qd=qd;
+   sp.local=localT({V1:1,V2:0.8,V3:0.35}, r.u(0.12,0.2)); sinus(E,rt,sp); E.caption='RBBB pattern in V1 plus left axis deviation'; },
+ ans:{chamb:['none'],stt:['secondary','none'],loc:['none']},
+ hl:[{leads:['V1'],kind:'note',txt:'rsR′'},{leads:['II','III','aVF'],kind:'note',txt:'rS (LAD)'}],
+ crit:{axis:'Left axis deviation (−45° to −90°)',int:'QRS ≥ 120 ms',p:'Normal',qrs:'RBBB morphology (rsR′ V1, wide S I/V6) plus rS in II, III, aVF',st:'Secondary changes V1–V3',t:'Inverted V1–V3',leads:'V1; II, III, aVF',key:'Two of three fascicles blocked — add a long PR and it becomes “trifascicular”'}},
+{id:'wpw', g:'Conduction', name:'Wolff-Parkinson-White pattern', rate:[60,95],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{pr:r.u(0.085,0.11)}), ca=Math.cos(sp.ax*Math.PI/180), sa=Math.sin(sp.ax*Math.PI/180), pd=vn([0.75*ca+0.2,0.75*sa,0.4]), dA=r.u(0.3,0.42), sh=0.03;
+   sp.qrs=[[0.016,0.013,vs(pd,dA*0.5)],[0.034,0.015,vs(pd,dA)],[0.05,0.012,vs(pd,dA*0.6)]].concat(sp.qrs.slice(1).map(c=>[c[0]+sh,c[1],c[2]]));
+   sp.qd=0.09*sp.k*0.97+sh; sp.t.v=va(sp.t.v, vs(pd,-r.u(0.15,0.25)));
+   sinus(E,rt,sp); E.caption='Short PR with a slurred delta-wave upstroke'; },
+ ans:{chamb:['none'],stt:['secondary','none'],loc:['none']},
+ hl:[{leads:['II','V4','V5'],kind:'note',txt:'delta wave'}],
+ crit:{axis:'Variable (depends on pathway)',int:'PR < 120 ms · QRS ≥ 110–120 ms',p:'Normal',qrs:'Slurred initial upstroke (delta wave) widening the QRS',st:'Secondary, discordant to the delta wave',t:'Often discordant',leads:'Global — best seen where the delta wave is upright',key:'Short PR + delta wave = pre-excitation via an accessory pathway'}},
+
+/* ---------- CHAMBER ENLARGEMENT ---------- */
+{id:'lvh', g:'Chamber Enlargement', name:'Left ventricular hypertrophy with strain', rate:[55,95],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{A:r.u(1.5,1.8), ax:[-10,55], zb:r.u(0.82,0.95), qd:r.u(0.092,0.108)});
+   const un=vn([Math.cos(sp.ax*Math.PI/180), Math.sin(sp.ax*Math.PI/180), -0.35]);
+   sp.st={v:vs(un,-r.u(0.08,0.12)), r1:0.015, r2:0.05}; sp.t={v:vs(un,-r.u(0.22,0.3)), s:0.05};
+   if(r.chance(0.5)) sp.p=LAE_P(r,r.u(0.9,1.1)); sinus(E,rt,sp); E.caption='Very tall voltages with lateral ST depression / asymmetric T inversion'; },
+ ans:{chamb:['lvh'],stt:['secondary','depression'],loc:['none','lateral']},
+ hl:[{leads:['V1','V2'],kind:'note',txt:'deep S'},{leads:['V5','V6','aVL'],kind:'down',txt:'tall R + strain'}],
+ crit:{axis:'Normal or left',int:'QRS may be mildly prolonged (< 120 ms)',p:'Often left atrial enlargement',qrs:'Sokolow-Lyon: S V1 + R V5 or V6 ≥ 35 mm; or R aVL ≥ 11 mm; Cornell: R aVL + S V3 > 28 mm (men) / 20 mm (women)',st:'Downsloping depression in I, aVL, V5–V6 (strain)',t:'Asymmetric inversion in lateral leads',leads:'V1–V2 (deep S); I, aVL, V5–V6 (tall R + strain)',key:'High voltage alone is common in young/thin patients — strain pattern adds specificity'}},
+{id:'rvh', g:'Chamber Enlargement', name:'Right ventricular hypertrophy', rate:[60,100],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{ax:[100,140], zb:-r.u(0.35,0.55), A:r.u(1.1,1.35), qd:r.u(0.085,0.1)});
+   sp.local=(E,b)=>{ for(const [L,k] of [['V1',1],['V2',0.9],['V3',0.45]]){ E.lg(L,b.pk,b.T.s,-(projLead(L,b.T.v)+0.2*k)); E.lp(L,b.J,b.pk-0.04,0.01,0.03,-0.07*k); } };
+   if(r.chance(0.6)) sp.p=RAE_P(r,r.u(0.9,1.1)); sinus(E,rt,sp); E.caption='Dominant R wave in V1 with right axis deviation'; },
+ ans:{chamb:['rvh'],stt:['secondary','twi','depression'],loc:['none','anterior']},
+ hl:[{leads:['V1','V2'],kind:'note',txt:'tall R + strain'},{leads:['V5','V6','I'],kind:'note',txt:'deep S'}],
+ crit:{axis:'Right axis deviation (> +90°)',int:'Normal',p:'Often right atrial enlargement',qrs:'R > S in V1 (R ≥ 7 mm); deep S in V5–V6; rS in I',st:'Depression V1–V3 (RV strain)',t:'Inverted V1–V3',leads:'V1–V3; I, V5–V6',key:'RAD + dominant R in V1 — consider pulmonary hypertension, chronic lung disease, congenital disease'}},
+{id:'lae', g:'Chamber Enlargement', name:'Left atrial enlargement', rate:[55,95],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r); sp.p=LAE_P(r,r.u(0.95,1.15)); sinus(E,rt,sp); E.caption='Broad notched P in II; deep, wide terminal negative P in V1'; },
+ ans:{chamb:['lae'],stt:['none'],loc:['none']},
+ hl:[{leads:['II'],kind:'note',txt:'P mitrale'},{leads:['V1'],kind:'note',txt:'neg. terminal P'}],
+ crit:{axis:'Normal',int:'P-wave duration ≥ 120 ms',p:'Notched “M-shaped” P in II (P mitrale); terminal negative P in V1 ≥ 1 mm deep and ≥ 40 ms wide',qrs:'Normal',st:'Normal',t:'Normal',leads:'II; V1',key:'Look at the P wave in II and V1 on every EKG'}},
+{id:'rae', g:'Chamber Enlargement', name:'Right atrial enlargement', rate:[60,100],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{ax:[55,85]}); sp.p=RAE_P(r,r.u(1.0,1.2)); sinus(E,rt,sp); E.caption='Tall, peaked P waves in II, III and aVF'; },
+ ans:{chamb:['rae'],stt:['none'],loc:['none']},
+ hl:[{leads:['II','III','aVF'],kind:'note',txt:'P > 2.5 mm'},{leads:['V1'],kind:'note',txt:'tall initial P'}],
+ crit:{axis:'Normal to rightward',int:'P duration normal',p:'P ≥ 2.5 mm tall in II, III, aVF (P pulmonale); initial P in V1 > 1.5 mm',qrs:'Normal',st:'Normal',t:'Normal',leads:'II, III, aVF; V1',key:'Height, not width, defines right atrial enlargement'}},
+
+/* ---------- ISCHEMIA & INFARCTION ---------- */
+{id:'antstemi', g:'Ischemia & Infarction', name:'Anterior STEMI (LAD)', rate:[65,110],
+ gen:(E,rt)=>{ const r=E.rng, a=r.u(0.26,0.38); stemi(E,rt,vs([-0.15,-0.6,1],0.5*a),{mod:(sp,r)=>{ if(r.chance(0.5)){ sp.qrs[0][2]=[-0.05,0.02,-0.12]; E.caption='ST elevation V1–V4 with developing Q waves'; } }}); if(!E.caption) E.caption='Convex ST elevation in V1–V4'; },
+ ans:{chamb:['none'],stt:['regional'],loc:['anterior']},
+ hl:[{leads:['V1','V2','V3','V4'],kind:'up',txt:'ST↑'},{leads:['III','aVF'],kind:'down',txt:'recip.'}],
+ crit:{axis:'Normal',int:'Normal',p:'Normal',qrs:'Loss of R waves / Q waves V1–V3 may develop',st:'Elevation ≥ 2 mm (men ≥ 40 y: ≥ 2 mm; women ≥ 1.5 mm) in V2–V3, ≥ 1 mm in other contiguous leads',t:'Hyperacute, broad, then inverting',leads:'V1–V4 (septal V1–V2, anterior V3–V4)',key:'Left anterior descending occlusion — activate the cath lab'}},
+{id:'antlat', g:'Ischemia & Infarction', name:'Anterolateral STEMI', rate:[65,110],
+ gen:(E,rt)=>{ const r=E.rng, a=r.u(0.26,0.36); stemi(E,rt,vs([0.7,-0.35,0.75],0.5*a)); E.caption='ST elevation across V2–V6, I and aVL'; },
+ ans:{chamb:['none'],stt:['regional'],loc:['antlat']},
+ hl:[{leads:['V2','V3','V4','V5','V6','I','aVL'],kind:'up',txt:'ST↑'},{leads:['III','aVF'],kind:'down',txt:'recip.'}],
+ crit:{axis:'Normal',int:'Normal',p:'Normal',qrs:'Q waves may develop',st:'Elevation V2–V6, I, aVL',t:'Hyperacute',leads:'V1–V6, I, aVL; reciprocal III, aVF',key:'Proximal LAD (or left main) — a large territory at risk'}},
+{id:'latstemi', g:'Ischemia & Infarction', name:'Lateral STEMI', rate:[60,105],
+ gen:(E,rt)=>{ const r=E.rng, a=r.u(0.14,0.2); stemi(E,rt,vs([0.9,-0.5,-0.05],a),{tk:r.u(0.7,1.0)}); E.caption='ST elevation I, aVL, V5–V6 with reciprocal depression in III'; },
+ ans:{chamb:['none'],stt:['regional'],loc:['lateral']},
+ hl:[{leads:['I','aVL','V5','V6'],kind:'up',txt:'ST↑'},{leads:['III','aVF','V1'],kind:'down',txt:'recip.'}],
+ crit:{axis:'Normal',int:'Normal',p:'Normal',qrs:'Q waves may develop in I, aVL',st:'Elevation I, aVL, V5–V6; reciprocal depression III, aVF',t:'Hyperacute',leads:'I, aVL, V5–V6',key:'Circumflex or diagonal — elevation in aVL can be subtle; the reciprocal change in III is often the giveaway'}},
+{id:'infstemi', g:'Ischemia & Infarction', name:'Inferior STEMI', rate:[50,100],
+ gen:(E,rt)=>{ const r=E.rng, a=r.u(0.2,0.3); stemi(E,rt,vs([-0.25,1,-0.15],a),{mod:(sp,r)=>{ if(r.chance(0.4)) sp.qrs[0][2]=[0.06,-0.28,0.06]; }}); E.caption='ST elevation II, III, aVF (III > II) with reciprocal depression in aVL'; },
+ ans:{chamb:['none'],stt:['regional'],loc:['inferior']},
+ hl:[{leads:['II','III','aVF'],kind:'up',txt:'ST↑'},{leads:['I','aVL'],kind:'down',txt:'recip.'}],
+ crit:{axis:'Normal',int:'Normal (watch for AV block)',p:'Normal',qrs:'Q waves may develop II, III, aVF',st:'Elevation II, III, aVF; reciprocal depression aVL (± I)',t:'Hyperacute',leads:'II, III, aVF',key:'ST↑ III > II suggests RCA — get right-sided leads (V4R) to look for RV infarction'}},
+{id:'infpost', g:'Ischemia & Infarction', name:'Inferoposterior STEMI', rate:[50,100],
+ gen:(E,rt)=>{ const r=E.rng, a=r.u(0.2,0.28); stemi(E,rt,vs([-0.2,1,-0.65],a),{mod:(sp,r)=>{ sp.qrs[2][2][2]*=0.35; sp.qrs[1][2][2]+=0.15; sp.t.v[2]+=0.12; }}); E.caption='Inferior ST elevation plus ST depression V1–V3'; },
+ ans:{chamb:['none'],stt:['regional'],loc:['infpost']},
+ hl:[{leads:['II','III','aVF'],kind:'up',txt:'ST↑'},{leads:['V1','V2','V3'],kind:'down',txt:'posterior'},{leads:['aVL'],kind:'down',txt:'recip.'}],
+ crit:{axis:'Normal',int:'Normal',p:'Normal',qrs:'Tall R in V1–V2 (posterior “Q waves” seen in mirror image)',st:'Elevation II, III, aVF; horizontal depression V1–V3',t:'Upright in V1–V3',leads:'II, III, aVF; V1–V3',key:'Anterior ST depression with inferior STEMI = posterior extension — consider posterior leads V7–V9'}},
+{id:'poststemi', g:'Ischemia & Infarction', name:'Isolated posterior STEMI', rate:[60,100],
+ gen:(E,rt)=>{ const r=E.rng, a=r.u(0.5,0.66); stemi(E,rt,vs([0.05,0.06,-1],0.5*a),{tk:0,mod:(sp,r)=>{ sp.qrs[2][2][2]*=0.25; sp.qrs[1][2][2]+=0.28; sp.t.v[2]=0.12; sp.st.r1=0.005; sp.st.r2=0.02; sp.st.de=-0.035; }}); E.caption='Horizontal ST depression V1–V3 with tall R and upright T'; },
+ ans:{chamb:['none'],stt:['regional','depression'],loc:['posterior']},
+ hl:[{leads:['V1','V2','V3'],kind:'down',txt:'ST↓ (mirror)'}],
+ crit:{axis:'Normal',int:'Normal',p:'Normal',qrs:'R/S > 1 in V2; tall, broad R in V1–V2',st:'Horizontal depression V1–V3 (mirror image of posterior elevation)',t:'Upright in V1–V3',leads:'V1–V3 (V7–V9 confirm)',key:'“STEMI-equivalent”: flip the precordial leads upside down to see the elevation'}},
+{id:'wellens', g:'Ischemia & Infarction', name:'Wellens syndrome', rate:[55,90],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r), typeA=r.chance(0.35), d=r.u(0.3,0.5);
+   sp.local=localT({V1:0.35,V2:1,V3:1,V4:0.55}, typeA?d*0.5:d, {biphasic:typeA, sw:1.0});
+   sinus(E,rt,sp); E.caption=typeA?'Biphasic T waves in V2–V3 (type A)':'Deep, symmetric T inversion in V2–V3 (type B)'; E.ans.typ=typeA; },
+ ans:{chamb:['none'],stt:['twi'],loc:['anterior']},
+ hl:[{leads:['V2','V3'],kind:'down',txt:'T wave'}],
+ crit:{axis:'Normal',int:'Normal',p:'Normal',qrs:'Preserved R waves; no Q waves',st:'Isoelectric or < 1 mm elevation',t:'Type A: biphasic (up then down) V2–V3 · Type B: deep, symmetric inversion V2–V3',leads:'V2–V3 (± V1, V4)',key:'Critical proximal LAD stenosis in a pain-free patient — avoid stress testing; needs angiography'}},
+{id:'dewinter', g:'Ischemia & Infarction', name:'de Winter T waves', rate:[60,100],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r), j=r.u(0.16,0.28), tt=r.u(0.45,0.7);
+   sp.st={v:vs([-0.6,-0.45,0],r.u(0.06,0.09)), r1:0.006, r2:0.03, de:-0.06};
+   sp.local=(E,b)=>{ for(const [L,k] of [['V1',0.4],['V2',1],['V3',1],['V4',0.9],['V5',0.6],['V6',0.35]]){ E.lp(L,b.J,b.J+0.03,0.004,0.03,-j*k); E.lg(L,b.pk,b.T.s*0.8,tt*k); } };
+   sinus(E,rt,sp); E.caption='Upsloping J-point depression into tall, symmetric T waves'; },
+ ans:{chamb:['none'],stt:['dewinter'],loc:['anterior']},
+ hl:[{leads:['V2','V3','V4','V5'],kind:'down',txt:'J↓ + tall T'},{leads:['aVR'],kind:'up',txt:'ST↑'}],
+ crit:{axis:'Normal',int:'Normal',p:'Normal',qrs:'Normal',st:'1–3 mm upsloping depression at the J point V1–V6; ~1 mm elevation in aVR',t:'Tall, prominent, symmetric in the precordial leads',leads:'V1–V6; aVR',key:'STEMI-equivalent of acute LAD occlusion — does not evolve into classic ST elevation'}},
+{id:'avrisch', g:'Ischemia & Infarction', name:'Diffuse ischemia with ST elevation in aVR', rate:[85,120],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{tA:0.7}); sp.st={v:vs([-0.75,-0.6,-0.1],r.u(0.16,0.22)), r1:0.008, r2:0.025, de:-0.04}; sinus(E,rt,sp); E.caption='Widespread ST depression with ST elevation in aVR (and V1)'; },
+ ans:{chamb:['none'],stt:['depression'],loc:['avr','diffuse']},
+ hl:[{leads:['aVR','V1'],kind:'up',txt:'ST↑'},{leads:['I','II','V4','V5','V6'],kind:'down',txt:'ST↓'}],
+ crit:{axis:'Normal',int:'Normal',p:'Normal',qrs:'Normal',st:'Depression ≥ 1 mm in ≥ 6 leads (maximal V4–V6, I, II) with elevation in aVR ± V1',t:'Often flattened',leads:'aVR (↑); I, II, V4–V6 (↓)',key:'Subendocardial ischemia — consider left main / three-vessel disease (or severe demand ischemia)'}},
+{id:'oldinf', g:'Ischemia & Infarction', name:'Old inferior MI (pathologic Q waves)', rate:[55,90],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{ax:[-25,25]}); sp.qrs[0]=[0.019*sp.k,0.0105*sp.k,[0.06,-0.42*r.u(0.85,1.15),0.04]]; sp.t.v=[0.33,-0.1*r.u(0.8,1.4),0.2]; sinus(E,rt,sp); E.caption='Wide Q waves in II, III and aVF with inverted T waves'; },
+ ans:{chamb:['none'],stt:['twi','none'],loc:['inferior']},
+ hl:[{leads:['II','III','aVF'],kind:'note',txt:'Q waves'}],
+ crit:{axis:'Normal to leftward',int:'Normal',p:'Normal',qrs:'Pathologic Q ≥ 40 ms or > 25% of the R-wave height in II, III, aVF',st:'Isoelectric',t:'Often inverted in II, III, aVF',leads:'II, III, aVF',key:'Q waves without ST elevation = prior (completed) infarction'}},
+
+/* ---------- ELECTROLYTES & DRUGS ---------- */
+{id:'hyperk', g:'Electrolytes & Drugs', name:'Hyperkalemia', rate:[60,100],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{qd:r.u(0.1,0.118), pa:0.45, pr:r.u(0.18,0.22)}); sp.t={v:vs(vn(sp.t.v),r.u(0.9,1.2)), s:r.u(0.026,0.031), sym:true}; sinus(E,rt,sp); E.caption='Tall, narrow, symmetric “tented” T waves; flattened P waves'; },
+ ans:{chamb:['none'],stt:['peaked'],loc:['none','diffuse']},
+ hl:[{leads:['V2','V3','V4','II'],kind:'note',txt:'peaked T'}],
+ crit:{axis:'Normal',int:'PR may lengthen; QRS widens as K⁺ rises',p:'Flattened, then lost',qrs:'Progressive widening; sine-wave pattern pre-arrest',st:'Normal early',t:'Tall, narrow-based, symmetric, “tented” — most obvious V2–V4',leads:'Precordial and inferior',key:'Peaked T → P flattening → QRS widening → sine wave: treat with calcium first'}},
+{id:'hypok', g:'Electrolytes & Drugs', name:'Hypokalemia', rate:[60,100],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{qtc:r.u(0.42,0.45)}), td=vn(sp.t.v); sp.t.v=vs(td,r.u(0.1,0.16)); sp.st={v:vs(td,-r.u(0.04,0.06)), r1:0.01, r2:0.04}; sp.u=vs(td,r.u(0.16,0.22)); sinus(E,rt,sp); E.caption='Flat T waves followed by prominent U waves'; },
+ ans:{chamb:['none'],stt:['flatU','depression'],loc:['none','diffuse']},
+ hl:[{leads:['V2','V3','V4'],kind:'note',txt:'U waves'}],
+ crit:{axis:'Normal',int:'Apparent QT (really QU) prolonged',p:'May increase in amplitude',qrs:'Normal',st:'Mild depression',t:'Flattened, may merge with the U wave',leads:'Best in V2–V3',key:'Prominent U wave (≥ T-wave height) — check Mg²⁺ too; risk of torsades'}},
+{id:'hyperca', g:'Electrolytes & Drugs', name:'Hypercalcemia', rate:[60,95],
+ gen:(E,rt)=>{ const r=E.rng; sinus(E,rt,baseSpec(r,{qtc:r.u(0.3,0.33)})); E.caption='Very short ST segment — T wave arises right after the QRS'; },
+ ans:{chamb:['none'],stt:['none'],loc:['none']},
+ hl:[{leads:['II','V2','V3'],kind:'note',txt:'short ST/QT'}],
+ crit:{axis:'Normal',int:'QTc short (< 360 ms)',p:'Normal',qrs:'Normal (Osborn waves if severe)',st:'Shortened or absent',t:'Begins immediately after the QRS',leads:'Global',key:'Short QT from a short ST segment — think malignancy, hyperparathyroidism'}},
+{id:'hypoca', g:'Electrolytes & Drugs', name:'Hypocalcemia', rate:[60,95],
+ gen:(E,rt)=>{ const r=E.rng; sinus(E,rt,baseSpec(r,{qtc:r.u(0.49,0.54)})); E.caption='Long, flat ST segment with a normal-shaped T wave'; },
+ ans:{chamb:['none'],stt:['none'],loc:['none']},
+ hl:[{leads:['II','V2','V3'],kind:'note',txt:'long ST/QT'}],
+ crit:{axis:'Normal',int:'QTc prolonged',p:'Normal',qrs:'Normal',st:'Lengthened (the QT is long because the ST is long)',t:'Normal width and shape',leads:'Global',key:'Long QT with a normal T wave = lengthened ST segment'}},
+{id:'lqt', g:'Electrolytes & Drugs', name:'Prolonged QT interval', rate:[50,85],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{qtc:r.u(0.51,0.58)}); sp.t.s=r.u(0.058,0.07); if(r.chance(0.4)){ sp.t.v2=vs(sp.t.v,0.5); sp.t.d2=0.07; sp.t.s2=0.04; } sinus(E,rt,sp); E.caption='Long QT with a broad (sometimes notched) T wave'; },
+ ans:{chamb:['none'],stt:['none'],loc:['none']},
+ hl:[{leads:['II','V3','V5'],kind:'note',txt:'QTc > 500'}],
+ crit:{axis:'Normal',int:'QTc > 470 (men) / 480 (women) ms; > 500 ms high risk',p:'Normal',qrs:'Normal',st:'Normal',t:'Broad, may be notched or bifid',leads:'Measure in II or V5 (longest QT)',key:'Drugs (antiarrhythmics, macrolides, antipsychotics, ondansetron), electrolytes, congenital — risk of torsades'}},
+{id:'digoxin', g:'Electrolytes & Drugs', name:'Digoxin effect', rate:[55,85],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{qtc:r.u(0.33,0.355), pr:r.u(0.18,0.23), tA:0.3}); sp.st={v:vs(vn([0.6,0.5,0.05]),-r.u(0.12,0.16)), r1:0.012, r2:0.06, de:0.03}; sinus(E,rt,sp); E.caption='Scooped (“Salvador Dalí”) ST depression; short QT'; },
+ ans:{chamb:['none'],stt:['scooped','depression'],loc:['none','lateral','diffuse']},
+ hl:[{leads:['II','V4','V5','V6'],kind:'down',txt:'scooped ST'}],
+ crit:{axis:'Normal',int:'Short QT; PR may lengthen',p:'Normal',qrs:'Normal',st:'Sagging, “reverse tick” depression — best seen in leads with tall R waves',t:'Flattened, low or inverted',leads:'Lateral and inferior',key:'Digoxin EFFECT (therapeutic) — not toxicity, which causes arrhythmias'}},
+{id:'tca', g:'Electrolytes & Drugs', name:'Sodium-channel blockade (TCA toxicity)', rate:[110,140],
+ gen:(E,rt)=>{ const r=E.rng, qd=r.u(0.12,0.145), sp=baseSpec(r,{qd, qtc:r.u(0.46,0.5)}); sp.qrs.push([qd*0.8,0.016*qd/0.13,vs([-0.6,-0.45,0.12],sp.A*r.u(0.6,0.8))]); sp.t.v=vs(sp.t.v,0.7); sinus(E,rt,sp); E.caption='Sinus tachycardia, wide QRS, terminal R in aVR'; },
+ ans:{chamb:['none'],stt:['secondary','none'],loc:['none']},
+ hl:[{leads:['aVR'],kind:'note',txt:'R > 3 mm'},{leads:['I'],kind:'note',txt:'terminal S'}],
+ crit:{axis:'Terminal 40 ms deviated rightward',int:'QRS > 100 ms (seizure risk) / > 160 ms (arrhythmia risk); QTc prolonged',p:'Normal',qrs:'Wide, with tall terminal R in aVR (> 3 mm) and deep S in I/aVL',st:'Secondary',t:'Variable',leads:'aVR; I, aVL',key:'Tachycardia + wide QRS + terminal R in aVR — give sodium bicarbonate'}},
+
+/* ---------- OTHER ---------- */
+{id:'pericarditis', g:'Other', name:'Acute pericarditis', rate:[90,115],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r); sp.st={v:vs([0.45,0.6,0.25],r.u(0.2,0.28)), r1:0.022, r2:0.045}; sp.prseg=vs([-0.3,-0.5,-0.12],r.u(0.15,0.22)); sinus(E,rt,sp); E.caption='Diffuse concave ST elevation with PR depression (PR elevation in aVR)'; },
+ ans:{chamb:['none'],stt:['diffuse'],loc:['diffuse']},
+ hl:[{leads:['I','II','aVF','V2','V3','V4','V5','V6'],kind:'up',txt:'ST↑'},{leads:['aVR'],kind:'down',txt:'ST↓ PR↑'}],
+ crit:{axis:'Normal',int:'Often sinus tachycardia',p:'PR-segment depression (PR elevation in aVR)',qrs:'Normal',st:'Diffuse, concave elevation not confined to one territory; depression only in aVR (± V1)',t:'Upright early; inverts later (stage III)',leads:'Most leads; reciprocal aVR',key:'No reciprocal ST depression (other than aVR/V1) and PR depression distinguish it from STEMI'}},
+{id:'effusion', g:'Other', name:'Pericardial effusion (low voltage + electrical alternans)', rate:[100,125],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{A:r.u(0.3,0.4), pa:0.6, tA:0.45}); sp.alt=r.u(0.6,0.75); sp.altV=vs([0.05,0.06,0.1],r.u(0.6,1)); sinus(E,rt,sp); E.caption='Small complexes whose height alternates beat to beat'; },
+ ans:{chamb:['none'],stt:['none'],loc:['none']},
+ hl:[{leads:['I','II','III','aVR','aVL','aVF'],kind:'note',txt:'< 5 mm'},{leads:['V2','V3'],kind:'note',txt:'alternans'}],
+ crit:{axis:'Normal',int:'Sinus tachycardia',p:'Normal (low amplitude)',qrs:'Low voltage: < 5 mm in all limb leads and/or < 10 mm in all precordial leads; amplitude alternates beat to beat',st:'Normal (may coexist with pericarditis)',t:'Low amplitude',leads:'Global',key:'Tachycardia + low voltage + electrical alternans = tamponade until proven otherwise'}},
+{id:'pe', g:'Other', name:'Acute pulmonary embolism (RV strain)', rate:[105,130],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{ax:[70,100], sep:[0.22,-0.28,0.1]}); sp.qrs[3]=[0.07*sp.k,0.009*sp.k,vs([-0.5,0.08,0.3],sp.A*r.u(0.5,0.7))]; sp.t.v=[0.3,-0.06,-0.12];
+   sp.local=localT({V1:0.8,V2:1,V3:0.8,V4:0.4}, r.u(0.12,0.2)); if(r.chance(0.4)){ sp.p=RAE_P(r,1); E.ans.chamb=['rae','none']; } sinus(E,rt,sp); E.caption='Tachycardia, S1Q3T3, and T inversion V1–V4'; },
+ ans:{chamb:['none'],stt:['twi'],loc:['none','anterior']},
+ hl:[{leads:['I'],kind:'note',txt:'S1'},{leads:['III'],kind:'note',txt:'Q3 T3'},{leads:['V1','V2','V3'],kind:'down',txt:'T inv.'}],
+ crit:{axis:'Rightward shift',int:'Sinus tachycardia (most common finding)',p:'May show right atrial enlargement',qrs:'S in I, Q in III (S1Q3T3); incomplete/complete RBBB possible',st:'Usually normal',t:'Inverted in III and V1–V4 (RV strain)',leads:'I, III; V1–V4',key:'S1Q3T3 is specific but insensitive — tachycardia and RV strain are more common'}},
+{id:'hypothermia', g:'Other', name:'Hypothermia (Osborn waves)', rate:[38,55],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r,{qtc:r.u(0.47,0.52), qd:r.u(0.095,0.11)}); sp.jw=vs(vn([0.55,0.6,0.25]),r.u(0.3,0.45)); sinus(E,rt,sp); E.caption='Positive hump at the J point (Osborn wave), bradycardia, long QT'; },
+ ans:{chamb:['none'],stt:['jwave'],loc:['none','diffuse']},
+ hl:[{leads:['II','aVF','V3','V4','V5'],kind:'note',txt:'Osborn wave'}],
+ crit:{axis:'Normal',int:'Sinus bradycardia; prolonged PR, QRS and QT',p:'Normal',qrs:'Osborn (J) wave — positive deflection at the J point, larger as temperature falls',st:'J-point elevation',t:'May invert',leads:'Inferior and lateral precordial',key:'Bradycardia + Osborn waves (± shivering artifact) — rewarm; risk of VF'}},
+{id:'brugada', g:'Other', name:'Brugada pattern (type 1)', rate:[60,95],
+ gen:(E,rt)=>{ const r=E.rng, sp=baseSpec(r), a=r.u(0.25,0.38);
+   sp.local=(E,b)=>{ for(const [L,k] of [['V1',1],['V2',0.85],['V3',0.22]]){ E.lg(L,b.J-0.006,0.008,0.12*k); E.lp(L,b.J-0.004,b.J+0.085,0.004,0.045,a*k); E.lg(L,b.pk+0.01,b.T.s*1.05,-(projLead(L,b.T.v)+0.16*k)); } };
+   sinus(E,rt,sp); E.caption='Coved ST elevation ≥ 2 mm in V1–V2 descending into an inverted T'; },
+ ans:{chamb:['none'],stt:['coved'],loc:['none','anterior']},
+ hl:[{leads:['V1','V2'],kind:'up',txt:'coved ST↑'}],
+ crit:{axis:'Normal',int:'Normal (PR may be long)',p:'Normal',qrs:'RBBB-like terminal positivity in V1–V2',st:'Coved elevation ≥ 2 mm at the J point in V1–V2',t:'Inverted in V1–V2',leads:'V1–V2',key:'Sodium-channelopathy with sudden-death risk — ask about syncope and family history'}}
+];
+const RH = {}; RH_LIST.forEach(r=>{ RH[r.id]=r; r.dx=r.id; });
+const DX_NAMES = {}; RH_LIST.forEach(r=>{ DX_NAMES[r.dx]=r.name; });
+const GROUPS = ['Normal & Technical','Conduction','Chamber Enlargement','Ischemia & Infarction','Electrolytes & Drugs','Other'];
+
+// Look-alike patterns used as quick-quiz distractors
+const CONFUSE = {
+  normal:['erepol','lafb','lareversal','hyperca'], erepol:['pericarditis','antstemi','normal','hyperk'], lareversal:['lpfb','normal','rvh','pe'],
+  rbbb:['bifasc','brugada','rvh','wpw'], lbbb:['lvh','wpw','tca','antstemi'], lafb:['normal','bifasc','lpfb','oldinf'], lpfb:['rvh','pe','lareversal','lafb'],
+  bifasc:['rbbb','lafb','lbbb','rvh'], wpw:['lbbb','rbbb','lvh','tca'],
+  lvh:['lbbb','antstemi','lae','digoxin'], rvh:['rbbb','pe','lpfb','poststemi'], lae:['rae','normal','lvh','hypok'], rae:['lae','pe','rvh','normal'],
+  antstemi:['antlat','wellens','erepol','dewinter'], antlat:['antstemi','latstemi','pericarditis','erepol'], latstemi:['antlat','infstemi','lvh','pericarditis'],
+  infstemi:['infpost','pericarditis','oldinf','latstemi'], infpost:['infstemi','poststemi','avrisch','pe'], poststemi:['rvh','infpost','avrisch','wpw'],
+  wellens:['pe','antstemi','lvh','dewinter'], dewinter:['hyperk','antstemi','avrisch','wellens'], avrisch:['digoxin','lvh','poststemi','pericarditis'], oldinf:['infstemi','lafb','pe','normal'],
+  hyperk:['dewinter','erepol','antstemi','hypoca'], hypok:['digoxin','lqt','hypoca','avrisch'], hyperca:['digoxin','normal','hyperk','hypoca'], hypoca:['lqt','hypok','hyperca','normal'],
+  lqt:['hypoca','hypok','hypothermia','tca'], digoxin:['avrisch','lvh','hypok','hyperca'], tca:['lbbb','rbbb','wpw','hyperk'],
+  pericarditis:['erepol','infstemi','antlat','effusion'], effusion:['pericarditis','normal','pe','hypothermia'], pe:['rvh','wellens','rbbb','lpfb'],
+  hypothermia:['erepol','lqt','hypoca','pericarditis'], brugada:['rbbb','antstemi','erepol','wellens']
+};
+
+/* =====================================================================
+   ARTIFACT — modelled at the electrode, then re-derived into each lead
+   ===================================================================== */
+const ELS=['RA','LA','LL','V1','V2','V3','V4','V5','V6'], LIMB_ELS=['RA','LA','LL'];
+const EL_NAMES={RA:'right arm (RA)',LA:'left arm (LA)',LL:'left leg (LL)',V1:'V1',V2:'V2',V3:'V3',V4:'V4',V5:'V5',V6:'V6'};
+function applyArtifact(E, type, sev, rng){
+  if(!type || type==='none') return;
+  const m={mild:0.5,moderate:1,severe:1.7}[sev]||1, a=E.t0, b=E.t1;
+  const add=(el,f)=>{ (E.art[el]=E.art[el]||[]).push(f); };
+  const tremor=k=>{ const env=makeNoise(rng,0.6,a,b);
+    for(const el of ELS){ const limb=LIMB_ELS.includes(el), amp=(limb?0.055:0.03)*k*m*rng.u(0.6,1.3), n=makeNoise(rng,0.007,a,b);
+      add(el,t=>amp*n(t)*(0.45+0.55*Math.max(0,env(t)+0.4))); } };
+  const ac=k=>{ const ph=rng.u(0,6.28);
+    for(const el of ELS){ const amp=0.035*k*m*rng.u(0.15,1.2), dp=rng.u(-0.25,0.25); add(el,t=>amp*Math.sin(2*Math.PI*60*t+ph+dp)); } };
+  const wander=k=>{ const f=rng.u(0.18,0.33), ph=rng.u(0,6.28);
+    for(const el of ELS){ const limb=LIMB_ELS.includes(el), amp=(limb?0.09:0.24)*k*m*rng.u(0.5,1.2), p=ph+rng.u(-0.8,0.8), n=makeNoise(rng,1.6,a,b);
+      add(el,t=>amp*(0.75*Math.sin(2*Math.PI*f*t+p)+0.45*n(t))); } };
+  const loose=k=>{
+    const el=rng.pick(['RA','LA','LL','RA','LA','LL','V1','V2','V3','V4','V5','V6']); E.looseEl=el;
+    const list=[{s:rng.u(0.3,2.2),d:rng.u(0.4,1.1),off:rng.u(-0.45,0.45)}];
+    for(let t=3+rng.u(0,2); t<b; t+=rng.u(1.8,4.5)) list.push({s:t,d:rng.u(0.3,1.1),off:rng.u(-0.45,0.45)});
+    const n=makeNoise(rng,0.03,a,b), n2=makeNoise(rng,0.012,a,b), n3=makeNoise(rng,0.004,a,b);
+    add(el,t=>{ let lo=0,hi=list.length-1; while(lo<hi){ const mid=(lo+hi+1)>>1; if(list[mid].s<=t) lo=mid; else hi=mid-1; }
+      const B=list[lo], base=0.025*k*m*n3(t); if(t<B.s||t>B.s+B.d) return base;
+      const env=Math.sin(Math.PI*(t-B.s)/B.d); return base+1.1*k*m*env*(0.7*n(t)+0.3*n2(t)+B.off); });
+  };
+  if(type==='tremor') tremor(1); else if(type==='ac') ac(1); else if(type==='wander') wander(1); else if(type==='loose') loose(1);
+  else if(type==='mixed'){ tremor(0.7); wander(0.7); }
+}
+
+/* =====================================================================
+   BUILD + ANSWER KEY
+   ===================================================================== */
+function buildEcg(id, seed, rate, art, live){
+  const R=RH[id], rng=makeRng(seed), D=live?LIVE_S:PAGE_S;
+  const E=new Ecg(rng, -3, D+1.5);
+  const rt = rate!=null ? rate : Math.round(rng.u(R.rate[0],R.rate[1]));
+  E.rate=rt; R.gen(E, rt);
+  if(art && art.type && art.type!=='none') applyArtifact(E, art.type, art.sev, makeRng((seed*7919+13)>>>0));
+  E.beats.sort((x,y)=>x.t-y.t);
+  E.L=render(E, D); E.D=D; E.id=id; E.hl = E.hl || R.hl || [];
+  return E;
+}
+const RATE_BANDS = [
+  {k:'lt60', label:'Less than 60/min', lo:0, hi:59},
+  {k:'n', label:'60–100/min', lo:60, hi:100},
+  {k:'t1', label:'101–150/min', lo:101, hi:150},
+  {k:'t2', label:'More than 150/min', lo:151, hi:9999}
+];
+function axisOf(E){
+  const bs=E.beats.filter(b=>b.on>1.5&&b.off<8.5); const b=bs[Math.floor(bs.length/2)]||E.beats[0];
+  let I=0, F=0; const i0=Math.round(b.on/DT)-10, i1=Math.round(b.off/DT)+10;
+  for(let i=Math.max(0,i0);i<=Math.min(E.L.I.length-1,i1);i++){ I+=E.L.I[i]; F+=E.L.aVF[i]; }
+  return Math.round(Math.atan2(F, I)*180/Math.PI);
+}
+function axisCats(d){
+  const s=new Set(), m=8, inR=(lo,hi)=>d>=lo-m&&d<=hi+m;
+  if(inR(-30,90)) s.add('normal'); if(inR(-90,-30)) s.add('lad'); if(inR(90,180)) s.add('rad'); if(inR(-180,-90)||d>=180-m) s.add('extreme');
+  if(d<=-180+m) s.add('rad');
+  return [...s];
+}
+function band(v, cuts){ // cuts: [[key,lo,hi],...] with 5% tolerance at the edges
+  const s=new Set(); for(const c of cuts) if(v>=c[1]-c[3] && v<=c[2]+c[3]) s.add(c[0]); return [...s];
+}
+function computeTruth(E){
+  const R=RH[E.id], bs=E.beats.filter(b=>b.t>=0&&b.t<=PAGE_S), sp=E.sp;
+  let sum=0; for(let i=1;i<bs.length;i++) sum+=bs[i].t-bs[i-1].t;
+  const vals=[60/(sum/(bs.length-1)), bs.length*6, E.rate], rate=new Set();
+  for(const v of vals) for(const b of RATE_BANDS) if(v>=b.lo-4 && v<=b.hi+4) rate.add(b.k);
+  const ax=axisOf(E), pr=sp.pr*1000, qrs=sp.qd*1000, qtc=sp.qtc*1000;
+  const a=Object.assign({}, R.ans, E.ans);
+  return {rate:[...rate], axis:axisCats(ax), pr:band(pr,[['short',0,119,5],['normal',120,200,5],['long',201,999,5]]),
+    qrs:band(qrs,[['normal',0,109,4],['ivcd',110,119,4],['wide',120,999,4]]), qtc:band(qtc,[['short',0,359,10],['normal',360,460,10],['long',461,999,10]]),
+    chamb:a.chamb, stt:a.stt, loc:a.loc,
+    m:{rate:Math.round(60/(sum/(bs.length-1))), axis:ax, pr:Math.round(pr/10)*10, qrs:Math.round(qrs/10)*10, qt:Math.round(sp.qtc*Math.sqrt(60/E.rate)*100)*10, qtc:Math.round(qtc/10)*10}};
+}
+
+/* Systematic answer options */
+const OPT = {
+  rate: RATE_BANDS.map(b=>[b.k,b.label]),
+  axis: [['normal','Normal (−30° to +90°)'],['lad','Left axis deviation (−30° to −90°)'],['rad','Right axis deviation (+90° to +180°)'],['extreme','Extreme axis (−90° to ±180°)']],
+  pr: [['normal','Normal (120–200 ms)'],['short','Short (< 120 ms)'],['long','Prolonged (> 200 ms)']],
+  qrs: [['normal','Normal (< 110 ms)'],['ivcd','Borderline / incomplete (110–119 ms)'],['wide','Wide (≥ 120 ms)']],
+  qtc: [['short','Short (< 360 ms)'],['normal','Normal (360–460 ms)'],['long','Prolonged (> 460 ms)']],
+  chamb: [['none','No hypertrophy or atrial enlargement'],['lvh','Left ventricular hypertrophy'],['rvh','Right ventricular hypertrophy'],['lae','Left atrial enlargement'],['rae','Right atrial enlargement']],
+  stt: [['none','No significant ST–T abnormality'],['regional','Regional ST elevation with reciprocal depression'],['diffuse','Diffuse concave ST elevation (± PR depression)'],['depression','ST depression (subendocardial pattern)'],['twi','T-wave inversion or biphasic T without ST elevation'],['dewinter','Upsloping J-point depression with tall symmetric T waves'],['secondary','Secondary (discordant) ST–T changes from abnormal depolarization'],['peaked','Tall, narrow, peaked T waves'],['flatU','Flattened T waves with prominent U waves'],['scooped','Scooped (sagging) ST depression'],['jwave','J-point notching or Osborn (J) waves'],['coved','Coved ST elevation with T inversion in V1–V2']],
+  loc: [['none','Not applicable / not localized'],['anterior','Anterior / anteroseptal (V1–V4)'],['lateral','Lateral (I, aVL, V5–V6)'],['inferior','Inferior (II, III, aVF)'],['posterior','Posterior (ST depression V1–V3)'],['infpost','Inferior + posterior'],['antlat','Anterolateral (V1–V6, I, aVL)'],['diffuse','Diffuse (multiple territories)'],['avr','Diffuse ST depression with ST elevation in aVR']]
+};
+const STEPS=['rate','axis','pr','qrs','qtc','chamb','stt','loc'];
+const STEP_NAMES = {rate:'Rate', axis:'Axis', pr:'PR interval', qrs:'QRS duration', qtc:'QTc', chamb:'Hypertrophy / enlargement', stt:'ST–T changes', loc:'Location', dx:'Interpretation'};
+function optLabel(step, k){ const o=OPT[step].find(x=>x[0]===k); return o?o[1]:'—'; }
+
+/* =====================================================================
+   12-LEAD VIEW (ECG paper renderer)
+   ===================================================================== */
+const COL = {bg:'#fff7f7', small:'#f3c4c4', big:'#e08a8a', trace:'#111418', P:'#1f5fbf', QRS:'#b3261e', T:'#2e7d32', note:'#4a4f55', cal:'#00838f', lab:'#5a2a2a'};
+const HL = {up:['rgba(179,38,30,0.07)','rgba(179,38,30,0.75)','#b3261e'], down:['rgba(31,95,191,0.07)','rgba(31,95,191,0.75)','#1f5fbf'], note:['rgba(0,131,143,0.07)','rgba(0,131,143,0.75)','#00737d']};
+const CELL = {}; LAYOUT.forEach((row,ri)=>row.forEach((L,ci)=>{ CELL[L]={r:ri,c:ci}; }));
+const views=[];
+class TwelveView{
+  constructor(host){
+    this.host=host;
+    this.scroller=document.createElement('div'); this.scroller.className='sv-scroll';
+    this.canvas=document.createElement('canvas'); this.canvas.className='sv-canvas';
+    this.scroller.appendChild(this.canvas); host.appendChild(this.scroller);
+    this.capEl=document.createElement('div'); this.capEl.className='sv-caption'; host.appendChild(this.capEl);
+    this.measEl=document.createElement('div'); this.measEl.className='sv-meas'; host.appendChild(this.measEl);
+    this.readout=document.createElement('div'); this.readout.className='sv-readout'; host.appendChild(this.readout);
+    this.hint=document.createElement('div'); this.hint.className='rot-hint'; this.hint.textContent='Tip: rotate your phone to landscape for a larger tracing.'; host.appendChild(this.hint);
+    this.ctx=this.canvas.getContext('2d'); this.grid=document.createElement('canvas');
+    this.labels=false; this.calipers=false; this.cal={a:40,b:62}; this.drag=null;
+    this.E=null; this.truth=null; this.mode='static'; this.frozen=false; this.frozenT=0; this.liveStart=0; this.ppm=0; this.dpr=0;
+    if(window.ResizeObserver) new ResizeObserver(()=>this.resize()).observe(this.host);
+    window.addEventListener('resize',()=>this.resize());
+    this.canvas.addEventListener('pointerdown',e=>this.pDown(e));
+    this.canvas.addEventListener('pointermove',e=>this.pMove(e));
+    window.addEventListener('pointerup',()=>{this.drag=null;});
+    views.push(this);
+  }
+  visible(){ return this.host.offsetParent!==null; }
+  setStrip(E, mode, truth){ this.E=E; this.mode=mode; this.truth=truth||null; this.frozen=false; this.liveStart=performance.now(); this.resize(true); this.draw(); }
+  setLabels(v){ this.labels=v; this.draw(); }
+  setCalipers(v){ this.calipers=v; this.canvas.style.touchAction=v?'none':'auto'; this.canvas.style.cursor=v?'ew-resize':'default'; this.draw(); this.updateReadout(); }
+  setFrozen(v){ if(v){ this.frozenT=this.curT(); this.frozen=true; } else { this.liveStart=performance.now()-this.frozenT*1000; this.frozen=false; } this.draw(); }
+  curT(){ if(this.frozen) return this.frozenT; return ((performance.now()-this.liveStart)/1000) % (this.E?this.E.D:LIVE_S); }
+  resize(force){
+    const w=this.host.clientWidth-2; if(w<=0) return;
+    const ui=document.documentElement.dataset.ui, fit=w/W_MM;
+    let ppm;
+    if(ui==='phone') ppm=Math.max(2.2,Math.min(5,Math.floor(fit*20)/20));
+    else ppm=Math.max(3,Math.min(6,Math.floor(fit*20)/20));
+    const dpr=window.devicePixelRatio||1;
+    if(!force && ppm===this.ppm && dpr===this.dpr) return;
+    this.ppm=ppm; this.dpr=dpr; this.pd=ppm*dpr;
+    const cw=W_MM*ppm, ch=H_MM*ppm;
+    this.canvas.style.width=cw+'px'; this.canvas.style.height=ch+'px';
+    this.canvas.width=Math.round(cw*dpr); this.canvas.height=Math.round(ch*dpr);
+    this.drawGrid(); this.draw();
+  }
+  drawGrid(){
+    const g=this.grid, p=this.pd, W=this.canvas.width, H=this.canvas.height; g.width=W; g.height=H;
+    const c=g.getContext('2d'); c.fillStyle=COL.bg; c.fillRect(0,0,W,H);
+    const lineSet=(big)=>{ c.beginPath();
+      for(let i=0;i<=W_MM;i++){ if((i%5===0)!==big) continue; const x=Math.round(i*p)+0.5; c.moveTo(x,0); c.lineTo(x,H); }
+      for(let j=0;j<=H_MM;j++){ if((j%5===0)!==big) continue; const y=Math.round(j*p)+0.5; c.moveTo(0,y); c.lineTo(W,y); }
+      c.stroke(); };
+    c.lineWidth=1; c.strokeStyle=COL.small; lineSet(false);
+    c.lineWidth=Math.max(1,Math.round(this.dpr*1.2)); c.strokeStyle=COL.big; lineSet(true);
+    // 1 mV calibration pulse on every row, column dividers and lead names
+    c.strokeStyle=COL.trace; c.lineWidth=1.4*this.dpr;
+    for(const yb of ROW_BASE){ const y0=yb*p, y1=(yb-10)*p; c.beginPath(); c.moveTo(1*p,y0); c.lineTo(3*p,y0); c.lineTo(3*p,y1); c.lineTo(8*p,y1); c.lineTo(8*p,y0); c.lineTo(9.5*p,y0); c.stroke(); }
+    c.lineWidth=1.6*this.dpr;
+    for(let r=0;r<3;r++) for(let k=1;k<4;k++){ const x=Math.round((LEFT_MM+k*COL_S*MM_PER_S)*p)+0.5; c.beginPath(); c.moveTo(x,(ROW_BASE[r]-4)*p); c.lineTo(x,(ROW_BASE[r]+4)*p); c.stroke(); }
+    c.font='700 '+Math.round(3.4*p)+'px system-ui,Segoe UI,Arial,sans-serif'; c.fillStyle=COL.lab; c.textBaseline='alphabetic'; c.textAlign='left';
+    LAYOUT.forEach((row,ri)=>row.forEach((L,ci)=>{ c.fillText(L,(LEFT_MM+ci*COL_S*MM_PER_S+1.5)*p,(ROW_BASE[ri]-14)*p); }));
+    c.fillText(RHY_LEAD,(LEFT_MM+1.5)*p,(ROW_BASE[3]-14)*p);
+  }
+  X(tp){ return (LEFT_MM+tp*MM_PER_S)*this.pd; }
+  Y(row,v){ return (ROW_BASE[row]-v*MM_PER_MV)*this.pd; }
+  // Draw lead L in row `row` for page times [a,b] of the page that began at absolute time P
+  trace(L,row,a,b,P){
+    const c=this.ctx, buf=this.E.L[L], Hd=this.canvas.height;
+    const i0=Math.max(0,Math.ceil((P+a)/DT)), i1=Math.min(buf.length-1,Math.floor((P+b)/DT)); if(i1<=i0) return;
+    c.beginPath();
+    for(let i=i0;i<=i1;i++){ const x=this.X(i*DT-P); let y=this.Y(row,buf[i]); y=Math.max(1,Math.min(Hd-1,y)); if(i===i0) c.moveTo(x,y); else c.lineTo(x,y); }
+    c.stroke();
+  }
+  // Segments to draw for a cell spanning page times [a,b]: each entry is [a0,b0,P] where absolute time = P + page time.
+  // Static: one 10-s acquisition laid out column by column. Live: every cell sweeps its own window in real time, so all
+  // 12 leads (and the rhythm strip) are contemporaneous and their sweep bars move together, as on a bedside 12-lead display.
+  segments(a,b){
+    if(this.mode==='static') return [[a,b,0]];
+    const W=b-a, T=this.curT(), pass=Math.floor(T/W)*W, tl=T-pass, gap=0.2, out=[];
+    if(tl>0) out.push([a,a+tl,pass-a]);
+    const s=a+tl+gap; if(s<b && pass-W>=0) out.push([s,b,pass-W-a]);
+    return out;
+  }
+  draw(){
+    if(!this.E || !this.pd) return;
+    const c=this.ctx; c.setTransform(1,0,0,1,0,0); c.drawImage(this.grid,0,0);
+    if(this.labels) this.drawHighlights();
+    c.strokeStyle=COL.trace; c.lineWidth=1.25*this.dpr; c.lineJoin='round';
+    LAYOUT.forEach((row,ri)=>row.forEach((L,ci)=>{ const a=ci*COL_S, b=a+COL_S; for(const s of this.segments(a,b)) this.trace(L,ri,s[0],s[1],s[2]); }));
+    const rs=this.segments(0,PAGE_S); for(const s of rs) this.trace(RHY_LEAD,3,s[0],s[1],s[2]);
+    if(this.labels) this.drawLabels(rs);
+    this.capEl.textContent = (this.labels && this.E.caption) ? 'Clue: '+this.E.caption : '';
+    const m=this.truth && this.truth.m;
+    this.measEl.textContent = (this.labels && m) ? 'Measured: rate '+m.rate+'/min · PR '+m.pr+' ms · QRS '+m.qrs+' ms · QT/QTc '+m.qt+'/'+m.qtc+' ms · QRS axis '+(m.axis>0?'+':'')+m.axis+'°' : '';
+    if(this.calipers) this.drawCalipers();
+  }
+  drawHighlights(){
+    const c=this.ctx, p=this.pd, d=this.dpr;
+    for(const h of this.E.hl){ const col=HL[h.kind]||HL.note;
+      for(const L of h.leads){ const cell=CELL[L]; if(!cell) continue;
+        const x0=(LEFT_MM+cell.c*COL_S*MM_PER_S+0.6)*p, x1=(LEFT_MM+(cell.c+1)*COL_S*MM_PER_S-0.6)*p, y0=(ROW_BASE[cell.r]-18.5)*p, y1=(ROW_BASE[cell.r]+15.5)*p;
+        c.fillStyle=col[0]; c.fillRect(x0,y0,x1-x0,y1-y0); c.strokeStyle=col[1]; c.lineWidth=1.5*d; c.setLineDash([5*d,3*d]); c.strokeRect(x0,y0,x1-x0,y1-y0); c.setLineDash([]);
+        this.text(h.txt, x1-1.2*p, y0+3.6*p, col[2], 10.5, 'right');
+      } }
+  }
+  text(txt,x,y,color,size,align){
+    const c=this.ctx; c.font='600 '+Math.round((size||10)*this.dpr)+'px system-ui,Segoe UI,Arial,sans-serif';
+    c.textAlign=align||'center'; c.textBaseline='alphabetic';
+    c.lineWidth=3*this.dpr; c.strokeStyle='rgba(255,247,247,0.92)'; c.strokeText(txt,x,y);
+    c.fillStyle=color; c.fillText(txt,x,y);
+  }
+  vMax(L,t0,t1){ const b=this.E.L[L]; let m=-1e9; for(let i=Math.max(0,Math.round(t0/DT));i<=Math.min(b.length-1,Math.round(t1/DT));i++) m=Math.max(m,b[i]); return m; }
+  // P / QRS / T labels on the rhythm strip, plus PR, QRS and QT brackets on the first complete beat
+  drawLabels(segs){
+    const E=this.E, p=this.pd, d=this.dpr, top=(ROW_BASE[3]-17)*p; let bracketDone=false;
+    for(const [a,b,P] of segs){
+      const inWin=t=>t>=P+a+0.03 && t<=P+b-0.03 && t>=0;
+      for(const bt of E.beats){
+        if(!inWin(bt.t) || bt.t-P>5.2) continue;     // label the first half of the rhythm strip only, to keep it readable
+        const X=t=>this.X(t-P), Y=v=>this.Y(3,v);
+        if(bt.pOn!=null && inWin(bt.pOn+0.045)){ const tp=bt.pOn+0.045; this.text('P',X(tp),Math.max(top,Y(this.vMax(RHY_LEAD,tp-0.03,tp+0.03))-5*d),COL.P,10); }
+        this.text('QRS',X(bt.t),Math.max(top,Y(this.vMax(RHY_LEAD,bt.on,bt.off))-5*d),COL.QRS,9);
+        if(inWin(bt.pk)) this.text('T',X(bt.pk),Math.max(top,Y(this.vMax(RHY_LEAD,bt.pk-0.04,bt.pk+0.04))-5*d),COL.T,10);
+        if(!bracketDone && bt.pOn!=null && inWin(bt.pOn) && inWin(bt.tEnd)){
+          bracketDone=true; const yb=(ROW_BASE[3]+7)*p, yq=(ROW_BASE[3]+11)*p, xt=X(bt.tEnd)+2.5*p;
+          this.bracket(X(bt.pOn),X(bt.on),yb,COL.P); this.bracket(X(bt.on),X(bt.off),yb,COL.QRS); this.bracket(X(bt.on),X(bt.tEnd),yq,COL.T);
+          this.text('PR '+ms10(bt.on-bt.pOn)+' ms',xt,yb+1.2*p,COL.P,9.5,'left');
+          this.text('QRS '+ms10(bt.off-bt.on)+' ms',xt+19*p,yb+1.2*p,COL.QRS,9.5,'left');
+          this.text('QT '+ms10(bt.qt)+' ms',xt,yq+1.2*p,COL.T,9.5,'left');
+        }
+      }
+    }
+  }
+  bracket(x0,x1,y,color){ const c=this.ctx,d=this.dpr; c.strokeStyle=color; c.lineWidth=1.2*d; c.beginPath(); c.moveTo(x0,y-3*d); c.lineTo(x0,y); c.lineTo(x1,y); c.lineTo(x1,y-3*d); c.stroke(); }
+  drawCalipers(){
+    const c=this.ctx,p=this.pd,d=this.dpr,H=this.canvas.height, xa=(LEFT_MM+this.cal.a)*p, xb=(LEFT_MM+this.cal.b)*p;
+    const touch=document.documentElement.dataset.input==='touch', hw=(touch?8:4)*d, hh=(touch?18:10)*d;
+    c.fillStyle='rgba(0,131,143,0.08)'; c.fillRect(Math.min(xa,xb),0,Math.abs(xb-xa),H);
+    c.strokeStyle=COL.cal; c.lineWidth=(touch?2:1.5)*d;
+    for(const x of [xa,xb]){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,H); c.stroke(); c.fillStyle=COL.cal; c.fillRect(x-hw,0,2*hw,hh); }
+  }
+  updateReadout(){
+    if(!this.calipers){ this.readout.textContent=''; return; }
+    const mm=Math.abs(this.cal.b-this.cal.a), s=mm/MM_PER_S;
+    this.readout.textContent='Calipers: '+Math.round(s*1000)+' ms · '+mm.toFixed(1)+' small boxes'+(s>0.15?' · if R–R, rate ≈ '+Math.round(60/s)+'/min':'')+'  — drag a line to move it, or drag on the tracing to measure';
+  }
+  mmFromEvent(e){ const r=this.canvas.getBoundingClientRect(); return Math.max(0,Math.min(PAGE_MM,(e.clientX-r.left)/this.ppm-LEFT_MM)); }
+  pDown(e){
+    if(!this.calipers) return; e.preventDefault();
+    const touch=(e.pointerType==='touch'||e.pointerType==='pen'), mm=this.mmFromEvent(e), tol=(touch?20:8)/this.ppm;
+    if(Math.abs(mm-this.cal.a)<tol) this.drag='a'; else if(Math.abs(mm-this.cal.b)<tol) this.drag='b';
+    else { this.cal.a=mm; this.cal.b=mm; this.drag='b'; }
+    this.draw(); this.updateReadout();
+  }
+  pMove(e){ if(!this.drag) return; this.cal[this.drag]=Math.round(this.mmFromEvent(e)*4)/4; this.draw(); this.updateReadout(); }
+}
+function ms10(v){ return Math.round(v*100)*10; }
+let lastFrameTs=0;
+function frame(ts){
+  const touch=document.documentElement.dataset.input==='touch';
+  if(!touch || ts-lastFrameTs>=32){ lastFrameTs=ts; for(const v of views) if(v.E && v.mode==='live' && !v.frozen && v.visible()) v.draw(); }
+  requestAnimationFrame(frame);
+}
+
+/* =====================================================================
+   APP STATE + UI
+   ===================================================================== */
+const $=id=>document.getElementById(id);
+let displayMode='static';
+function esc(s){ return String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+function critHTML(R){
+  const c=R.crit, row=(k,v)=>'<tr><th>'+k+'</th><td>'+esc(v)+'</td></tr>';
+  return row('Axis',c.axis)+row('Intervals',c.int)+row('P waves',c.p)+row('QRS',c.qrs)+row('ST segment',c.st)+row('T waves',c.t)+row('Leads',c.leads)+'<tr class="key"><th>Key feature</th><td>'+esc(c.key)+'</td></tr>';
+}
+function artifactFor(prob){ if(Math.random()>=prob) return {type:'none'}; const types=['tremor','ac','wander','loose','mixed']; const x=Math.random(); return {type:types[Math.floor(Math.random()*types.length)], sev:x<0.45?'mild':(x<0.85?'moderate':'severe')}; }
+function artName(a, E){ return ({tremor:'muscle tremor',ac:'60-cycle interference',wander:'wandering baseline',loose:'loose lead / motion',mixed:'mixed'})[a.type]+(a.type==='loose'&&E&&E.looseEl?' — '+EL_NAMES[E.looseEl]+' electrode':'')+' ('+a.sev+')'; }
+
+/* ---------- Study ---------- */
+const study={id:'normal', seed:newSeed(), rate:null, view:null};
+function buildStudyNav(){
+  const nav=$('rlist'), sel=$('rselect'); let html='', shtml='';
+  for(const g of GROUPS){ html+='<h3>'+g+'</h3>'; shtml+='<optgroup label="'+g+'">';
+    for(const r of RH_LIST.filter(x=>x.g===g)){ html+='<button data-id="'+r.id+'">'+esc(r.name)+'</button>'; shtml+='<option value="'+r.id+'">'+esc(r.name)+'</option>'; }
+    shtml+='</optgroup>'; }
+  nav.innerHTML=html; sel.innerHTML=shtml;
+  nav.addEventListener('click',e=>{ const b=e.target.closest('button[data-id]'); if(b) selectRhythm(b.dataset.id); });
+  sel.addEventListener('change',()=>selectRhythm(sel.value));
+}
+function selectRhythm(id){
+  study.id=id; study.seed=newSeed(); const R=RH[id];
+  document.querySelectorAll('#rlist button').forEach(b=>b.classList.toggle('on',b.dataset.id===id)); $('rselect').value=id;
+  $('sTitle').textContent=R.name; $('sGroup').textContent=R.g; $('sCrit').innerHTML=critHTML(R);
+  const rr=$('sRate'); rr.min=R.rate[0]; rr.max=R.rate[1]; rr.step=1; study.rate=Math.round(R.rate[0]+Math.random()*(R.rate[1]-R.rate[0])); rr.value=study.rate;
+  regenStudy();
+}
+function regenStudy(){
+  const art={type:$('sArt').value, sev:$('sSev').value};
+  $('sRateVal').textContent = study.rate+' /min';
+  const E=buildEcg(study.id, study.seed, study.rate, art, displayMode==='live');
+  study.view.setStrip(E, displayMode, computeTruth(buildEcg(study.id, study.seed, study.rate, null, false)));
+  $('sFreeze').classList.toggle('hidden', displayMode!=='live'); $('sFreeze').classList.remove('on'); $('sFreeze').textContent='Freeze';
+}
+function initStudy(){
+  study.view=new TwelveView($('sView'));
+  buildStudyNav();
+  $('sNew').onclick=()=>{ study.seed=newSeed(); const R=RH[study.id]; study.rate=Math.round(R.rate[0]+Math.random()*(R.rate[1]-R.rate[0])); $('sRate').value=study.rate; regenStudy(); };
+  $('sRate').oninput=()=>{ study.rate=+$('sRate').value; regenStudy(); };
+  $('sArt').onchange=regenStudy; $('sSev').onchange=regenStudy;
+  $('sLabels').onclick=()=>{ const on=!$('sLabels').classList.contains('on'); $('sLabels').classList.toggle('on',on); study.view.setLabels(on); };
+  $('sCal').onclick=()=>{ const on=!$('sCal').classList.contains('on'); $('sCal').classList.toggle('on',on); study.view.setCalipers(on); };
+  $('sFreeze').onclick=()=>{ const on=!$('sFreeze').classList.contains('on'); $('sFreeze').classList.toggle('on',on); $('sFreeze').textContent=on?'Resume':'Freeze'; study.view.setFrozen(on); };
+  selectRhythm('normal');
+}
+
+/* ---------- Quiz ---------- */
+const quiz={settings:null, qs:[], cur:0, view:null, rview:null, timer:null, deadline:0, answered:false, sel:null};
+function initQuiz(){
+  quiz.view=new TwelveView($('qView')); quiz.rview=new TwelveView($('rvView'));
+  $('qCats').innerHTML=GROUPS.map(g=>'<label class="inline"><input type="checkbox" value="'+g+'" checked> '+g+' <span style="color:var(--muted);font-size:12px">('+RH_LIST.filter(r=>r.g===g).length+')</span></label>').join('');
+  $('qStart').onclick=startQuiz;
+  $('qSubmit').onclick=()=>submitAnswer(false);
+  $('qNext').onclick=nextQuestion;
+  $('qQuit').onclick=()=>finishQuiz();
+  $('qCal').onclick=()=>{ const on=!$('qCal').classList.contains('on'); $('qCal').classList.toggle('on',on); quiz.view.setCalipers(on); };
+  $('qLabels').onclick=()=>{ const on=!$('qLabels').classList.contains('on'); $('qLabels').classList.toggle('on',on); quiz.view.setLabels(on); };
+  $('qFreeze').onclick=()=>{ const on=!$('qFreeze').classList.contains('on'); $('qFreeze').classList.toggle('on',on); $('qFreeze').textContent=on?'Resume':'Freeze'; quiz.view.setFrozen(on); };
+  $('qRetake').onclick=()=>startQuiz(true);
+  $('qNewSetup').onclick=()=>showQuizPanel('setup');
+  $('rvLabels').onclick=()=>{ const on=!$('rvLabels').classList.contains('on'); $('rvLabels').classList.toggle('on',on); quiz.rview.setLabels(on); };
+  $('rvCal').onclick=()=>{ const on=!$('rvCal').classList.contains('on'); $('rvCal').classList.toggle('on',on); quiz.rview.setCalipers(on); };
+  $('reviewList').addEventListener('click',e=>{ const b=e.target.closest('button[data-q]'); if(b) showReview(+b.dataset.q); });
+}
+function showQuizPanel(which){ $('qSetup').classList.toggle('hidden',which!=='setup'); $('qRun').classList.toggle('hidden',which!=='run'); $('qSummary').classList.toggle('hidden',which!=='summary'); if(which!=='run') stopTimer(); }
+function readSettings(){
+  return { type:document.querySelector('input[name=qtype]:checked').value, n:+$('qN').value, time:+$('qTime').value,
+    fb:document.querySelector('input[name=qfb]:checked').value, art:+$('qArt').value,
+    cats:[...document.querySelectorAll('#qCats input:checked')].map(x=>x.value) };
+}
+function startQuiz(retake){
+  const st = (retake===true && quiz.settings) ? quiz.settings : readSettings();
+  if(!st.cats.length){ $('qSetupMsg').textContent='Select at least one category.'; return; }
+  $('qSetupMsg').textContent=''; quiz.settings=st;
+  const pool=RH_LIST.filter(r=>st.cats.includes(r.g)).map(r=>r.id); let bag=[], last=null; quiz.qs=[];
+  for(let i=0;i<st.n;i++){
+    if(!bag.length){ bag=pool.slice(); for(let k=bag.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [bag[k],bag[j]]=[bag[j],bag[k]]; } if(bag.length>1 && bag[bag.length-1]===last){ [bag[0],bag[bag.length-1]]=[bag[bag.length-1],bag[0]]; } }
+    const id=bag.pop(), R=RH[id]; last=id;
+    quiz.qs.push({id, seed:newSeed(), rate:Math.round(R.rate[0]+Math.random()*(R.rate[1]-R.rate[0])), art:artifactFor(st.art)});
+  }
+  quiz.cur=0; showQuizPanel('run'); showQuestion();
+}
+function distractors(id){
+  const R=RH[id], out=[], seen=new Set([R.dx]);
+  const tryAdd=x=>{ const r=RH[x]; if(r && !seen.has(r.dx) && out.length<4){ seen.add(r.dx); out.push(r.dx); } };
+  (CONFUSE[id]||[]).forEach(tryAdd);
+  RH_LIST.filter(r=>r.g===R.g).sort(()=>Math.random()-0.5).forEach(r=>tryAdd(r.id));
+  RH_LIST.slice().sort(()=>Math.random()-0.5).forEach(r=>tryAdd(r.id));
+  return out;
+}
+function selHTML(step, opts){ return '<select data-step="'+step+'"><option value="">— select —</option>'+opts.map(o=>'<option value="'+o[0]+'">'+esc(o[1])+'</option>').join('')+'</select>'; }
+function dxSelectHTML(){
+  let h='<select data-step="dx"><option value="">— select interpretation —</option>';
+  for(const g of GROUPS){ h+='<optgroup label="'+g+'">'; for(const r of RH_LIST.filter(x=>x.g===g)) h+='<option value="'+r.dx+'">'+esc(DX_NAMES[r.dx])+'</option>'; h+='</optgroup>'; }
+  return h+'</select>';
+}
+function showQuestion(){
+  const q=quiz.qs[quiz.cur], st=quiz.settings;
+  q.S=buildEcg(q.id,q.seed,q.rate,q.art,displayMode==='live'); q.truth=computeTruth(buildEcg(q.id,q.seed,q.rate,null,false));
+  quiz.view.setStrip(q.S, displayMode, q.truth); quiz.view.setLabels(false);
+  $('qLabels').classList.add('hidden'); $('qLabels').classList.remove('on');
+  $('qFreeze').classList.toggle('hidden',displayMode!=='live'); $('qFreeze').classList.remove('on'); $('qFreeze').textContent='Freeze';
+  $('qProg').textContent='Question '+(quiz.cur+1)+' of '+quiz.qs.length;
+  updateScoreLine();
+  quiz.answered=false; quiz.sel=null; $('qFeedback').innerHTML='';
+  $('qSubmit').classList.remove('hidden'); $('qSubmit').disabled=false; $('qNext').classList.add('hidden');
+  const box=$('qAnswers');
+  if(st.type==='quick'){
+    q.options=[RH[q.id].dx, ...distractors(q.id)].sort(()=>Math.random()-0.5);
+    box.innerHTML='<div class="mc">'+q.options.map(dx=>'<button data-dx="'+dx+'">'+esc(DX_NAMES[dx])+'</button>').join('')+'</div>';
+    box.querySelector('.mc').onclick=e=>{ const b=e.target.closest('button[data-dx]'); if(!b||quiz.answered) return; quiz.sel=b.dataset.dx; box.querySelectorAll('.mc button').forEach(x=>x.classList.toggle('sel',x===b)); };
+  } else {
+    box.innerHTML='<div class="sys">'+STEPS.map((k,i)=>'<div class="lbl">'+(i+1)+'. '+STEP_NAMES[k]+'</div>'+selHTML(k,OPT[k])).join('')+
+      '<div class="lbl">'+(STEPS.length+1)+'. Interpretation</div>'+dxSelectHTML()+'</div>';
+  }
+  startTimer();
+}
+function updateScoreLine(){
+  const done=quiz.qs.filter(x=>x.graded), ok=done.filter(x=>x.correct).length;
+  $('qScore').textContent = (quiz.settings.fb==='now' && done.length) ? 'Score: '+ok+' / '+done.length : '';
+}
+function startTimer(){
+  stopTimer(); const t=quiz.settings.time, el=$('qTimer');
+  if(!t){ el.classList.add('hidden'); return; }
+  el.classList.remove('hidden'); quiz.deadline=performance.now()+t*1000;
+  const tick=()=>{ const left=Math.max(0,Math.ceil((quiz.deadline-performance.now())/1000)); el.textContent=left+' s'; el.classList.toggle('low',left<=10); if(left<=0){ stopTimer(); submitAnswer(true); } };
+  tick(); quiz.timer=setInterval(tick,200);
+}
+function stopTimer(){ if(quiz.timer){ clearInterval(quiz.timer); quiz.timer=null; } }
+function submitAnswer(timedOut){
+  if(quiz.answered) return;
+  const q=quiz.qs[quiz.cur], st=quiz.settings, R=RH[q.id];
+  if(!timedOut){
+    if(st.type==='quick' && !quiz.sel){ flash('Select an answer first.'); return; }
+    if(st.type==='sys' && !$('qAnswers').querySelector('select[data-step=dx]').value){ flash('Select an interpretation (step '+(STEPS.length+1)+') first.'); return; }
+  }
+  stopTimer(); $('qTimer').classList.add('hidden'); quiz.answered=true; q.graded=true; q.timedOut=!!timedOut;
+  if(st.type==='quick'){ q.resp={dx:quiz.sel||''}; }
+  else { q.resp={}; $('qAnswers').querySelectorAll('select').forEach(s=>{ q.resp[s.dataset.step]=s.value; s.disabled=true; }); }
+  q.correct = q.resp.dx===R.dx;
+  if(st.type==='sys'){ q.steps={}; for(const k of STEPS) q.steps[k]=q.truth[k].includes(q.resp[k]); q.steps.dx=q.correct; }
+  $('qSubmit').classList.add('hidden'); $('qNext').classList.remove('hidden');
+  $('qNext').textContent = quiz.cur===quiz.qs.length-1 ? 'Finish' : 'Next';
+  if(st.fb==='now'){ showFeedback(q); updateScoreLine(); }
+  else { nextQuestion(); }
+}
+function flash(msg){ $('qFeedback').innerHTML='<div style="color:var(--bad);margin-top:10px;font-size:14px">'+esc(msg)+'</div>'; }
+function stepsTable(q){
+  let h='<table class="steps"><colgroup><col class="c1"><col><col><col class="c4"></colgroup><tr><th>Step</th><th>Your answer</th><th>Accepted answer(s)</th><th></th></tr>';
+  for(const k of STEPS){
+    const ok=q.steps[k]; h+='<tr><td class="sn">'+STEP_NAMES[k]+'</td><td class="sy">'+esc(q.resp[k]?optLabel(k,q.resp[k]):'—')+'</td><td class="sa">'+q.truth[k].map(x=>esc(optLabel(k,x))).join('<br>')+'</td><td class="sm '+(ok?'mark-ok':'mark-bad')+'">'+(ok?'✓':'✗')+'</td></tr>';
+  }
+  h+='<tr><td class="sn">'+STEP_NAMES.dx+'</td><td class="sy">'+esc(q.resp.dx?DX_NAMES[q.resp.dx]:'—')+'</td><td class="sa">'+esc(DX_NAMES[RH[q.id].dx])+'</td><td class="sm '+(q.correct?'mark-ok':'mark-bad')+'">'+(q.correct?'✓':'✗')+'</td></tr></table>';
+  return h;
+}
+function measLine(q){
+  const m=q.truth.m;
+  return 'Measured: rate ≈ '+m.rate+'/min · PR '+m.pr+' ms · QRS '+m.qrs+' ms · QTc '+m.qtc+' ms · QRS axis '+(m.axis>0?'+':'')+m.axis+'°'+(q.art.type!=='none'?' · artifact: '+artName(q.art,q.S):'');
+}
+function showFeedback(q){
+  const R=RH[q.id], st=quiz.settings;
+  if(st.type==='quick') $('qAnswers').querySelectorAll('.mc button').forEach(b=>{ if(b.dataset.dx===R.dx) b.classList.add('right'); else if(b.dataset.dx===q.resp.dx) b.classList.add('wrong'); });
+  let h='<div class="fb '+(q.correct?'ok':'bad')+'"><h3>'+(q.timedOut?'Time expired — ':'')+(q.correct?'Correct':'Not quite')+': '+esc(R.name)+'</h3>';
+  h+='<div style="font-size:13px;color:var(--muted)">'+esc(measLine(q))+'</div>';
+  if(st.type==='sys') h+=stepsTable(q);
+  h+='<table class="crit">'+critHTML(R)+'</table></div>';
+  $('qFeedback').innerHTML=h;
+  $('qLabels').classList.remove('hidden');
+}
+function nextQuestion(){ if(quiz.cur<quiz.qs.length-1){ quiz.cur++; showQuestion(); } else finishQuiz(); }
+function finishQuiz(){
+  stopTimer(); showQuizPanel('summary'); $('reviewPane').classList.add('hidden');
+  const st=quiz.settings, graded=quiz.qs.filter(q=>q.graded), ok=graded.filter(q=>q.correct).length, n=graded.length;
+  $('sumScore').textContent = n ? ok+' / '+n+' ('+Math.round(100*ok/n)+'%)' : '—';
+  let d='<div style="font-size:14px">'+(st.type==='quick'?'Quick':'Systematic')+' quiz · '+st.cats.join(', ')+'</div>';
+  if(st.type==='sys' && n){ d+='<div class="stepacc">'; for(const k of STEPS){ const c=graded.filter(q=>q.steps[k]).length; d+='<span>'+STEP_NAMES[k]+': '+c+'/'+n+'</span>'; } d+='</div>'; }
+  if(n<quiz.qs.length) d+='<div style="font-size:13px;color:var(--muted);margin-top:6px">Ended early: '+n+' of '+quiz.qs.length+' answered.</div>';
+  $('sumDetail').innerHTML=d;
+  let h='<colgroup><col class="n"><col><col><col class="m"><col class="b"></colgroup><tr><th>#</th><th>Your answer</th><th>Correct interpretation</th><th></th><th></th></tr>';
+  graded.forEach(q=>{ const i=quiz.qs.indexOf(q); h+='<tr><td class="rn">'+(i+1)+'</td><td class="ra">'+esc(q.resp.dx?DX_NAMES[q.resp.dx]:(q.timedOut?'(time expired)':'—'))+'</td><td class="rc">'+esc(RH[q.id].name)+'</td><td class="rm '+(q.correct?'mark-ok':'mark-bad')+'">'+(q.correct?'✓':'✗')+'</td><td class="rb"><button class="btn" data-q="'+i+'">Review</button></td></tr>'; });
+  $('reviewList').innerHTML=h;
+}
+function showReview(i){
+  const q=quiz.qs[i], R=RH[q.id]; $('reviewPane').classList.remove('hidden');
+  $('rvTitle').textContent='Question '+(i+1)+': '+R.name; $('rvGroup').textContent=R.g;
+  quiz.rview.setStrip(buildEcg(q.id,q.seed,q.rate,q.art,false),'static',q.truth);
+  quiz.rview.setLabels($('rvLabels').classList.contains('on'));
+  $('rvSteps').innerHTML = quiz.settings.type==='sys' ? stepsTable(q) : '<div style="margin:8px 0;font-size:14px">Your answer: <b>'+esc(q.resp.dx?DX_NAMES[q.resp.dx]:'—')+'</b> '+(q.correct?'<span class="mark-ok">✓</span>':'<span class="mark-bad">✗</span>')+(q.art.type!=='none'?' · artifact: '+esc(artName(q.art,q.S)):'')+'</div>';
+  $('rvCrit').innerHTML=critHTML(R);
+  $('reviewPane').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ---------- Header controls ---------- */
+function initHeader(){
+  $('tabSeg').onclick=e=>{ const b=e.target.closest('button[data-tab]'); if(!b) return; $('tabSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); $('studyTab').classList.toggle('hidden',b.dataset.tab!=='study'); $('quizTab').classList.toggle('hidden',b.dataset.tab!=='quiz'); views.forEach(v=>v.resize(true)); window.scrollTo(0,0); };
+  $('modeSeg').onclick=e=>{ const b=e.target.closest('button[data-mode]'); if(!b||b.dataset.mode===displayMode) return; displayMode=b.dataset.mode; $('modeSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    regenStudy();
+    if(!$('qRun').classList.contains('hidden')){ const q=quiz.qs[quiz.cur]; q.S=buildEcg(q.id,q.seed,q.rate,q.art,displayMode==='live'); quiz.view.setStrip(q.S,displayMode,q.truth); if(quiz.answered) quiz.view.setLabels($('qLabels').classList.contains('on')); $('qFreeze').classList.toggle('hidden',displayMode!=='live'); $('qFreeze').classList.remove('on'); $('qFreeze').textContent='Freeze'; }
+  };
+}
+initHeader(); initStudy(); initQuiz(); requestAnimationFrame(frame);
+Device.onChange(()=>views.forEach(v=>v.resize(true)));
+</script>
+<script>
+(function(){
+  'use strict';
+  var ACCESS_PASSWORD = "12345";
+  var SESSION_KEY = "twelveLeadTrainerAuth";
+  var gate = document.getElementById('twelveGate');
+  var main = document.getElementById('appMain');
+  var pwInput = document.getElementById('twelveGatePassword');
+  var errorMsg = document.getElementById('twelveGateError');
+  var submitBtn = document.getElementById('twelveGateSubmit');
+  function grantAccess(){
+    try{ sessionStorage.setItem(SESSION_KEY, 'granted'); }catch(e){}
+    gate.style.display = 'none';
+    main.style.display = 'contents';
+    try{ window.dispatchEvent(new Event('resize')); }catch(e){}
+  }
+  function attempt(){
+    if (pwInput.value === ACCESS_PASSWORD){ grantAccess(); }
+    else { errorMsg.style.display = 'block'; pwInput.value = ''; pwInput.focus(); }
+  }
+  submitBtn.addEventListener('click', attempt);
+  pwInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') attempt(); });
+  var alreadyGranted = false;
+  try{ alreadyGranted = sessionStorage.getItem(SESSION_KEY) === 'granted'; }catch(e){}
+  if (alreadyGranted){ grantAccess(); } else { pwInput.focus(); }
+})();
+</script>
+</body>
+</html>
